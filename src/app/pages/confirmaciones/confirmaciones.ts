@@ -665,7 +665,7 @@ export class Confirmaciones {
         latestByCode.set(c.codigo_id, c);
       }
     }
-    return Array.from(latestByCode.values()).sort((a, b) => (a.id ?? 0) - (b.id ?? 0));
+    return Array.from(latestByCode.values()).sort((a, b) => (b.id ?? 0) - (a.id ?? 0));
   });
 
   readonly totalConfirmados = computed(() => {
