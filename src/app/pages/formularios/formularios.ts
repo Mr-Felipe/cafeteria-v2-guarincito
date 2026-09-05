@@ -800,6 +800,7 @@ export class Formularios implements OnInit {
     try {
       await this.supabase.deleteConfirmacion(id);
       this.respuestas.update(list => list.filter(r => r.id !== id));
+      this.cafeteria.confirmaciones.update(list => list.filter(c => c.id !== id));
       this.cafeteria.notify('success', 'Eliminado', 'Registro eliminado correctamente');
     } catch (err) {
       console.error('[Formularios] Error eliminando:', err);
