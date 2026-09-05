@@ -158,8 +158,8 @@ interface WebConfirmacion {
                           <mat-icon class="text-white text-lg">local_cafe</mat-icon>
                         </div>
                         <div>
-                          <h4 class="text-base font-bold text-white">Refrigerio Noche</h4>
-                          <p class="text-blue-100 text-[10px]">Nocturno (L-V)</p>
+                          <h4 class="text-base font-bold text-white">Refrigerio</h4>
+                          <p class="text-blue-100 text-[10px]">Nocturno (L-V) + Sabado</p>
                         </div>
                       </div>
                       <span [class]="refrigerioConfig()?.activo ? 'px-2 py-0.5 bg-white/20 rounded-full text-[10px] font-bold text-white' : 'px-2 py-0.5 bg-red-500/80 rounded-full text-[10px] font-bold text-white'">
@@ -177,18 +177,40 @@ interface WebConfirmacion {
                           class="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform"></div>
                       </button>
                     </div>
-                    <div class="flex items-center gap-3">
-                      <div class="flex-1">
-                        <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Inicio</label>
-                        <input type="time" [ngModel]="refrigerioConfig()?.hora_inicio"
-                          (ngModelChange)="updateTime('refrigerio', 'hora_inicio', $event)"
-                          class="w-full py-2 px-3 text-sm rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-slate-700">
+                    <!-- L-V Schedule -->
+                    <div class="p-2 bg-blue-50 rounded-xl">
+                      <p class="text-[10px] font-bold uppercase tracking-wider text-blue-600 mb-2">Lunes - Viernes</p>
+                      <div class="flex items-center gap-3">
+                        <div class="flex-1">
+                          <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Inicio</label>
+                          <input type="time" [ngModel]="refrigerioConfig()?.hora_inicio"
+                            (ngModelChange)="updateTime('refrigerio', 'hora_inicio', $event)"
+                            class="w-full py-2 px-3 text-sm rounded-xl bg-white border border-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-slate-700">
+                        </div>
+                        <div class="flex-1">
+                          <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Fin</label>
+                          <input type="time" [ngModel]="refrigerioConfig()?.hora_fin"
+                            (ngModelChange)="updateTime('refrigerio', 'hora_fin', $event)"
+                            class="w-full py-2 px-3 text-sm rounded-xl bg-white border border-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-slate-700">
+                        </div>
                       </div>
-                      <div class="flex-1">
-                        <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Fin</label>
-                        <input type="time" [ngModel]="refrigerioConfig()?.hora_fin"
-                          (ngModelChange)="updateTime('refrigerio', 'hora_fin', $event)"
-                          class="w-full py-2 px-3 text-sm rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-slate-700">
+                    </div>
+                    <!-- Sabado Schedule -->
+                    <div class="p-2 bg-violet-50 rounded-xl">
+                      <p class="text-[10px] font-bold uppercase tracking-wider text-violet-600 mb-2">Sabado</p>
+                      <div class="flex items-center gap-3">
+                        <div class="flex-1">
+                          <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Inicio</label>
+                          <input type="time" [ngModel]="findeConfig()?.hora_inicio"
+                            (ngModelChange)="updateTime('refrigerio_finde', 'hora_inicio', $event)"
+                            class="w-full py-2 px-3 text-sm rounded-xl bg-white border border-violet-200 focus:outline-none focus:ring-2 focus:ring-violet-500 font-mono text-slate-700">
+                        </div>
+                        <div class="flex-1">
+                          <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Fin</label>
+                          <input type="time" [ngModel]="findeConfig()?.hora_fin"
+                            (ngModelChange)="updateTime('refrigerio_finde', 'hora_fin', $event)"
+                            class="w-full py-2 px-3 text-sm rounded-xl bg-white border border-violet-200 focus:outline-none focus:ring-2 focus:ring-violet-500 font-mono text-slate-700">
+                        </div>
                       </div>
                     </div>
                     <div class="flex items-center justify-between p-3 bg-blue-50 rounded-xl">
