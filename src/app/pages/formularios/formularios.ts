@@ -588,7 +588,7 @@ export class Formularios implements OnInit {
   readonly loading = signal(true);
   readonly configExpanded = signal(false);
   readonly config = signal<FormConfig[]>([]);
-  readonly respuestas = signal<WebConfirmacion[]>([]);
+  readonly respuestas = computed(() => this.cafeteria.webConfirmaciones() as WebConfirmacion[]);
   readonly filtroTipo = signal<'todos' | 'almuerzo' | 'refrigerio' | 'adea' | 'fin_de_semana'>('todos');
   readonly filtroGeneral = signal('');
   readonly filtroConf = signal('');
@@ -672,7 +672,7 @@ export class Formularios implements OnInit {
         ]).then(([a, r, ad, fs]) => [...a, ...r, ...ad, ...fs])
       ]);
       this.config.set(configData);
-      this.respuestas.set(respuestasData);
+      this.cafeteria.webConfirmaciones.set(respuestasData);
     } catch (err) {
       console.error('[Formularios] Error loading data:', err);
     } finally {
@@ -799,7 +799,7 @@ export class Formularios implements OnInit {
   async eliminarConfirmacion(id: number) {
     try {
       await this.supabase.deleteConfirmacion(id);
-      this.respuestas.update(list => list.filter(r => r.id !== id));
+      this.cafeteria.webConfirmaciones.update(list => list.filter((r: any) => r.id !== id));
       this.cafeteria.confirmaciones.update(list => list.filter(c => c.id !== id));
       this.cafeteria.notify('success', 'Eliminado', 'Registro eliminado correctamente');
     } catch (err) {

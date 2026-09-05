@@ -31,6 +31,7 @@ export class CafeteriaService {
   readonly beneficiarios = signal<Beneficiario[]>([]);
   readonly confirmaciones = signal<Confirmacion[]>([]);
   readonly entregas = signal<Entrega[]>([]);
+  readonly webConfirmaciones = signal<any[]>([]);
   readonly carreras = signal<Carrera[]>(CARRERAS_INIT);
   readonly tiposComida = signal<TipoComida[]>(TIPOS_COMIDA_INIT);
   readonly formularios = signal<Formulario[]>(FORMULARIOS_INIT);
@@ -186,11 +187,18 @@ export class CafeteriaService {
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'confirmaciones' }, (payload: any) => {
         const newConf = payload.new as Confirmacion;
         const fechaHoy = this.selectedDate();
-        if (newConf.fecha && newConf.fecha.startsWith(fechaHoy.split('-').reverse().join('/').substring(0, 10))) {
+        const fechaHoyFmt = fechaHoy.split('-').reverse().join('/').substring(0, 10);
+        if (newConf.fecha && newConf.fecha.startsWith(fechaHoyFmt)) {
           this.confirmaciones.update(list => {
             if (list.some(c => c.id === newConf.id)) return list;
             return [...list, newConf];
           });
+          if (newConf.origen === 'WEB_FORM' && newConf.formulario_tipo) {
+            this.webConfirmaciones.update(list => {
+              if (list.some(c => c.id === newConf.id)) return list;
+              return [...list, newConf];
+            });
+          }
         }
       })
       .subscribe();

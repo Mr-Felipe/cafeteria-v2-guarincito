@@ -57,6 +57,7 @@ export interface Confirmacion {
   nombre_en_form?: string | null;
   tipo_comida_nombre?: string;
   carrera_nombre?: string;
+  formulario_tipo?: string;
   jornada?: string;
   hora_estimada?: string;
   entregado?: boolean;
