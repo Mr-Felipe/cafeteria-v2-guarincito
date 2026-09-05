@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { SupabaseService } from '../../services/supabase.service';
+import { CafeteriaService } from '../../services/cafeteria.service';
 
 interface FormConfig {
   id: number;
@@ -581,6 +582,7 @@ interface WebConfirmacion {
 })
 export class Formularios implements OnInit {
   private readonly supabase = inject(SupabaseService);
+  private readonly cafeteria = inject(CafeteriaService);
   readonly String = String;
 
   readonly loading = signal(true);
@@ -702,8 +704,11 @@ export class Formularios implements OnInit {
       this.config.update(configs =>
         configs.map(c => c.tipo === tipo ? { ...c, activo: !c.activo } : c)
       );
+      const estado = !cfg.activo ? 'ABIERTO' : 'CERRADO';
+      this.cafeteria.notify('success', 'Formulario ' + estado, `El formulario de ${tipo} ahora esta ${estado}`);
     } catch (err) {
       console.error('[Formularios] Error toggling:', err);
+      this.cafeteria.notify('error', 'Error', 'No se pudo cambiar el estado del formulario');
     }
   }
 
@@ -715,8 +720,10 @@ export class Formularios implements OnInit {
       this.config.update(configs =>
         configs.map(c => c.tipo === tipo ? { ...c, [field]: value } : c)
       );
+      this.cafeteria.notify('success', 'Horario actualizado', `Horario del formulario ${tipo} actualizado`);
     } catch (err) {
       console.error('[Formularios] Error updating time:', err);
+      this.cafeteria.notify('error', 'Error', 'No se pudo actualizar el horario');
     }
   }
 
@@ -793,8 +800,10 @@ export class Formularios implements OnInit {
     try {
       await this.supabase.deleteConfirmacion(id);
       this.respuestas.update(list => list.filter(r => r.id !== id));
+      this.cafeteria.notify('success', 'Eliminado', 'Registro eliminado correctamente');
     } catch (err) {
       console.error('[Formularios] Error eliminando:', err);
+      this.cafeteria.notify('error', 'Error', 'No se pudo eliminar el registro');
     }
   }
 }
