@@ -80,6 +80,7 @@ export class SupabaseService {
   private isConfigured = false;
 
   constructor() {
+    if (typeof window === 'undefined') return;
     try {
       if (SUPABASE_CONFIG.url && SUPABASE_CONFIG.anonKey) {
         this.client = createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey, {
