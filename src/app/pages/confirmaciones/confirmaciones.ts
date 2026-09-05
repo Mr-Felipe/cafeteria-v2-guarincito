@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, signal, computed } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { CafeteriaService } from '../../services/cafeteria.service';
 import { SupabaseService } from '../../services/supabase.service';
 import { Beneficiario, Confirmacion, getVisualCarrera } from '../../models/cafeteria.models';
@@ -9,7 +9,7 @@ import { Beneficiario, Confirmacion, getVisualCarrera } from '../../models/cafet
 @Component({
   selector: 'app-confirmaciones',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, MatIconModule, ReactiveFormsModule],
+  imports: [RouterLink, MatIconModule, ReactiveFormsModule, FormsModule],
   template: `
     <div class="space-y-6">
       <!-- HEADER -->
@@ -80,30 +80,30 @@ import { Beneficiario, Confirmacion, getVisualCarrera } from '../../models/cafet
       </div>
 
       <!-- KPIS -->
-      <section class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+      <section class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-4">
         <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
-          <div><div class="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">Confirmados</div><div class="text-2xl font-bold text-slate-900">{{ totalConfirmados() }}</div></div>
-          <div class="w-full bg-slate-100 h-1.5 rounded-full mt-3 overflow-hidden"><div class="bg-blue-500 h-full" [style.width.%]="cafeteriaService.beneficiarios().length > 0 ? (totalConfirmados() / cafeteriaService.beneficiarios().length * 100) : 0"></div></div>
+          <div><div class="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">Confirmados</div><div class="text-2xl font-bold text-slate-900">{{ totalConfirmadosPorSubsidio() }}</div></div>
+          <div class="w-full bg-slate-100 h-1.5 rounded-full mt-3 overflow-hidden"><div class="bg-blue-500 h-full" [style.width.%]="cafeteriaService.beneficiarios().length > 0 ? (totalConfirmadosPorSubsidio() / cafeteriaService.beneficiarios().length * 100) : 0"></div></div>
         </div>
         <a routerLink="/entregas" class="bg-white hover:bg-emerald-50/50 transition-colors p-5 rounded-xl border border-slate-200 hover:border-emerald-300 shadow-sm flex flex-col justify-between group cursor-pointer">
-          <div><div class="flex items-center justify-between"><span class="text-emerald-700 text-xs font-semibold uppercase tracking-wider mb-1">Entregadas</span><mat-icon class="text-xs text-emerald-500 group-hover:translate-x-0.5 transition-transform">arrow_forward</mat-icon></div><div class="text-2xl font-bold text-slate-900">{{ cafeteriaService.stats().totalEntregados }}</div></div>
-          <div class="w-full bg-slate-100 h-1.5 rounded-full mt-3 overflow-hidden"><div class="bg-emerald-500 h-full" [style.width.%]="cafeteriaService.stats().porcentaje"></div></div>
+          <div><div class="flex items-center justify-between"><span class="text-emerald-700 text-xs font-semibold uppercase tracking-wider mb-1">Entregadas</span><mat-icon class="text-xs text-emerald-500 group-hover:translate-x-0.5 transition-transform">arrow_forward</mat-icon></div><div class="text-2xl font-bold text-slate-900">{{ entregadasPorSubsidio() }}</div></div>
+          <div class="w-full bg-slate-100 h-1.5 rounded-full mt-3 overflow-hidden"><div class="bg-emerald-500 h-full" [style.width.%]="totalConfirmadosPorSubsidio() > 0 ? (entregadasPorSubsidio() / totalConfirmadosPorSubsidio() * 100) : 0"></div></div>
         </a>
         <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
-          <div><div class="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">Pendientes</div><div class="text-2xl font-bold text-slate-900">{{ cafeteriaService.stats().totalPendientes }}</div></div>
-          <div class="w-full bg-slate-100 h-1.5 rounded-full mt-3 overflow-hidden"><div class="bg-orange-500 h-full" [style.width.%]="cafeteriaService.stats().porcentaje"></div></div>
+          <div><div class="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">Pendientes</div><div class="text-2xl font-bold text-slate-900">{{ pendientesPorSubsidio() }}</div></div>
+          <div class="w-full bg-slate-100 h-1.5 rounded-full mt-3 overflow-hidden"><div class="bg-orange-500 h-full" [style.width.%]="totalConfirmadosPorSubsidio() > 0 ? (pendientesPorSubsidio() / totalConfirmadosPorSubsidio() * 100) : 0"></div></div>
         </div>
         <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
           <div><div class="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">En Padrón</div><div class="text-2xl font-bold text-slate-900">{{ cafeteriaService.beneficiarios().length }}</div></div>
           <div class="w-full bg-slate-100 h-1.5 rounded-full mt-3 overflow-hidden"><div class="bg-blue-500 h-full" [style.width.%]="100"></div></div>
         </div>
-        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between" [class.bg-purple-50]="confirmadosExtranos().length > 0" [class.border-purple-200]="confirmadosExtranos().length > 0">
-          <div><div class="text-xs font-semibold uppercase tracking-wider mb-1" [class.text-purple-800]="confirmadosExtranos().length > 0" [class.text-slate-500]="confirmadosExtranos().length === 0">Extraños</div><div class="text-2xl font-bold" [class.text-purple-950]="confirmadosExtranos().length > 0" [class.text-slate-900]="confirmadosExtranos().length === 0">{{ confirmadosExtranos().length }}</div></div>
-          <div class="w-full bg-slate-100 h-1.5 rounded-full mt-3 overflow-hidden"><div class="bg-purple-500 h-full" [style.width.%]="confirmadosExtranos().length > 0 ? 100 : 0"></div></div>
+        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between" [class.bg-purple-50]="extranosPorSubsidio() > 0" [class.border-purple-200]="extranosPorSubsidio() > 0">
+          <div><div class="text-xs font-semibold uppercase tracking-wider mb-1" [class.text-purple-800]="extranosPorSubsidio() > 0" [class.text-slate-500]="extranosPorSubsidio() === 0">Extraños</div><div class="text-2xl font-bold" [class.text-purple-950]="extranosPorSubsidio() > 0" [class.text-slate-900]="extranosPorSubsidio() === 0">{{ extranosPorSubsidio() }}</div></div>
+          <div class="w-full bg-slate-100 h-1.5 rounded-full mt-3 overflow-hidden"><div class="bg-purple-500 h-full" [style.width.%]="extranosPorSubsidio() > 0 ? 100 : 0"></div></div>
         </div>
         <div class="bg-white p-5 rounded-xl border border-amber-200 shadow-sm flex flex-col justify-between" [class.bg-amber-50]="entregadosSinConfirmar().length > 0" [class.border-amber-300]="entregadosSinConfirmar().length > 0">
           <div><div class="text-xs font-semibold uppercase tracking-wider mb-1" [class.text-amber-800]="entregadosSinConfirmar().length > 0" [class.text-slate-500]="entregadosSinConfirmar().length === 0">Entregados Sin Confirmar</div><div class="text-2xl font-bold" [class.text-amber-900]="entregadosSinConfirmar().length > 0" [class.text-slate-900]="entregadosSinConfirmar().length === 0">{{ entregadosSinConfirmar().length }}</div></div>
-          <div class="text-xs text-amber-600 mt-2 font-medium">{{ noConfirmaron().length }} en padrón sin confirmar</div>
+          <div class="text-xs text-amber-600 mt-2 font-medium">{{ noConfirmaronPorSubsidio() }} en padrón sin confirmar</div>
         </div>
       </section>
 
@@ -188,7 +188,7 @@ import { Beneficiario, Confirmacion, getVisualCarrera } from '../../models/cafet
 
         <!-- 1: CONFIRMADOS VALIDOS -->
         <div class="bg-slate-50 border border-slate-200 rounded-xl shadow-sm overflow-hidden max-h-[calc(100vh-4rem)] flex flex-col">
-          <button type="button" class="w-full text-left p-4 sm:p-5 hover:bg-slate-100/70 transition-colors flex items-center justify-between cursor-pointer border-b border-slate-200 shrink-0 sticky top-16 z-20 bg-slate-50" (click)="toggleAccordionValidos()">
+          <button type="button" class="w-full text-left p-4 sm:p-5 hover:bg-slate-100/70 transition-colors flex items-center justify-between cursor-pointer border-b border-slate-200 shrink-0 bg-slate-50" (click)="toggleAccordionValidos()">
             <div class="flex items-center gap-3">
               <div class="w-8 h-8 rounded-lg bg-green-100 text-green-700 flex items-center justify-center shrink-0"><mat-icon [style.fontSize.px]="24">verified</mat-icon></div>
               <div>
@@ -202,19 +202,25 @@ import { Beneficiario, Confirmacion, getVisualCarrera } from '../../models/cafet
             <mat-icon class="text-slate-400 transition-transform duration-200" [class.rotate-180]="accordionValidosOpen()">expand_more</mat-icon>
           </button>
           @if (accordionValidosOpen()) {
-            <div class="p-4 sm:p-5 space-y-4 flex-1 overflow-y-auto min-h-0">
-              <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-                <div class="relative flex-1 max-w-md">
-                  <mat-icon class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</mat-icon>
-                  <input type="text" [value]="busquedaValidos()" (input)="busquedaValidos.set($any($event.target).value)" placeholder="Buscar por codigo, nombre..." class="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20"/>
+            <div class="flex flex-col flex-1 overflow-y-auto min-h-0">
+              <div class="sticky top-0 z-10 p-4 sm:p-5 bg-slate-50 border-b border-slate-200">
+                <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                  <div class="relative flex-1 max-w-md">
+                    <mat-icon class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</mat-icon>
+                    <input #busqValidos type="text" [value]="busquedaValidos()" (input)="busquedaValidos.set($any($event.target).value)" placeholder="Buscar por codigo, nombre..." class="w-full pl-9 pr-8 py-2 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20"/>
+                    @if (busquedaValidos()) {
+                      <button type="button" (click)="busquedaValidos.set(''); busqValidos.focus()" class="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 text-slate-400 hover:text-slate-600 cursor-pointer"><mat-icon class="text-base">close</mat-icon></button>
+                    }
+                  </div>
+                  <select [ngModel]="carreraValidos()" (ngModelChange)="carreraValidos.set($event)" class="p-2 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 focus:outline-none">
+                    <option value="TODAS">Todas las carreras</option>
+                    @for (c of carrerasEnConfirmaciones(); track c) { <option [value]="c">{{ c }}</option> }
+                  </select>
                 </div>
-                <select [value]="carreraValidos()" (change)="carreraValidos.set($any($event.target).value)" class="p-2 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 focus:outline-none">
-                  <option value="TODAS">Todas las carreras</option>
-                  @for (c of carrerasEnConfirmaciones(); track c) { <option [value]="c">{{ c }}</option> }
-                </select>
               </div>
-              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                @for (c of confirmadosValidosFiltrados(); track c.id || c.codigo_id) {
+              <div class="p-4 sm:p-5 space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  @for (c of confirmadosValidosFiltrados(); track c.id || c.codigo_id) {
                   @let visual = getVisual(c.carrera_nombre || c.carrera_real || c.carrera_en_form || '');
                   <div class="bg-white border border-slate-200 rounded-xl p-4 flex flex-col justify-between hover:border-slate-300 hover:shadow-sm transition-all">
                     <div>
@@ -260,13 +266,14 @@ import { Beneficiario, Confirmacion, getVisualCarrera } from '../../models/cafet
                   </div>
                 }
               </div>
+              </div>
             </div>
           }
         </div>
 
         <!-- 2: EXTRANOS -->
         <div class="bg-amber-50/30 border border-amber-200 rounded-xl shadow-sm overflow-hidden max-h-[calc(100vh-4rem)] flex flex-col">
-          <button type="button" class="w-full text-left p-4 sm:p-5 hover:bg-amber-50/50 transition-colors flex items-center justify-between cursor-pointer border-b border-amber-200 shrink-0 sticky top-16 z-20 bg-amber-50" (click)="toggleAccordionExtranos()">
+          <button type="button" class="w-full text-left p-4 sm:p-5 hover:bg-amber-50/50 transition-colors flex items-center justify-between cursor-pointer border-b border-amber-200 shrink-0 bg-amber-50" (click)="toggleAccordionExtranos()">
             <div class="flex items-center gap-3">
               <div class="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center shrink-0"><mat-icon [style.fontSize.px]="24">warning_amber</mat-icon></div>
               <div>
@@ -280,19 +287,25 @@ import { Beneficiario, Confirmacion, getVisualCarrera } from '../../models/cafet
             <mat-icon class="text-slate-400 transition-transform duration-200" [class.rotate-180]="accordionExtranosOpen()">expand_more</mat-icon>
           </button>
           @if (accordionExtranosOpen()) {
-            <div class="p-4 sm:p-5 space-y-4 flex-1 overflow-y-auto min-h-0">
-              <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-                <div class="relative flex-1 max-w-md">
-                  <mat-icon class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</mat-icon>
-                  <input type="text" [value]="busquedaExtranos()" (input)="busquedaExtranos.set($any($event.target).value)" placeholder="Buscar por codigo, nombre..." class="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/20"/>
+            <div class="flex flex-col flex-1 overflow-y-auto min-h-0">
+              <div class="sticky top-0 z-10 p-4 sm:p-5 bg-amber-50 border-b border-amber-200">
+                <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                  <div class="relative flex-1 max-w-md">
+                    <mat-icon class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</mat-icon>
+                    <input #busqExtr type="text" [value]="busquedaExtranos()" (input)="busquedaExtranos.set($any($event.target).value)" placeholder="Buscar por codigo, nombre..." class="w-full pl-9 pr-8 py-2 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/20"/>
+                    @if (busquedaExtranos()) {
+                      <button type="button" (click)="busquedaExtranos.set(''); busqExtr.focus()" class="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 text-slate-400 hover:text-slate-600 cursor-pointer"><mat-icon class="text-base">close</mat-icon></button>
+                    }
+                  </div>
+                  <select [ngModel]="carreraExtranos()" (ngModelChange)="carreraExtranos.set($event)" class="p-2 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 focus:outline-none">
+                    <option value="TODAS">Todas las carreras</option>
+                    @for (c of carrerasEnExtranos(); track c) { <option [value]="c">{{ c }}</option> }
+                  </select>
                 </div>
-                <select [value]="carreraExtranos()" (change)="carreraExtranos.set($any($event.target).value)" class="p-2 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 focus:outline-none">
-                  <option value="TODAS">Todas las carreras</option>
-                  @for (c of carrerasEnExtranos(); track c) { <option [value]="c">{{ c }}</option> }
-                </select>
               </div>
-              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                @for (c of confirmadosExtranosFiltrados(); track c.id || c.codigo_id) {
+              <div class="p-4 sm:p-5 space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  @for (c of confirmadosExtranosFiltrados(); track c.id || c.codigo_id) {
                   @let visual = getVisual(c.carrera_en_form || c.carrera_real || c.carrera_nombre || '');
                   <div class="bg-white border border-amber-200 rounded-xl p-4 flex flex-col justify-between hover:shadow-sm transition-all">
                     <div>
@@ -365,13 +378,14 @@ import { Beneficiario, Confirmacion, getVisualCarrera } from '../../models/cafet
                   <div class="col-span-full p-6 text-center text-slate-500 text-xs font-semibold bg-white rounded-xl border border-dashed border-slate-200">No se detectan estudiantes externos para este filtro.</div>
                 }
               </div>
+              </div>
             </div>
           }
         </div>
 
         <!-- 3: NO CONFIRMARON -->
         <div class="bg-slate-50 border border-slate-200 rounded-xl shadow-sm overflow-hidden max-h-[calc(100vh-4rem)] flex flex-col">
-          <button type="button" class="w-full text-left p-4 sm:p-5 hover:bg-slate-100/70 transition-colors flex items-center justify-between cursor-pointer border-b border-slate-200 shrink-0 sticky top-16 z-20 bg-slate-50" (click)="toggleAccordionNoConfirmaron()">
+          <button type="button" class="w-full text-left p-4 sm:p-5 hover:bg-slate-100/70 transition-colors flex items-center justify-between cursor-pointer border-b border-slate-200 shrink-0 bg-slate-50" (click)="toggleAccordionNoConfirmaron()">
             <div class="flex items-center gap-3">
               <div class="w-8 h-8 rounded-lg bg-slate-200 text-slate-700 flex items-center justify-center shrink-0"><mat-icon [style.fontSize.px]="24">person_off</mat-icon></div>
               <div>
@@ -385,18 +399,24 @@ import { Beneficiario, Confirmacion, getVisualCarrera } from '../../models/cafet
             <mat-icon class="text-slate-400 transition-transform duration-200" [class.rotate-180]="accordionNoConfirmaronOpen()">expand_more</mat-icon>
           </button>
           @if (accordionNoConfirmaronOpen()) {
-            <div class="p-4 sm:p-5 space-y-4 flex-1 overflow-y-auto min-h-0">
-              <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-                <div class="relative flex-1 max-w-md">
-                  <mat-icon class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</mat-icon>
-                  <input type="text" [value]="busquedaNoConfirmaron()" (input)="busquedaNoConfirmaron.set($any($event.target).value)" placeholder="Buscar por codigo, nombre..." class="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20"/>
+            <div class="flex flex-col flex-1 overflow-y-auto min-h-0">
+              <div class="sticky top-0 z-10 p-4 sm:p-5 bg-slate-50 border-b border-slate-200">
+                <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                  <div class="relative flex-1 max-w-md">
+                    <mat-icon class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</mat-icon>
+                    <input #busqNoConf type="text" [value]="busquedaNoConfirmaron()" (input)="busquedaNoConfirmaron.set($any($event.target).value)" placeholder="Buscar por codigo, nombre..." class="w-full pl-9 pr-8 py-2 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20"/>
+                    @if (busquedaNoConfirmaron()) {
+                      <button type="button" (click)="busquedaNoConfirmaron.set(''); busqNoConf.focus()" class="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 text-slate-400 hover:text-slate-600 cursor-pointer"><mat-icon class="text-base">close</mat-icon></button>
+                    }
+                  </div>
+                  <select [ngModel]="carreraNoConfirmaron()" (ngModelChange)="carreraNoConfirmaron.set($event)" class="p-2 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 focus:outline-none">
+                    <option value="TODAS">Todas las carreras</option>
+                    @for (c of carrerasEnNoConfirmaron(); track c) { <option [value]="c">{{ c }}</option> }
+                  </select>
                 </div>
-                <select [value]="carreraNoConfirmaron()" (change)="carreraNoConfirmaron.set($any($event.target).value)" class="p-2 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 focus:outline-none">
-                  <option value="TODAS">Todas las carreras</option>
-                  @for (c of carrerasEnNoConfirmaron(); track c) { <option [value]="c">{{ c }}</option> }
-                </select>
               </div>
-              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              <div class="p-4 sm:p-5 space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                 @for (b of noConfirmaronFiltrados(); track b.codigo_id) {
                   @let visual = getVisual(b.carrera_nombre || '');
                   @let yaEntregado = cafeteriaService.entregas().some(e => e.codigo_id === b.codigo_id && e.estado === 'ENTREGADO' && e.fecha === cafeteriaService.selectedDate());
@@ -437,6 +457,7 @@ import { Beneficiario, Confirmacion, getVisualCarrera } from '../../models/cafet
                 @if (noConfirmaronFiltrados().length === 0) {
                   <div class="col-span-full p-6 text-center text-slate-500 text-xs font-semibold bg-white rounded-xl border border-dashed border-slate-200">Excelente! Todos los estudiantes han confirmado.</div>
                 }
+              </div>
               </div>
             </div>
           }
@@ -670,6 +691,40 @@ export class Confirmaciones {
 
   readonly totalConfirmados = computed(() => {
     return this.confirmadosValidos().length + this.confirmadosExtranos().length;
+  });
+
+  readonly totalConfirmadosPorSubsidio = computed(() => {
+    const tipo = this.filtroSubsidio();
+    const validos = tipo === 'Todos' ? this.confirmadosValidos() : this.confirmadosValidos().filter(c => c.tipo_comida_nombre === tipo);
+    const extranos = tipo === 'Todos' ? this.confirmadosExtranos() : this.confirmadosExtranos().filter(c => c.tipo_comida_nombre === tipo);
+    return validos.length + extranos.length;
+  });
+
+  readonly extranosPorSubsidio = computed(() => {
+    const tipo = this.filtroSubsidio();
+    return tipo === 'Todos' ? this.confirmadosExtranos().length : this.confirmadosExtranos().filter(c => c.tipo_comida_nombre === tipo).length;
+  });
+
+  readonly noConfirmaronPorSubsidio = computed(() => {
+    return this.noConfirmaron().length;
+  });
+
+  readonly entregadasPorSubsidio = computed(() => {
+    const tipo = this.filtroSubsidio();
+    const confs = this.cafeteriaService.confirmaciones();
+    const ents = this.cafeteriaService.activeEntregas();
+    const confCodes = tipo === 'Todos'
+      ? new Set(confs.map(c => c.codigo_id))
+      : new Set(confs.filter(c => c.tipo_comida_nombre === tipo).map(c => c.codigo_id));
+    return ents.filter(e => confCodes.has(e.codigo_id)).length;
+  });
+
+  readonly pendientesPorSubsidio = computed(() => {
+    const tipo = this.filtroSubsidio();
+    const confs = this.cafeteriaService.confirmaciones().filter(c => c.es_beneficiario_valido && !c.motivo_alerta);
+    const filtered = tipo === 'Todos' ? confs : confs.filter(c => c.tipo_comida_nombre === tipo);
+    const entregados = this.entregadasPorSubsidio();
+    return Math.max(0, filtered.length - entregados);
   });
 
   readonly confirmadosExtranos = computed(() => {
