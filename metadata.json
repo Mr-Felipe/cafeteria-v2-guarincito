@@ -1,0 +1,7 @@
+{
+  "name": "Cafetería Guarincito",
+  "description": "Sistema de gestión y entrega rápida de raciones de cafetería universitaria con soporte offline-first y sincronización Supabase.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+
