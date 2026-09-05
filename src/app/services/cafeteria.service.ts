@@ -179,6 +179,7 @@ export class CafeteriaService {
   }
 
   private initRealtimeSubscription(): void {
+    if (typeof window === 'undefined') return;
     const client = this.supabase.getSupabaseClient();
     if (!client) return;
 
