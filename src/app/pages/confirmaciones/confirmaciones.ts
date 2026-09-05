@@ -219,7 +219,7 @@ import { Beneficiario, Confirmacion, getVisualCarrera } from '../../models/cafet
                 </div>
               </div>
               <div class="p-4 sm:p-5 space-y-4">
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
                   @for (c of confirmadosValidosFiltrados(); track c.id || c.codigo_id) {
                   @let visual = getVisual(c.carrera_nombre || c.carrera_real || c.carrera_en_form || '');
                   <div class="bg-white border border-slate-200 rounded-xl p-4 flex flex-col justify-between hover:border-slate-300 hover:shadow-sm transition-all">
@@ -304,7 +304,7 @@ import { Beneficiario, Confirmacion, getVisualCarrera } from '../../models/cafet
                 </div>
               </div>
               <div class="p-4 sm:p-5 space-y-4">
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
                   @for (c of confirmadosExtranosFiltrados(); track c.id || c.codigo_id) {
                   @let visual = getVisual(c.carrera_en_form || c.carrera_real || c.carrera_nombre || '');
                   <div class="bg-white border border-amber-200 rounded-xl p-4 flex flex-col justify-between hover:shadow-sm transition-all">
@@ -416,7 +416,7 @@ import { Beneficiario, Confirmacion, getVisualCarrera } from '../../models/cafet
                 </div>
               </div>
               <div class="p-4 sm:p-5 space-y-4">
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
                 @for (b of noConfirmaronFiltrados(); track b.codigo_id) {
                   @let visual = getVisual(b.carrera_nombre || '');
                   @let yaEntregado = cafeteriaService.entregas().some(e => e.codigo_id === b.codigo_id && e.estado === 'ENTREGADO' && e.fecha === cafeteriaService.selectedDate());
