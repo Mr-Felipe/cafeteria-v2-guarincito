@@ -100,6 +100,10 @@ export class SupabaseService {
     return this.isConfigured && this.client !== null;
   }
 
+  getSupabaseClient() {
+    return this.client;
+  }
+
   async testConnection(): Promise<{ success: boolean; latencyMs: number; error?: string }> {
     if (!this.client) {
       return { success: false, latencyMs: 0, error: 'Cliente de Supabase no configurado' };

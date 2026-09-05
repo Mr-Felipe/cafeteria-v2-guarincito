@@ -139,6 +139,7 @@ export class CafeteriaService {
   constructor() {
     this.initNetworkListeners();
     this.initData();
+    this.initRealtimeSubscription();
     effect(() => {
       const fecha = this.selectedDate();
       this.loadFechaData(fecha);
@@ -174,6 +175,25 @@ export class CafeteriaService {
         this.notify('alert', 'Modo Offline Activado', 'Operando sin conexión. Las entregas se guardarán localmente y se sincronizarán al volver.');
       });
     }
+  }
+
+  private initRealtimeSubscription(): void {
+    const client = this.supabase.getSupabaseClient();
+    if (!client) return;
+
+    const channel = client
+      .channel('confirmaciones-changes')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'confirmaciones' }, (payload: any) => {
+        const newConf = payload.new as Confirmacion;
+        const fechaHoy = this.selectedDate();
+        if (newConf.fecha && newConf.fecha.startsWith(fechaHoy.split('-').reverse().join('/').substring(0, 10))) {
+          this.confirmaciones.update(list => {
+            if (list.some(c => c.id === newConf.id)) return list;
+            return [...list, newConf];
+          });
+        }
+      })
+      .subscribe();
   }
 
   async initData(): Promise<void> {
