@@ -123,7 +123,7 @@ interface WebConfirmacion {
                           class="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform"></div>
                       </button>
                     </div>
-                    <div class="flex items-center gap-3">
+                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
                       <div class="flex-1">
                         <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Inicio</label>
                         <input type="time" [ngModel]="almuerzoConfig()?.hora_inicio"
@@ -177,7 +177,7 @@ interface WebConfirmacion {
                           class="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform"></div>
                       </button>
                     </div>
-                    <div class="flex items-center gap-3">
+                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
                       <div class="flex-1">
                         <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Inicio</label>
                         <input type="time" [ngModel]="refrigerioConfig()?.hora_inicio"
@@ -231,7 +231,7 @@ interface WebConfirmacion {
                           class="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform"></div>
                       </button>
                     </div>
-                    <div class="flex items-center gap-3">
+                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
                       <div class="flex-1">
                         <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Inicio</label>
                         <input type="time" [ngModel]="adeaConfig()?.hora_inicio"
@@ -288,7 +288,7 @@ interface WebConfirmacion {
                     <!-- Sabado Schedule -->
                     <div class="p-2 bg-violet-50 rounded-xl">
                       <p class="text-[10px] font-bold uppercase tracking-wider text-violet-600 mb-2">Sabado - Refrigerio</p>
-                      <div class="flex items-center gap-3">
+                      <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
                         <div class="flex-1">
                           <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Inicio</label>
                           <input type="time" [ngModel]="findeConfig()?.hora_inicio"
@@ -306,7 +306,7 @@ interface WebConfirmacion {
                     <!-- Domingo Schedule -->
                     <div class="p-2 bg-indigo-50 rounded-xl">
                       <p class="text-[10px] font-bold uppercase tracking-wider text-indigo-600 mb-2">Domingo - Desayuno</p>
-                      <div class="flex items-center gap-3">
+                      <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
                         <div class="flex-1">
                           <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Inicio</label>
                           <input type="time" [ngModel]="desayunoConfig()?.hora_inicio"
