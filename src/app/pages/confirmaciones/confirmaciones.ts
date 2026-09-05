@@ -187,8 +187,8 @@ import { Beneficiario, Confirmacion, getVisualCarrera } from '../../models/cafet
       <div class="space-y-4">
 
         <!-- 1: CONFIRMADOS VALIDOS -->
-        <div class="bg-slate-50 border border-slate-200 rounded-xl shadow-sm overflow-hidden">
-          <button type="button" class="w-full text-left p-4 sm:p-5 hover:bg-slate-100/70 transition-colors flex items-center justify-between cursor-pointer border-b border-slate-200" (click)="toggleAccordionValidos()">
+        <div class="bg-slate-50 border border-slate-200 rounded-xl shadow-sm overflow-hidden max-h-[calc(100vh-4rem)] flex flex-col">
+          <button type="button" class="w-full text-left p-4 sm:p-5 hover:bg-slate-100/70 transition-colors flex items-center justify-between cursor-pointer border-b border-slate-200 shrink-0 sticky top-16 z-20 bg-slate-50" (click)="toggleAccordionValidos()">
             <div class="flex items-center gap-3">
               <div class="w-8 h-8 rounded-lg bg-green-100 text-green-700 flex items-center justify-center shrink-0"><mat-icon [style.fontSize.px]="24">verified</mat-icon></div>
               <div>
@@ -202,7 +202,7 @@ import { Beneficiario, Confirmacion, getVisualCarrera } from '../../models/cafet
             <mat-icon class="text-slate-400 transition-transform duration-200" [class.rotate-180]="accordionValidosOpen()">expand_more</mat-icon>
           </button>
           @if (accordionValidosOpen()) {
-            <div class="p-4 sm:p-5 space-y-4">
+            <div class="p-4 sm:p-5 space-y-4 flex-1 overflow-y-auto min-h-0">
               <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3">
                 <div class="relative flex-1 max-w-md">
                   <mat-icon class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</mat-icon>
@@ -265,8 +265,8 @@ import { Beneficiario, Confirmacion, getVisualCarrera } from '../../models/cafet
         </div>
 
         <!-- 2: EXTRANOS -->
-        <div class="bg-amber-50/30 border border-amber-200 rounded-xl shadow-sm overflow-hidden">
-          <button type="button" class="w-full text-left p-4 sm:p-5 hover:bg-amber-50/50 transition-colors flex items-center justify-between cursor-pointer border-b border-amber-200" (click)="toggleAccordionExtranos()">
+        <div class="bg-amber-50/30 border border-amber-200 rounded-xl shadow-sm overflow-hidden max-h-[calc(100vh-4rem)] flex flex-col">
+          <button type="button" class="w-full text-left p-4 sm:p-5 hover:bg-amber-50/50 transition-colors flex items-center justify-between cursor-pointer border-b border-amber-200 shrink-0 sticky top-16 z-20 bg-amber-50" (click)="toggleAccordionExtranos()">
             <div class="flex items-center gap-3">
               <div class="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center shrink-0"><mat-icon [style.fontSize.px]="24">warning_amber</mat-icon></div>
               <div>
@@ -280,7 +280,7 @@ import { Beneficiario, Confirmacion, getVisualCarrera } from '../../models/cafet
             <mat-icon class="text-slate-400 transition-transform duration-200" [class.rotate-180]="accordionExtranosOpen()">expand_more</mat-icon>
           </button>
           @if (accordionExtranosOpen()) {
-            <div class="p-4 sm:p-5 space-y-4">
+            <div class="p-4 sm:p-5 space-y-4 flex-1 overflow-y-auto min-h-0">
               <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3">
                 <div class="relative flex-1 max-w-md">
                   <mat-icon class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</mat-icon>
@@ -370,8 +370,8 @@ import { Beneficiario, Confirmacion, getVisualCarrera } from '../../models/cafet
         </div>
 
         <!-- 3: NO CONFIRMARON -->
-        <div class="bg-slate-50 border border-slate-200 rounded-xl shadow-sm overflow-hidden">
-          <button type="button" class="w-full text-left p-4 sm:p-5 hover:bg-slate-100/70 transition-colors flex items-center justify-between cursor-pointer border-b border-slate-200" (click)="toggleAccordionNoConfirmaron()">
+        <div class="bg-slate-50 border border-slate-200 rounded-xl shadow-sm overflow-hidden max-h-[calc(100vh-4rem)] flex flex-col">
+          <button type="button" class="w-full text-left p-4 sm:p-5 hover:bg-slate-100/70 transition-colors flex items-center justify-between cursor-pointer border-b border-slate-200 shrink-0 sticky top-16 z-20 bg-slate-50" (click)="toggleAccordionNoConfirmaron()">
             <div class="flex items-center gap-3">
               <div class="w-8 h-8 rounded-lg bg-slate-200 text-slate-700 flex items-center justify-center shrink-0"><mat-icon [style.fontSize.px]="24">person_off</mat-icon></div>
               <div>
@@ -385,7 +385,7 @@ import { Beneficiario, Confirmacion, getVisualCarrera } from '../../models/cafet
             <mat-icon class="text-slate-400 transition-transform duration-200" [class.rotate-180]="accordionNoConfirmaronOpen()">expand_more</mat-icon>
           </button>
           @if (accordionNoConfirmaronOpen()) {
-            <div class="p-4 sm:p-5 space-y-4">
+            <div class="p-4 sm:p-5 space-y-4 flex-1 overflow-y-auto min-h-0">
               <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3">
                 <div class="relative flex-1 max-w-md">
                   <mat-icon class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</mat-icon>
@@ -769,9 +769,9 @@ export class Confirmaciones {
     return list;
   });
 
-  toggleAccordionValidos(): void { this.accordionValidosOpen.update(v => !v); }
-  toggleAccordionExtranos(): void { this.accordionExtranosOpen.update(v => !v); }
-  toggleAccordionNoConfirmaron(): void { this.accordionNoConfirmaronOpen.update(v => !v); }
+  toggleAccordionValidos(): void { this.accordionValidosOpen.update(v => { if (!v) { this.accordionExtranosOpen.set(false); this.accordionNoConfirmaronOpen.set(false); } return !v; }); }
+  toggleAccordionExtranos(): void { this.accordionExtranosOpen.update(v => { if (!v) { this.accordionValidosOpen.set(false); this.accordionNoConfirmaronOpen.set(false); } return !v; }); }
+  toggleAccordionNoConfirmaron(): void { this.accordionNoConfirmaronOpen.update(v => { if (!v) { this.accordionValidosOpen.set(false); this.accordionExtranosOpen.set(false); } return !v; }); }
 
   getVisual(carrera: string) {
     return getVisualCarrera(carrera);
