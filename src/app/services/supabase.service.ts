@@ -439,7 +439,7 @@ export class SupabaseService {
         .select('*')
         .eq('origen', 'WEB_FORM')
         .eq('formulario_tipo', formularioTipo)
-        .order('id', { ascending: false });
+        .order('id', { ascending: true });
 
       if (error) throw error;
       return data || [];

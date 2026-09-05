@@ -665,7 +665,7 @@ export class Confirmaciones {
         latestByCode.set(c.codigo_id, c);
       }
     }
-    return Array.from(latestByCode.values());
+    return Array.from(latestByCode.values()).sort((a, b) => (a.id ?? 0) - (b.id ?? 0));
   });
 
   readonly totalConfirmados = computed(() => {
@@ -675,7 +675,7 @@ export class Confirmaciones {
   readonly confirmadosExtranos = computed(() => {
     return this.cafeteriaService.confirmaciones().filter(c =>
       (!c.es_beneficiario_valido || c.motivo_alerta)
-    );
+    ).sort((a, b) => (a.id ?? 0) - (b.id ?? 0));
   });
 
   readonly noConfirmaron = computed(() => {
