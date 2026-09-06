@@ -441,11 +441,19 @@ export class SupabaseService {
     if (!this.client) return [];
     try {
       const { data, error } = await this.client.from('carrera_horario')
-        .select('*, carreras(id, nombre)')
+        .select('*')
         .eq('form_tipo', formTipo)
         .order('carrera_id');
       if (error) throw error;
-      return data || [];
+
+      const carrerasIds = [...new Set((data || []).map((h: any) => h.carrera_id))];
+      let carrerasMap: Record<number, string> = {};
+      if (carrerasIds.length > 0) {
+        const { data: carreras } = await this.client.from('carreras').select('id, nombre').in('id', carrerasIds);
+        (carreras || []).forEach((c: any) => carrerasMap[c.id] = c.nombre);
+      }
+
+      return (data || []).map((h: any) => ({ ...h, carreras: { nombre: carrerasMap[h.carrera_id] || 'ID: ' + h.carrera_id } }));
     } catch (err) {
       console.warn('[Supabase] fetchCarreraHorarios falló:', err);
       return [];
