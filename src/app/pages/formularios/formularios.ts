@@ -198,72 +198,29 @@ interface WebConfirmacion {
                       Horarios por carrera
                     </button>
                     @if (expandedForm() === 'refrigerio') {
-                      <div class="space-y-3">
-                        <!-- Predeterminado -->
-                        <div class="border border-slate-200 rounded-xl overflow-hidden">
-                          <div class="bg-slate-50 px-3 py-2 border-b border-slate-200">
-                            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Predeterminado</span>
-                          </div>
-                          @for (h of carrerasHorariosDefault(); track h.id) {
-                            <div class="flex items-center gap-2 px-3 py-2 border-b border-slate-100 last:border-0">
-                              <span class="text-sm text-slate-700 flex-1 truncate">{{ h.carreras?.nombre || 'ID: ' + h.carrera_id }}</span>
-                              <input type="time" [value]="h.hora_cierre"
-                                (change)="updateHorarioCierre(h.id, $any($event.target).value)"
-                                class="w-20 py-1 px-2 text-xs rounded-lg bg-slate-50 border border-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono text-slate-700">
-                              <button (click)="toggleHorarioActivo(h.id, !h.activo)"
-                                [class]="h.activo ? 'bg-blue-500' : 'bg-slate-300'"
-                                class="relative w-8 h-4 rounded-full transition-colors cursor-pointer flex-shrink-0">
-                                <div [class]="h.activo ? 'translate-x-4' : 'translate-x-0'"
-                                  class="absolute top-0.5 left-0.5 w-3 h-3 bg-white rounded-full shadow transition-transform"></div>
-                              </button>
-                            </div>
-                          }
-                          @if (carrerasHorariosDefault().length === 0) {
-                            <div class="px-3 py-4 text-center text-xs text-slate-400">No hay carreras predeterminadas</div>
-                          }
+                      <div class="border border-slate-200 rounded-xl overflow-hidden">
+                        <div class="bg-slate-50 px-3 py-2 border-b border-slate-200 flex">
+                          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 flex-1">Carrera</span>
+                          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 w-20 text-center">Cierre</span>
+                          <span class="w-8"></span>
                         </div>
-                        <!-- Personalizado -->
-                        <div class="border border-dashed border-slate-300 rounded-xl overflow-hidden">
-                          <div class="bg-slate-50 px-3 py-2 border-b border-slate-200">
-                            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Personalizado</span>
+                        @for (h of carrerasHorarios(); track h.id) {
+                          <div class="flex items-center gap-2 px-3 py-2 border-b border-slate-100 last:border-0">
+                            <span class="text-sm text-slate-700 flex-1 truncate">{{ h.carreras?.nombre || 'ID: ' + h.carrera_id }}</span>
+                            <input type="time" [value]="h.hora_cierre"
+                              (change)="updateHorarioCierre(h.id, $any($event.target).value)"
+                              class="w-20 py-1 px-2 text-xs rounded-lg bg-slate-50 border border-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono text-slate-700">
+                            <button (click)="toggleHorarioActivo(h.id, !h.activo)"
+                              [class]="h.activo ? 'bg-blue-500' : 'bg-slate-300'"
+                              class="relative w-8 h-4 rounded-full transition-colors cursor-pointer flex-shrink-0">
+                              <div [class]="h.activo ? 'translate-x-4' : 'translate-x-0'"
+                                class="absolute top-0.5 left-0.5 w-3 h-3 bg-white rounded-full shadow transition-transform"></div>
+                            </button>
                           </div>
-                          @for (h of carrerasHorariosCustom(); track h.id) {
-                            <div class="flex items-center gap-2 px-3 py-2 border-b border-slate-100 last:border-0">
-                              <span class="text-sm text-slate-700 flex-1 truncate">{{ h.carreras?.nombre || 'ID: ' + h.carrera_id }}</span>
-                              <input type="time" [value]="h.hora_cierre"
-                                (change)="updateHorarioCierre(h.id, $any($event.target).value)"
-                                class="w-20 py-1 px-2 text-xs rounded-lg bg-slate-50 border border-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono text-slate-700">
-                              <button (click)="toggleHorarioActivo(h.id, !h.activo)"
-                                [class]="h.activo ? 'bg-blue-500' : 'bg-slate-300'"
-                                class="relative w-8 h-4 rounded-full transition-colors cursor-pointer flex-shrink-0">
-                                <div [class]="h.activo ? 'translate-x-4' : 'translate-x-0'"
-                                  class="absolute top-0.5 left-0.5 w-3 h-3 bg-white rounded-full shadow transition-transform"></div>
-                              </button>
-                              <button (click)="deleteHorarioCarrera(h.id, 'refrigerio')"
-                                class="p-1 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all cursor-pointer">
-                                <mat-icon class="text-[14px]">close</mat-icon>
-                              </button>
-                            </div>
-                          }
-                          @if (carrerasNoAgregadas('refrigerio').length > 0) {
-                            <div class="p-3 space-y-2">
-                              @for (c of carrerasNoAgregadas('refrigerio'); track c.id) {
-                                <div class="flex items-center gap-2">
-                                  <span class="text-sm text-slate-600 flex-1 truncate">{{ c.nombre }}</span>
-                                  <input type="time" [attr.data-carrera]="c.id" value="19:00"
-                                    class="w-20 py-1 px-2 text-xs rounded-lg bg-white border border-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono text-slate-700">
-                                  <button (click)="addHorarioFromCustom('refrigerio', c.id, $event)"
-                                    class="p-1 text-blue-500 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-all cursor-pointer">
-                                    <mat-icon class="text-[16px]">add</mat-icon>
-                                  </button>
-                                </div>
-                              }
-                            </div>
-                          }
-                          @if (carrerasHorariosCustom().length === 0 && carrerasNoAgregadas('refrigerio').length === 0) {
-                            <div class="px-3 py-4 text-center text-xs text-slate-400">No hay carreras personalizadas</div>
-                          }
-                        </div>
+                        }
+                        @if (carrerasHorarios().length === 0) {
+                          <div class="px-3 py-4 text-center text-xs text-slate-400">No hay carreras configuradas para este formulario</div>
+                        }
                       </div>
                     }
                     <div class="flex items-center justify-between p-3 bg-blue-50 rounded-xl">
@@ -694,17 +651,6 @@ export class Formularios implements OnInit {
   readonly carrerasHorarios = signal<any[]>([]);
   readonly carrerasDisponibles = signal<any[]>([]);
   readonly expandedForm = signal<string | null>(null);
-  readonly defaultCarreraIds = signal<Set<number>>(new Set());
-
-  readonly carrerasHorariosDefault = computed(() => {
-    const defaultIds = this.defaultCarreraIds();
-    return this.carrerasHorarios().filter(h => defaultIds.has(h.carrera_id));
-  });
-
-  readonly carrerasHorariosCustom = computed(() => {
-    const defaultIds = this.defaultCarreraIds();
-    return this.carrerasHorarios().filter(h => !defaultIds.has(h.carrera_id));
-  });
   readonly modalConf = signal<{
     existe: boolean;
     estado: 'hoy' | 'otro_dia' | 'no_existe';
@@ -853,15 +799,15 @@ export class Formularios implements OnInit {
 
   async loadCarreraHorarios(formTipo: string) {
     try {
-      const servicioId = formTipo === 'refrigerio' ? 3 : formTipo === 'almuerzo' ? 2 : formTipo === 'almuerzo_adea' ? 2 : 2;
+      const servicioId = formTipo === 'refrigerio' ? 3 : 2;
       const [horarios, servicios] = await Promise.all([
         this.supabase.fetchCarreraHorarios(formTipo),
         this.supabase.fetchCarreraServicio(servicioId)
       ]);
 
-      const defaultIds = new Set(servicios.map((s: any) => s.carrera_id));
-      this.defaultCarreraIds.set(defaultIds);
-      this.carrerasHorarios.set(horarios);
+      const servicioCarreras = new Set(servicios.map((s: any) => s.carrera_id));
+      const filtrados = horarios.filter((h: any) => servicioCarreras.has(h.carrera_id));
+      this.carrerasHorarios.set(filtrados);
     } catch (err) {
       console.error('[Formularios] Error loading horarios:', err);
     }
@@ -887,41 +833,6 @@ export class Formularios implements OnInit {
       console.error('[Formularios] Error toggling horario:', err);
       this.cafeteria.notify('error', 'Error', 'No se pudo actualizar');
     }
-  }
-
-  async addHorarioCarrera(formTipo: string, carreraId: number, horaCierre: string = '19:00') {
-    try {
-      await this.supabase.addCarreraHorario(formTipo, carreraId, horaCierre);
-      await this.loadCarreraHorarios(formTipo);
-      this.cafeteria.notify('success', 'Carrera agregada', `Horario: ${horaCierre}`);
-    } catch (err) {
-      console.error('[Formularios] Error adding horario:', err);
-      this.cafeteria.notify('error', 'Error', 'No se pudo agregar la carrera');
-    }
-  }
-
-  addHorarioFromCustom(formTipo: string, carreraId: number, event: Event) {
-    const btn = event.target as HTMLElement;
-    const container = btn.closest('.flex') as HTMLElement;
-    const input = container?.querySelector('input[type="time"]') as HTMLInputElement;
-    const horaCierre = input?.value || '19:00';
-    this.addHorarioCarrera(formTipo, carreraId, horaCierre);
-  }
-
-  async deleteHorarioCarrera(horarioId: number, formTipo: string) {
-    try {
-      await this.supabase.deleteCarreraHorario(horarioId);
-      await this.loadCarreraHorarios(formTipo);
-      this.cafeteria.notify('success', 'Carrera eliminada', 'Horario eliminado');
-    } catch (err) {
-      console.error('[Formularios] Error deleting horario:', err);
-      this.cafeteria.notify('error', 'Error', 'No se pudo eliminar');
-    }
-  }
-
-  carrerasNoAgregadas(formTipo: string): any[] {
-    const agregadas = this.carrerasHorarios().map(h => h.carrera_id);
-    return this.carrerasDisponibles().filter(c => !agregadas.includes(c.id));
   }
 
   extractTime(fecha: string): string {
