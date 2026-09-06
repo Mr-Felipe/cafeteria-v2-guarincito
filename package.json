@@ -6,6 +6,7 @@
     "start": "ng serve",
     "dev": "cross-env ng serve --port=3000 --host=0.0.0.0 --allowed-hosts=true ${DISABLE_HMR:+--live-reload=false}",
     "build": "ng build",
+    "build:prod": "ng build --configuration=production && cp dist/app/browser/index.csr.html dist/app/browser/index.html",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "lint": "ng lint",
