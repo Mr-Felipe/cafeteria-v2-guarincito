@@ -452,6 +452,21 @@ export class SupabaseService {
     }
   }
 
+  async fetchCarreraServicio(servicioId: number): Promise<any[]> {
+    if (!this.client) return [];
+    try {
+      const { data, error } = await this.client.from('carrera_servicio')
+        .select('carrera_id')
+        .eq('servicio_id', servicioId)
+        .eq('activo', true);
+      if (error) throw error;
+      return data || [];
+    } catch (err) {
+      console.warn('[Supabase] fetchCarreraServicio falló:', err);
+      return [];
+    }
+  }
+
   async updateCarreraHorario(id: number, updates: { hora_cierre?: string; activo?: boolean }): Promise<void> {
     if (!this.client) return;
     try {
