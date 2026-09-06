@@ -199,16 +199,17 @@ interface WebConfirmacion {
                     </button>
                     @if (expandedForm() === 'refrigerio') {
                       <div class="border border-slate-200 rounded-xl overflow-hidden">
-                        <div class="bg-slate-50 px-3 py-2 border-b border-slate-200">
-                          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Carrera</span>
-                          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 ml-auto">Cierre</span>
+                        <div class="bg-slate-50 px-3 py-2 border-b border-slate-200 flex">
+                          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 flex-1">Carrera</span>
+                          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 w-20 text-center">Cierre</span>
+                          <span class="w-8"></span>
                         </div>
                         @for (h of carrerasHorarios(); track h.id) {
                           <div class="flex items-center gap-2 px-3 py-2 border-b border-slate-100 last:border-0">
                             <span class="text-sm text-slate-700 flex-1 truncate">{{ h.carreras?.nombre || 'ID: ' + h.carrera_id }}</span>
                             <input type="time" [value]="h.hora_cierre"
                               (change)="updateHorarioCierre(h.id, $any($event.target).value)"
-                              class="w-24 py-1 px-2 text-xs rounded-lg bg-slate-50 border border-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono text-slate-700">
+                              class="w-20 py-1 px-2 text-xs rounded-lg bg-slate-50 border border-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono text-slate-700">
                             <button (click)="toggleHorarioActivo(h.id, !h.activo)"
                               [class]="h.activo ? 'bg-blue-500' : 'bg-slate-300'"
                               class="relative w-8 h-4 rounded-full transition-colors cursor-pointer flex-shrink-0">
@@ -221,20 +222,30 @@ interface WebConfirmacion {
                             </button>
                           </div>
                         }
-                        @if (carrerasNoAgregadas('refrigerio').length > 0) {
-                          <div class="px-3 py-2 bg-slate-50">
-                            <select #addCarreraRef class="w-full text-sm py-1.5 px-2 rounded-lg border border-slate-200 bg-white text-slate-700">
-                              @for (c of carrerasNoAgregadas('refrigerio'); track c.id) {
-                                <option [value]="c.id">{{ c.nombre }}</option>
-                              }
-                            </select>
-                            <button (click)="addHorarioCarrera('refrigerio', +addCarreraRef.value)"
-                              class="mt-2 w-full py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-all cursor-pointer">
-                              + Agregar carrera
-                            </button>
-                          </div>
+                        @if (carrerasHorarios().length === 0) {
+                          <div class="px-3 py-4 text-center text-xs text-slate-400">No hay horarios configurados</div>
                         }
                       </div>
+                      @if (carrerasNoAgregadas('refrigerio').length > 0) {
+                        <div class="mt-3 border border-dashed border-slate-300 rounded-xl overflow-hidden">
+                          <div class="px-3 py-2 bg-slate-50 border-b border-slate-200">
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Horario personalizado</span>
+                          </div>
+                          <div class="p-3 space-y-2">
+                            @for (c of carrerasNoAgregadas('refrigerio'); track c.id) {
+                              <div class="flex items-center gap-2">
+                                <span class="text-sm text-slate-600 flex-1 truncate">{{ c.nombre }}</span>
+                                <input type="time" [attr.data-carrera]="c.id" value="19:00"
+                                  class="w-20 py-1 px-2 text-xs rounded-lg bg-white border border-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono text-slate-700">
+                                <button (click)="addHorarioFromCustom('refrigerio', c.id, $event)"
+                                  class="p-1 text-blue-500 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-all cursor-pointer">
+                                  <mat-icon class="text-[16px]">add</mat-icon>
+                                </button>
+                              </div>
+                            }
+                          </div>
+                        </div>
+                      }
                     }
                     <div class="flex items-center justify-between p-3 bg-blue-50 rounded-xl">
                       <span class="text-sm text-blue-700">Respuestas hoy</span>
@@ -841,15 +852,23 @@ export class Formularios implements OnInit {
     }
   }
 
-  async addHorarioCarrera(formTipo: string, carreraId: number) {
+  async addHorarioCarrera(formTipo: string, carreraId: number, horaCierre: string = '19:00') {
     try {
-      await this.supabase.addCarreraHorario(formTipo, carreraId, '19:00');
+      await this.supabase.addCarreraHorario(formTipo, carreraId, horaCierre);
       await this.loadCarreraHorarios(formTipo);
-      this.cafeteria.notify('success', 'Carrera agregada', 'Horario por defecto: 19:00');
+      this.cafeteria.notify('success', 'Carrera agregada', `Horario: ${horaCierre}`);
     } catch (err) {
       console.error('[Formularios] Error adding horario:', err);
       this.cafeteria.notify('error', 'Error', 'No se pudo agregar la carrera');
     }
+  }
+
+  addHorarioFromCustom(formTipo: string, carreraId: number, event: Event) {
+    const btn = event.target as HTMLElement;
+    const container = btn.closest('.flex') as HTMLElement;
+    const input = container?.querySelector('input[type="time"]') as HTMLInputElement;
+    const horaCierre = input?.value || '19:00';
+    this.addHorarioCarrera(formTipo, carreraId, horaCierre);
   }
 
   async deleteHorarioCarrera(horarioId: number, formTipo: string) {
