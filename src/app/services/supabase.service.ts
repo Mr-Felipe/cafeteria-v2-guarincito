@@ -437,6 +437,59 @@ export class SupabaseService {
     }
   }
 
+  async fetchCarreraHorarios(formTipo: string): Promise<any[]> {
+    if (!this.client) return [];
+    try {
+      const { data, error } = await this.client.from('carrera_horario')
+        .select('*, carreras(id, nombre)')
+        .eq('form_tipo', formTipo)
+        .order('carrera_id');
+      if (error) throw error;
+      return data || [];
+    } catch (err) {
+      console.warn('[Supabase] fetchCarreraHorarios falló:', err);
+      return [];
+    }
+  }
+
+  async updateCarreraHorario(id: number, updates: { hora_cierre?: string; activo?: boolean }): Promise<void> {
+    if (!this.client) return;
+    try {
+      const { error } = await this.client.from('carrera_horario').update(updates).eq('id', id);
+      if (error) throw error;
+    } catch (err) {
+      console.warn('[Supabase] updateCarreraHorario falló:', err);
+      throw err;
+    }
+  }
+
+  async addCarreraHorario(formTipo: string, carreraId: number, horaCierre: string): Promise<void> {
+    if (!this.client) return;
+    try {
+      const { error } = await this.client.from('carrera_horario').insert({
+        form_tipo: formTipo,
+        carrera_id: carreraId,
+        hora_cierre: horaCierre,
+        activo: true
+      });
+      if (error) throw error;
+    } catch (err) {
+      console.warn('[Supabase] addCarreraHorario falló:', err);
+      throw err;
+    }
+  }
+
+  async deleteCarreraHorario(id: number): Promise<void> {
+    if (!this.client) return;
+    try {
+      const { error } = await this.client.from('carrera_horario').delete().eq('id', id);
+      if (error) throw error;
+    } catch (err) {
+      console.warn('[Supabase] deleteCarreraHorario falló:', err);
+      throw err;
+    }
+  }
+
   async fetchWebConfirmaciones(formularioTipo: string): Promise<any[]> {
     if (!this.client) return [];
     try {

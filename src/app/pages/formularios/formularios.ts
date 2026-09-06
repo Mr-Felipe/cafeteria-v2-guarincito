@@ -192,14 +192,50 @@ interface WebConfirmacion {
                           class="w-full py-2 px-3 text-sm rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-slate-700">
                       </div>
                     </div>
-                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
-                      <div class="flex-1">
-                        <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Cierre Trabajo Social</label>
-                        <input type="time" [ngModel]="refrigerioConfig()?.hora_cierre_trabajo_social"
-                          (ngModelChange)="updateTime('refrigerio', 'hora_cierre_trabajo_social', $event)"
-                          class="w-full py-2 px-3 text-sm rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-slate-700">
+                    <button (click)="toggleExpandForm('refrigerio')"
+                      class="flex items-center gap-2 w-full py-2 px-3 text-sm text-slate-600 hover:bg-slate-50 rounded-xl transition-all cursor-pointer">
+                      <mat-icon class="text-[18px]" [class.rotate-180]="expandedForm() === 'refrigerio'">expand_more</mat-icon>
+                      Horarios por carrera
+                    </button>
+                    @if (expandedForm() === 'refrigerio') {
+                      <div class="border border-slate-200 rounded-xl overflow-hidden">
+                        <div class="bg-slate-50 px-3 py-2 border-b border-slate-200">
+                          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Carrera</span>
+                          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 ml-auto">Cierre</span>
+                        </div>
+                        @for (h of carrerasHorarios(); track h.id) {
+                          <div class="flex items-center gap-2 px-3 py-2 border-b border-slate-100 last:border-0">
+                            <span class="text-sm text-slate-700 flex-1 truncate">{{ h.carreras?.nombre || 'ID: ' + h.carrera_id }}</span>
+                            <input type="time" [value]="h.hora_cierre"
+                              (change)="updateHorarioCierre(h.id, $any($event.target).value)"
+                              class="w-24 py-1 px-2 text-xs rounded-lg bg-slate-50 border border-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono text-slate-700">
+                            <button (click)="toggleHorarioActivo(h.id, !h.activo)"
+                              [class]="h.activo ? 'bg-blue-500' : 'bg-slate-300'"
+                              class="relative w-8 h-4 rounded-full transition-colors cursor-pointer flex-shrink-0">
+                              <div [class]="h.activo ? 'translate-x-4' : 'translate-x-0'"
+                                class="absolute top-0.5 left-0.5 w-3 h-3 bg-white rounded-full shadow transition-transform"></div>
+                            </button>
+                            <button (click)="deleteHorarioCarrera(h.id, 'refrigerio')"
+                              class="p-1 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all cursor-pointer">
+                              <mat-icon class="text-[14px]">close</mat-icon>
+                            </button>
+                          </div>
+                        }
+                        @if (carrerasNoAgregadas('refrigerio').length > 0) {
+                          <div class="px-3 py-2 bg-slate-50">
+                            <select #addCarreraRef class="w-full text-sm py-1.5 px-2 rounded-lg border border-slate-200 bg-white text-slate-700">
+                              @for (c of carrerasNoAgregadas('refrigerio'); track c.id) {
+                                <option [value]="c.id">{{ c.nombre }}</option>
+                              }
+                            </select>
+                            <button (click)="addHorarioCarrera('refrigerio', +addCarreraRef.value)"
+                              class="mt-2 w-full py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-all cursor-pointer">
+                              + Agregar carrera
+                            </button>
+                          </div>
+                        }
                       </div>
-                    </div>
+                    }
                     <div class="flex items-center justify-between p-3 bg-blue-50 rounded-xl">
                       <span class="text-sm text-blue-700">Respuestas hoy</span>
                       <span class="text-lg font-bold text-blue-800">{{ refrigerioCount() }}</span>
@@ -625,6 +661,9 @@ export class Formularios implements OnInit {
   readonly filtroConf = signal('');
   readonly filtroFecha = signal(this.getTodayString());
   readonly highlightConf = signal<number | null>(null);
+  readonly carrerasHorarios = signal<any[]>([]);
+  readonly carrerasDisponibles = signal<any[]>([]);
+  readonly expandedForm = signal<string | null>(null);
   readonly modalConf = signal<{
     existe: boolean;
     estado: 'hoy' | 'otro_dia' | 'no_existe';
@@ -694,17 +733,19 @@ export class Formularios implements OnInit {
   async refreshAll() {
     this.loading.set(true);
     try {
-      const [configData, respuestasData] = await Promise.all([
+      const [configData, respuestasData, carrerasData] = await Promise.all([
         this.supabase.fetchFormConfig(),
         Promise.all([
           this.supabase.fetchWebConfirmaciones('almuerzo'),
           this.supabase.fetchWebConfirmaciones('refrigerio'),
           this.supabase.fetchWebConfirmaciones('adea'),
           this.supabase.fetchWebConfirmaciones('fin_de_semana')
-        ]).then(([a, r, ad, fs]) => [...a, ...r, ...ad, ...fs])
+        ]).then(([a, r, ad, fs]) => [...a, ...r, ...ad, ...fs]),
+        this.supabase.fetchCarreras()
       ]);
       this.config.set(configData);
       this.cafeteria.webConfirmaciones.set(respuestasData);
+      this.carrerasDisponibles.set(carrerasData);
     } catch (err) {
       console.error('[Formularios] Error loading data:', err);
     } finally {
@@ -744,7 +785,7 @@ export class Formularios implements OnInit {
     }
   }
 
-  async updateTime(tipo: string, field: 'hora_inicio' | 'hora_fin', value: string) {
+  async updateTime(tipo: string, field: string, value: string) {
     const cfg = this.config().find(c => c.tipo === tipo);
     if (!cfg) return;
     try {
@@ -757,6 +798,74 @@ export class Formularios implements OnInit {
       console.error('[Formularios] Error updating time:', err);
       this.cafeteria.notify('error', 'Error', 'No se pudo actualizar el horario');
     }
+  }
+
+  toggleExpandForm(formTipo: string) {
+    if (this.expandedForm() === formTipo) {
+      this.expandedForm.set(null);
+      this.carrerasHorarios.set([]);
+    } else {
+      this.expandedForm.set(formTipo);
+      this.loadCarreraHorarios(formTipo);
+    }
+  }
+
+  async loadCarreraHorarios(formTipo: string) {
+    try {
+      const data = await this.supabase.fetchCarreraHorarios(formTipo);
+      this.carrerasHorarios.set(data);
+    } catch (err) {
+      console.error('[Formularios] Error loading horarios:', err);
+    }
+  }
+
+  async updateHorarioCierre(horarioId: number, horaCierre: string) {
+    try {
+      await this.supabase.updateCarreraHorario(horarioId, { hora_cierre: horaCierre });
+      this.carrerasHorarios.update(hs => hs.map(h => h.id === horarioId ? { ...h, hora_cierre: horaCierre } : h));
+      this.cafeteria.notify('success', 'Horario actualizado', 'Hora de cierre actualizada');
+    } catch (err) {
+      console.error('[Formularios] Error updating horario:', err);
+      this.cafeteria.notify('error', 'Error', 'No se pudo actualizar el horario');
+    }
+  }
+
+  async toggleHorarioActivo(horarioId: number, activo: boolean) {
+    try {
+      await this.supabase.updateCarreraHorario(horarioId, { activo });
+      this.carrerasHorarios.update(hs => hs.map(h => h.id === horarioId ? { ...h, activo } : h));
+      this.cafeteria.notify('success', activo ? 'Carrera activada' : 'Carrera desactivada', 'Configuracion actualizada');
+    } catch (err) {
+      console.error('[Formularios] Error toggling horario:', err);
+      this.cafeteria.notify('error', 'Error', 'No se pudo actualizar');
+    }
+  }
+
+  async addHorarioCarrera(formTipo: string, carreraId: number) {
+    try {
+      await this.supabase.addCarreraHorario(formTipo, carreraId, '19:00');
+      await this.loadCarreraHorarios(formTipo);
+      this.cafeteria.notify('success', 'Carrera agregada', 'Horario por defecto: 19:00');
+    } catch (err) {
+      console.error('[Formularios] Error adding horario:', err);
+      this.cafeteria.notify('error', 'Error', 'No se pudo agregar la carrera');
+    }
+  }
+
+  async deleteHorarioCarrera(horarioId: number, formTipo: string) {
+    try {
+      await this.supabase.deleteCarreraHorario(horarioId);
+      await this.loadCarreraHorarios(formTipo);
+      this.cafeteria.notify('success', 'Carrera eliminada', 'Horario eliminado');
+    } catch (err) {
+      console.error('[Formularios] Error deleting horario:', err);
+      this.cafeteria.notify('error', 'Error', 'No se pudo eliminar');
+    }
+  }
+
+  carrerasNoAgregadas(formTipo: string): any[] {
+    const agregadas = this.carrerasHorarios().map(h => h.carrera_id);
+    return this.carrerasDisponibles().filter(c => !agregadas.includes(c.id));
   }
 
   extractTime(fecha: string): string {
