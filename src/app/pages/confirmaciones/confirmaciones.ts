@@ -319,7 +319,7 @@ import { Beneficiario, Confirmacion, getVisualCarrera } from '../../models/cafet
                           <span class="font-mono text-[10px] text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">{{ getHoraConfirmacion(c.fecha) }}</span>
                         </div>
                       </div>
-                      <h4 class="font-semibold text-sm text-slate-900">{{ c.beneficiario_nombre || 'Sin Nombre' }}</h4>
+                      <h4 class="font-semibold text-sm text-slate-900">{{ c.beneficiario_nombre || c.nombre_en_form || 'Sin Nombre' }}</h4>
                       @if (c.motivo_alerta) {
                         <div class="mt-1.5 p-2 rounded-lg text-[11px] font-medium flex items-start gap-1.5"
                           [class.bg-amber-50]="c.motivo_alerta === 'no_en_padron'"
