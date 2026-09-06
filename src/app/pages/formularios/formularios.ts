@@ -11,6 +11,7 @@ interface FormConfig {
   activo: boolean;
   hora_inicio: string;
   hora_fin: string;
+  hora_cierre_trabajo_social?: string;
 }
 
 interface WebConfirmacion {
@@ -188,6 +189,14 @@ interface WebConfirmacion {
                         <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Fin</label>
                         <input type="time" [ngModel]="refrigerioConfig()?.hora_fin"
                           (ngModelChange)="updateTime('refrigerio', 'hora_fin', $event)"
+                          class="w-full py-2 px-3 text-sm rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-slate-700">
+                      </div>
+                    </div>
+                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
+                      <div class="flex-1">
+                        <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Cierre Trabajo Social</label>
+                        <input type="time" [ngModel]="refrigerioConfig()?.hora_cierre_trabajo_social"
+                          (ngModelChange)="updateTime('refrigerio', 'hora_cierre_trabajo_social', $event)"
                           class="w-full py-2 px-3 text-sm rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-slate-700">
                       </div>
                     </div>
