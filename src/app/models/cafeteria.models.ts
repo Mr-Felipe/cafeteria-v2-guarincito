@@ -223,6 +223,12 @@ export const CARRERA_VISUAL_MAP: Record<string, CarreraVisual> = {
     pillActive: 'bg-cyan-600 text-white', pillCount: 'bg-cyan-700 text-white',
     color: 'bg-cyan-100 text-cyan-800', jornada: 'Fin de semana'
   },
+  'MEDICINA': {
+    nombre: 'MEDICINA', icono: 'local_hospital',
+    badgeClass: 'bg-red-100 text-red-900 border-red-200',
+    pillActive: 'bg-red-600 text-white', pillCount: 'bg-red-700 text-white',
+    color: 'bg-red-100 text-red-800', jornada: 'Diurna'
+  },
   'TECNICO EN PROCESOS': {
     nombre: 'TECNICO EN PROCESOS', icono: 'biotech',
     badgeClass: 'bg-indigo-100 text-indigo-900 border-indigo-200',
