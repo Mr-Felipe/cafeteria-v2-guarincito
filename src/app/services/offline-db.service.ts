@@ -108,9 +108,33 @@ export class OfflineDbService {
     // fecha es "YYYY-MM-DD"; el campo en DB es "DD/MM/YYYY HH:mm:ss"
     const [y, m, d] = fecha.split('-');
     const prefijo = `${d}/${m}/${y}`;
-    return await this.db.confirmaciones
+    const confs = await this.db.confirmaciones
       .filter(c => c.fecha.startsWith(prefijo))
       .toArray();
+    return this.enrichConfirmaciones(confs);
+  }
+
+  private async enrichConfirmaciones(confs: Confirmacion[]): Promise<Confirmacion[]> {
+    if (confs.length === 0) return confs;
+    const allBen = await this.db.beneficiarios.toArray();
+    const allCarreras = await this.db.carreras.toArray();
+    const benByCodigo = new Map<string, typeof allBen[0]>();
+    for (const b of allBen) {
+      benByCodigo.set(String(b.codigo_id), b);
+    }
+    const carreraById = new Map<number, typeof allCarreras[0]>();
+    for (const c of allCarreras) {
+      if (c.id) carreraById.set(c.id, c);
+    }
+    return confs.map(c => {
+      const ben = benByCodigo.get(String(c.codigo_id));
+      const carrera = ben?.carrera_id ? carreraById.get(ben.carrera_id) : null;
+      return {
+        ...c,
+        beneficiario_nombre: ben?.nombre || c.beneficiario_nombre || (c.es_beneficiario_valido ? 'Desconocido' : 'No en padron'),
+        carrera_nombre: carrera?.nombre || c.carrera_real || c.carrera_nombre || 'Sin Carrera'
+      };
+    });
   }
 
   async saveConfirmaciones(confirmaciones: Confirmacion[]): Promise<void> {
