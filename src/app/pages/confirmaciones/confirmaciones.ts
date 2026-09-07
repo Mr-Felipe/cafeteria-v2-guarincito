@@ -729,15 +729,17 @@ export class Confirmaciones {
 
   readonly confirmadosExtranos = computed(() => {
     return this.cafeteriaService.confirmaciones().filter(c =>
-      (!c.es_beneficiario_valido || c.motivo_alerta)
+      (!c.es_beneficiario_valido || c.motivo_alerta) && !c.entregado
     ).sort((a, b) => (a.id ?? 0) - (b.id ?? 0));
   });
 
   readonly noConfirmaron = computed(() => {
     const confCodes = new Set(this.cafeteriaService.confirmaciones().map(c => c.codigo_id));
+    const entregados = new Set(this.cafeteriaService.entregas().filter(e => e.estado === 'ENTREGADO').map(e => e.codigo_id));
     const tipoFiltro = this.filtroSubsidio();
     return this.cafeteriaService.filteredBeneficiarios().filter(b => {
       if (confCodes.has(b.codigo_id)) return false;
+      if (entregados.has(b.codigo_id)) return false;
       if (tipoFiltro !== 'Todos') {
         const tipoBen = b.tipo_comida_id === 2 ? 'Almuerzo' : b.tipo_comida_id === 3 ? 'Refrigerio' : 'Desayuno';
         if (tipoBen !== tipoFiltro) return false;

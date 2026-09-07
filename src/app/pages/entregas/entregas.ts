@@ -81,9 +81,15 @@ import { getVisualCarrera } from '../../models/cafeteria.models';
           </div>
           <div class="mt-2 flex items-baseline gap-2">
             <span class="text-2xl sm:text-3xl font-extrabold text-slate-900">{{ cafeteriaService.stats().totalEntregados }}</span>
-            <span class="text-xs font-medium text-slate-500">
-              de {{ cafeteriaService.stats().totalConfirmados }} confirmados ({{ cafeteriaService.stats().porcentaje }}%)
-            </span>
+            @if (cafeteriaService.stats().totalEntregados > cafeteriaService.stats().totalConfirmados) {
+              <span class="text-xs font-medium text-amber-600">
+                {{ cafeteriaService.stats().totalConfirmados }} confirmados + extrañas
+              </span>
+            } @else {
+              <span class="text-xs font-medium text-slate-500">
+                de {{ cafeteriaService.stats().totalConfirmados }} confirmados ({{ cafeteriaService.stats().porcentaje }}%)
+              </span>
+            }
           </div>
           <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden mt-3">
             <div
@@ -93,39 +99,24 @@ import { getVisualCarrera } from '../../models/cafeteria.models';
           </div>
         </div>
 
-        <!-- 2. Almuerzos Entregados -->
-        <div class="bg-white rounded-xl border border-slate-200/90 p-4 shadow-xs flex flex-col justify-between">
-          <div class="flex items-center justify-between">
-            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Almuerzos (Diurno)</span>
-            <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-700 border border-amber-100 flex items-center justify-center">
-              <mat-icon [style.fontSize.px]="20">lunch_dining</mat-icon>
+        <!-- Tarjetas dinamicas por tipo de comida -->
+        @for (card of entregasCards(); track card.key) {
+          <div class="bg-white rounded-xl border border-slate-200/90 p-4 shadow-xs flex flex-col justify-between">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">{{ card.label }}</span>
+              <div class="w-8 h-8 rounded-lg bg-{{ card.color }}-50 text-{{ card.color }}-700 border border-{{ card.color }}-100 flex items-center justify-center">
+                <mat-icon [style.fontSize.px]="20">{{ card.icon }}</mat-icon>
+              </div>
             </div>
-          </div>
-          <div class="mt-2 flex items-baseline gap-2">
-            <span class="text-2xl sm:text-3xl font-extrabold text-slate-900">{{ almuerzosEntregados() }}</span>
-            <span class="text-xs font-medium text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-100">
-              11:30 AM - 2:30 PM
-            </span>
-          </div>
-          <p class="text-[11px] text-slate-400 mt-2">9 Programas academicos diurnos</p>
-        </div>
-
-        <!-- 3. Refrigerios Entregados -->
-        <div class="bg-white rounded-xl border border-slate-200/90 p-4 shadow-xs flex flex-col justify-between">
-          <div class="flex items-center justify-between">
-            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Refrigerios (Noche)</span>
-            <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-700 border border-blue-100 flex items-center justify-center">
-              <mat-icon [style.fontSize.px]="20">nightlife</mat-icon>
+            <div class="mt-2 flex items-baseline gap-2">
+              <span class="text-2xl sm:text-3xl font-extrabold text-slate-900">{{ card.count }}</span>
+              <span class="text-xs font-medium text-{{ card.color }}-700 bg-{{ card.color }}-50 px-2 py-0.5 rounded-md border border-{{ card.color }}-100">
+                {{ card.time }}
+              </span>
             </div>
+            <p class="text-[11px] text-slate-400 mt-2">{{ card.desc }}</p>
           </div>
-          <div class="mt-2 flex items-baseline gap-2">
-            <span class="text-2xl sm:text-3xl font-extrabold text-slate-900">{{ refrigeriosEntregados() }}</span>
-            <span class="text-xs font-medium text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100">
-              5:30 PM - 8:00 PM
-            </span>
-          </div>
-          <p class="text-[11px] text-slate-400 mt-2">Admon Financiera y Trabajo Social</p>
-        </div>
+        }
 
         <!-- 4. Rango de Horas Operativas -->
         <div class="bg-white rounded-xl border border-slate-200/90 p-4 shadow-xs flex flex-col justify-between">
@@ -513,6 +504,24 @@ export class Entregas {
   readonly refrigeriosEntregados = computed(() =>
     this.cafeteriaService.entregas().filter(e => e.tipo_comida_nombre === 'Refrigerio').length
   );
+
+  readonly desayunosEntregados = computed(() =>
+    this.cafeteriaService.entregas().filter(e => e.tipo_comida_nombre === 'Desayuno').length
+  );
+
+  readonly entregasCards = computed(() => {
+    const dow = this.cafeteriaService.selectedDayOfWeek();
+    if (dow === 0) {
+      return [
+        { key: 'desayuno', label: 'Desayunos (Fin de Semana)', icon: 'free_breakfast', color: 'emerald', count: this.desayunosEntregados(), time: '6:00 AM - 10:00 AM', desc: 'Domingos - Regencia y Tec. Procesos' },
+        { key: 'almuerzo', label: 'Almuerzos (Diurno)', icon: 'lunch_dining', color: 'amber', count: this.almuerzosEntregados(), time: '11:30 AM - 2:30 PM', desc: '9 Programas academicos diurnos' }
+      ];
+    }
+    return [
+      { key: 'almuerzo', label: 'Almuerzos (Diurno)', icon: 'lunch_dining', color: 'amber', count: this.almuerzosEntregados(), time: '11:30 AM - 2:30 PM', desc: '9 Programas academicos diurnos' },
+      { key: 'refrigerio', label: 'Refrigerios (Noche)', icon: 'nightlife', color: 'blue', count: this.refrigeriosEntregados(), time: '5:30 PM - 8:00 PM', desc: 'Admon Financiera y Trabajo Social' }
+    ];
+  });
 
   readonly filteredEntregas = computed(() => {
     const list = this.cafeteriaService.entregas();

@@ -215,7 +215,6 @@ export class Sidebar implements OnInit, OnDestroy {
     { label: 'Confirmaciones', route: '/confirmaciones', icon: 'how_to_reg', badge: 'Principal' },
     { label: 'Entregas del Dia', route: '/entregas', icon: 'task_alt' },
     { label: 'Beneficiarios', route: '/beneficiarios', icon: 'badge' },
-    { label: 'Formularios', route: '/formularios', icon: 'dynamic_form' },
     { label: 'Configuracion', route: '/config', icon: 'settings' }
   ];
 

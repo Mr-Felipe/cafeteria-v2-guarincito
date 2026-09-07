@@ -426,7 +426,7 @@ export class SupabaseService {
     }
   }
 
-  async updateFormConfig(id: number, updates: { activo?: boolean; hora_inicio?: string; hora_fin?: string }): Promise<void> {
+  async updateFormConfig(id: number, updates: { activo?: boolean; hora_inicio?: string; hora_fin?: string; dias_activos?: string[] }): Promise<void> {
     if (!this.client) return;
     try {
       const { error } = await this.client.from('form_config').update({ ...updates, updated_at: new Date().toISOString() }).eq('id', id);
@@ -440,6 +440,7 @@ export class SupabaseService {
   async fetchCarreraHorarios(formTipo: string): Promise<any[]> {
     if (!this.client) return [];
     try {
+      const servicioId = formTipo === 'refrigerio' ? 3 : formTipo === 'almuerzo' ? 2 : formTipo === 'almuerzo_adea' ? 2 : 2;
       const { data, error } = await this.client.from('carrera_horario')
         .select('*')
         .eq('form_tipo', formTipo)
@@ -447,13 +448,30 @@ export class SupabaseService {
       if (error) throw error;
 
       const carrerasIds = [...new Set((data || []).map((h: any) => h.carrera_id))];
-      let carrerasMap: Record<number, string> = {};
+      let carrerasMap: Record<number, { nombre: string; dias: string[] }> = {};
+
       if (carrerasIds.length > 0) {
-        const { data: carreras } = await this.client.from('carreras').select('id, nombre').in('id', carrerasIds);
-        (carreras || []).forEach((c: any) => carrerasMap[c.id] = c.nombre);
+        const [carrerasRes, serviciosRes] = await Promise.all([
+          this.client.from('carreras').select('id, nombre').in('id', carrerasIds),
+          this.client.from('carrera_servicio').select('carrera_id, dia_semana').eq('servicio_id', servicioId).eq('activo', true).in('carrera_id', carrerasIds)
+        ]);
+
+        const carreras = carrerasRes.data || [];
+        const servicios = serviciosRes.data || [];
+
+        carreras.forEach((c: any) => {
+          const dias = servicios.filter((s: any) => s.carrera_id === c.id).map((s: any) => s.dia_semana);
+          carrerasMap[c.id] = { nombre: c.nombre, dias };
+        });
       }
 
-      return (data || []).map((h: any) => ({ ...h, carreras: { nombre: carrerasMap[h.carrera_id] || 'ID: ' + h.carrera_id } }));
+      return (data || []).map((h: any) => ({
+        ...h,
+        carreras: {
+          nombre: carrerasMap[h.carrera_id]?.nombre || 'ID: ' + h.carrera_id,
+          dias: carrerasMap[h.carrera_id]?.dias || []
+        }
+      }));
     } catch (err) {
       console.warn('[Supabase] fetchCarreraHorarios falló:', err);
       return [];
@@ -482,6 +500,17 @@ export class SupabaseService {
       if (error) throw error;
     } catch (err) {
       console.warn('[Supabase] updateCarreraHorario falló:', err);
+      throw err;
+    }
+  }
+
+  async updateCarrera(id: number, updates: { nombre?: string; jornada?: string; activo?: boolean }): Promise<void> {
+    if (!this.client) return;
+    try {
+      const { error } = await this.client.from('carreras').update(updates).eq('id', id);
+      if (error) throw error;
+    } catch (err) {
+      console.warn('[Supabase] updateCarrera falló:', err);
       throw err;
     }
   }

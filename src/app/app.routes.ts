@@ -23,13 +23,13 @@ export const routes: Routes = [
   },
   {
     path: 'formularios',
-    loadComponent: () => import('./pages/formularios/formularios').then(m => m.Formularios),
-    title: 'Formularios Web - Cafeteria Guarincito'
+    redirectTo: 'config',
+    pathMatch: 'full'
   },
   {
     path: 'config',
     loadComponent: () => import('./pages/configuracion/configuracion').then(m => m.Configuracion),
-    title: 'Configuracion y Formularios - Cafeteria Guarincito'
+    title: 'Configuracion del Sistema - Cafeteria Guarincito'
   },
   {
     path: 'verify',

@@ -11,7 +11,7 @@ interface FormConfig {
   activo: boolean;
   hora_inicio: string;
   hora_fin: string;
-  hora_cierre_trabajo_social?: string;
+  dias_activos?: string[];
 }
 
 interface WebConfirmacion {
@@ -31,6 +31,13 @@ interface WebConfirmacion {
   imports: [CommonModule, FormsModule, MatIconModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
+    <style>
+      .anim-fade-in { animation: fadeSlideIn 150ms ease-out; }
+      @keyframes fadeSlideIn {
+        from { opacity: 0; transform: scale(0.92) translateX(4px); }
+        to { opacity: 1; transform: scale(1) translateX(0); }
+      }
+    </style>
     <div class="space-y-6">
       <!-- Header -->
       <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm gap-4">
@@ -116,27 +123,122 @@ interface WebConfirmacion {
                   </div>
                   <div class="p-4 space-y-3 bg-white">
                     <div class="flex items-center justify-between">
-                      <span class="text-sm font-medium text-slate-700">Estado</span>
-                      <button (click)="toggleActivo('almuerzo')"
-                        [class]="almuerzoConfig()?.activo ? 'bg-emerald-500' : 'bg-slate-300'"
-                        class="relative w-12 h-6 rounded-full transition-colors cursor-pointer">
-                        <div [class]="almuerzoConfig()?.activo ? 'translate-x-6' : 'translate-x-0'"
-                          class="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform"></div>
+                      <div class="flex items-center gap-2">
+                        <mat-icon class="text-slate-400 text-[18px]">calendar_today</mat-icon>
+                        <span class="text-xs text-slate-500">{{ almuerzoConfig()?.dias_activos?.join(', ') || 'No configurado' }}</span>
+                      </div>
+                      <button (click)="openDiasModal('almuerzo')"
+                        class="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all cursor-pointer">
+                        <mat-icon class="text-[16px]">calendar_month</mat-icon>
                       </button>
                     </div>
-                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
-                      <div class="flex-1">
-                        <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Inicio</label>
-                        <input type="time" [ngModel]="almuerzoConfig()?.hora_inicio"
-                          (ngModelChange)="updateTime('almuerzo', 'hora_inicio', $event)"
-                          class="w-full py-2 px-3 text-sm rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono text-slate-700">
+                    <div class="flex items-end gap-2">
+                      <div class="flex-1 flex flex-col sm:flex-row items-stretch sm:items-end gap-2">
+                        @if (editingAlmuerzo()) {
+                          <div class="flex-1">
+                            <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Inicio</label>
+                            <input type="time" [value]="almuerzoConfig()?.hora_inicio"
+                              (input)="editingAlmuerzoInicio.set($any($event.target).value)"
+                              class="w-full py-2 px-3 text-sm rounded-xl bg-emerald-50 border border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono text-slate-700">
+                          </div>
+                          <div class="flex-1">
+                            <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Fin</label>
+                            <input type="time" [value]="almuerzoConfig()?.hora_fin"
+                              (input)="editingAlmuerzoFin.set($any($event.target).value)"
+                              class="w-full py-2 px-3 text-sm rounded-xl bg-emerald-50 border border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono text-slate-700">
+                          </div>
+                        } @else {
+                          <div class="flex-1">
+                            <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Inicio</label>
+                            <input type="time" [value]="almuerzoConfig()?.hora_inicio" disabled
+                              class="w-full py-2 px-3 text-sm rounded-xl bg-slate-100 border border-slate-200 font-mono text-slate-400 cursor-not-allowed">
+                          </div>
+                          <div class="flex-1">
+                            <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Fin</label>
+                            <input type="time" [value]="almuerzoConfig()?.hora_fin" disabled
+                              class="w-full py-2 px-3 text-sm rounded-xl bg-slate-100 border border-slate-200 font-mono text-slate-400 cursor-not-allowed">
+                          </div>
+                        }
                       </div>
-                      <div class="flex-1">
-                        <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Fin</label>
-                        <input type="time" [ngModel]="almuerzoConfig()?.hora_fin"
-                          (ngModelChange)="updateTime('almuerzo', 'hora_fin', $event)"
-                          class="w-full py-2 px-3 text-sm rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono text-slate-700">
+                      @if (editingAlmuerzo()) {
+                        <div class="anim-fade-in flex items-center gap-1 flex-shrink-0">
+                          <button (click)="saveCardHours('almuerzo', editingAlmuerzoInicio() || almuerzoConfig()?.hora_inicio, editingAlmuerzoFin() || almuerzoConfig()?.hora_fin, 'almuerzo')"
+                            class="p-2 text-green-600 hover:bg-green-50 rounded-lg cursor-pointer">
+                            <mat-icon class="text-[18px]">check</mat-icon>
+                          </button>
+                          <button (click)="editingAlmuerzo.set(false)"
+                            class="p-2 text-red-500 hover:bg-red-50 rounded-lg cursor-pointer">
+                            <mat-icon class="text-[18px]">close</mat-icon>
+                          </button>
+                        </div>
+                      } @else {
+                        <button class="anim-fade-in p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg cursor-pointer flex-shrink-0"
+                          (click)="editingAlmuerzo.set(true); editingAlmuerzoInicio.set(almuerzoConfig()?.hora_inicio || ''); editingAlmuerzoFin.set(almuerzoConfig()?.hora_fin || '')">
+                          <mat-icon class="text-[18px]">edit</mat-icon>
+                        </button>
+                      }
+                    </div>
+                    <button (click)="toggleExpandAlmuerzo()"
+                      class="flex items-center gap-2 w-full py-2 px-3 text-sm text-slate-600 hover:bg-slate-50 rounded-xl transition-all cursor-pointer">
+                      <mat-icon class="text-[18px] transition-transform duration-300" [class.rotate-180]="expandedAlmuerzo()">expand_more</mat-icon>
+                      Horarios por carrera
+                      @if (getCustomCount(almuerzoHorarios(), almuerzoConfig()?.hora_fin) > 0) {
+                        <span class="ml-auto px-2 py-0.5 bg-amber-100 text-amber-700 text-[10px] font-bold rounded-full">{{ getCustomCount(almuerzoHorarios(), almuerzoConfig()?.hora_fin) }} personalizado{{ getCustomCount(almuerzoHorarios(), almuerzoConfig()?.hora_fin) > 1 ? 's' : '' }}</span>
+                      }
+                    </button>
+                    <div class="overflow-hidden transition-all duration-300 ease-in-out" [style.max-height]="expandedAlmuerzo() ? '500px' : '0px'" [style.opacity]="expandedAlmuerzo() ? '1' : '0'">
+                      <div class="border border-slate-200 rounded-xl mt-2">
+                        <div class="bg-slate-50 px-3 py-2 border-b border-slate-200">
+                          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Horario de cierre por carrera</span>
+                          <p class="text-[9px] text-slate-400 mt-0.5">Hora a la que deja de estar disponible cada carrera</p>
+                        </div>
+                        <div class="bg-slate-50 px-3 py-1.5 border-b border-slate-200 flex">
+                          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 flex-1">Carrera</span>
+                          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 w-32 text-center">Cierre</span>
+                          <span class="w-8"></span>
+                        </div>
+                        <div class="max-h-48 overflow-y-auto">
+                          @for (h of almuerzoHorarios(); track h.id) {
+                            <div class="flex items-center gap-2 px-3 py-2 border-b border-slate-100 last:border-0">
+                              <span class="text-sm text-slate-700 flex-1 truncate">{{ h.carreras?.nombre || 'ID: ' + h.carrera_id }}</span>
+                              @if (editingHorarioId() === h.id) {
+                                <div class="anim-fade-in flex items-center gap-2">
+                                  <input type="time" [value]="h.hora_cierre"
+                                    (input)="editingHorarioValue.set($any($event.target).value)"
+                                    class="w-32 py-1 px-2 text-xs rounded-lg bg-emerald-50 border border-emerald-300 focus:outline-none focus:ring-1 focus:ring-emerald-500 font-mono text-slate-700">
+                                  <button (click)="saveHorario(h.id, editingHorarioValue() || h.hora_cierre)"
+                                    class="p-1 text-green-600 hover:bg-green-50 rounded-lg cursor-pointer">
+                                    <mat-icon class="text-[16px]">check</mat-icon>
+                                  </button>
+                                  <button (click)="cancelEditHorario()"
+                                    class="p-1 text-red-500 hover:bg-red-50 rounded-lg cursor-pointer">
+                                    <mat-icon class="text-[16px]">close</mat-icon>
+                                  </button>
+                                </div>
+                              } @else {
+                                <div class="anim-fade-in flex items-center gap-2">
+                                  <input type="time" [value]="h.hora_cierre" disabled
+                                    class="w-32 py-1 px-2 text-xs rounded-lg bg-slate-100 border border-slate-200 font-mono text-slate-400 cursor-not-allowed">
+                                  <button (click)="editingHorarioId.set(h.id); editingHorarioValue.set(h.hora_cierre)"
+                                    class="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg cursor-pointer">
+                                    <mat-icon class="text-[16px]">edit</mat-icon>
+                                  </button>
+                                </div>
+                              }
+                            </div>
+                          }
+                          @if (almuerzoHorarios().length === 0) {
+                            <div class="px-3 py-4 text-center text-xs text-slate-400">No hay carreras configuradas</div>
+                          }
+                        </div>
                       </div>
+                      @if (almuerzoHorarios().length > 0) {
+                        <button (click)="resetHorariosDefault('almuerzo')"
+                          class="mt-2 w-full py-2 text-xs font-medium text-amber-700 hover:bg-amber-50 border border-amber-300 rounded-xl transition-all cursor-pointer flex items-center justify-center gap-2">
+                          <mat-icon class="text-[14px]">restart_alt</mat-icon>
+                          Restablecer horarios por defecto
+                        </button>
+                      }
                     </div>
                     <div class="flex items-center justify-between p-3 bg-emerald-50 rounded-xl">
                       <span class="text-sm text-emerald-700">Respuestas hoy</span>
@@ -170,59 +272,123 @@ interface WebConfirmacion {
                   </div>
                   <div class="p-4 space-y-3 bg-white">
                     <div class="flex items-center justify-between">
-                      <span class="text-sm font-medium text-slate-700">Estado</span>
-                      <button (click)="toggleActivo('refrigerio')"
-                        [class]="refrigerioConfig()?.activo ? 'bg-blue-500' : 'bg-slate-300'"
-                        class="relative w-12 h-6 rounded-full transition-colors cursor-pointer">
-                        <div [class]="refrigerioConfig()?.activo ? 'translate-x-6' : 'translate-x-0'"
-                          class="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform"></div>
+                      <div class="flex items-center gap-2">
+                        <mat-icon class="text-slate-400 text-[18px]">calendar_today</mat-icon>
+                        <span class="text-xs text-slate-500">{{ refrigerioConfig()?.dias_activos?.join(', ') || 'No configurado' }}</span>
+                      </div>
+                      <button (click)="openDiasModal('refrigerio')"
+                        class="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all cursor-pointer">
+                        <mat-icon class="text-[16px]">calendar_month</mat-icon>
                       </button>
                     </div>
-                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
-                      <div class="flex-1">
-                        <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Inicio</label>
-                        <input type="time" [ngModel]="refrigerioConfig()?.hora_inicio"
-                          (ngModelChange)="updateTime('refrigerio', 'hora_inicio', $event)"
-                          class="w-full py-2 px-3 text-sm rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-slate-700">
+                    <div class="flex items-end gap-2">
+                      <div class="flex-1 flex flex-col sm:flex-row items-stretch sm:items-end gap-2">
+                        @if (editingGeneralHours()) {
+                          <div class="flex-1">
+                            <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Inicio</label>
+                            <input type="time" [value]="refrigerioConfig()?.hora_inicio"
+                              (input)="editingGeneralInicio.set($any($event.target).value)"
+                              class="w-full py-2 px-3 text-sm rounded-xl bg-blue-50 border border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-slate-700">
+                          </div>
+                          <div class="flex-1">
+                            <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Fin</label>
+                            <input type="time" [value]="refrigerioConfig()?.hora_fin"
+                              (input)="editingGeneralFin.set($any($event.target).value)"
+                              class="w-full py-2 px-3 text-sm rounded-xl bg-blue-50 border border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-slate-700">
+                          </div>
+                        } @else {
+                          <div class="flex-1">
+                            <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Inicio</label>
+                            <input type="time" [value]="refrigerioConfig()?.hora_inicio" disabled
+                              class="w-full py-2 px-3 text-sm rounded-xl bg-slate-100 border border-slate-200 font-mono text-slate-400 cursor-not-allowed">
+                          </div>
+                          <div class="flex-1">
+                            <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Fin</label>
+                            <input type="time" [value]="refrigerioConfig()?.hora_fin" disabled
+                              class="w-full py-2 px-3 text-sm rounded-xl bg-slate-100 border border-slate-200 font-mono text-slate-400 cursor-not-allowed">
+                          </div>
+                        }
                       </div>
-                      <div class="flex-1">
-                        <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Fin</label>
-                        <input type="time" [ngModel]="refrigerioConfig()?.hora_fin"
-                          (ngModelChange)="updateTime('refrigerio', 'hora_fin', $event)"
-                          class="w-full py-2 px-3 text-sm rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-slate-700">
-                      </div>
+                      @if (editingGeneralHours()) {
+                        <div class="anim-fade-in flex items-center gap-1 flex-shrink-0">
+                          <button (click)="saveGeneralHours('refrigerio', editingGeneralInicio() || refrigerioConfig()?.hora_inicio, editingGeneralFin() || refrigerioConfig()?.hora_fin)"
+                            class="p-2 text-green-600 hover:bg-green-50 rounded-lg cursor-pointer">
+                            <mat-icon class="text-[18px]">check</mat-icon>
+                          </button>
+                          <button (click)="editingGeneralHours.set(false)"
+                            class="p-2 text-red-500 hover:bg-red-50 rounded-lg cursor-pointer">
+                            <mat-icon class="text-[18px]">close</mat-icon>
+                          </button>
+                        </div>
+                      } @else {
+                        <button class="anim-fade-in p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg cursor-pointer flex-shrink-0"
+                          (click)="editingGeneralHours.set(true); editingGeneralInicio.set(refrigerioConfig()?.hora_inicio || ''); editingGeneralFin.set(refrigerioConfig()?.hora_fin || '')">
+                          <mat-icon class="text-[18px]">edit</mat-icon>
+                        </button>
+                      }
                     </div>
                     <button (click)="toggleExpandForm('refrigerio')"
                       class="flex items-center gap-2 w-full py-2 px-3 text-sm text-slate-600 hover:bg-slate-50 rounded-xl transition-all cursor-pointer">
-                      <mat-icon class="text-[18px]" [class.rotate-180]="expandedForm() === 'refrigerio'">expand_more</mat-icon>
+                      <mat-icon class="text-[18px] transition-transform duration-300" [class.rotate-180]="expandedForm() === 'refrigerio'">expand_more</mat-icon>
                       Horarios por carrera
+                      @if (carrerasCustomCount() > 0) {
+                        <span class="ml-auto px-2 py-0.5 bg-amber-100 text-amber-700 text-[10px] font-bold rounded-full">{{ carrerasCustomCount() }} personalizado{{ carrerasCustomCount() > 1 ? 's' : '' }}</span>
+                      }
                     </button>
-                    @if (expandedForm() === 'refrigerio') {
-                      <div class="border border-slate-200 rounded-xl overflow-hidden">
-                        <div class="bg-slate-50 px-3 py-2 border-b border-slate-200 flex">
+                    <div class="overflow-hidden transition-all duration-300 ease-in-out" [style.max-height]="expandedForm() === 'refrigerio' ? '500px' : '0px'" [style.opacity]="expandedForm() === 'refrigerio' ? '1' : '0'">
+                      <div class="border border-slate-200 rounded-xl mt-2">
+                        <div class="bg-slate-50 px-3 py-2 border-b border-slate-200">
+                          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Horario de cierre por carrera</span>
+                          <p class="text-[9px] text-slate-400 mt-0.5">Hora a la que deja de estar disponible cada carrera</p>
+                        </div>
+                        <div class="bg-slate-50 px-3 py-1.5 border-b border-slate-200 flex">
                           <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 flex-1">Carrera</span>
                           <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 w-20 text-center">Cierre</span>
                           <span class="w-8"></span>
                         </div>
-                        @for (h of carrerasHorarios(); track h.id) {
-                          <div class="flex items-center gap-2 px-3 py-2 border-b border-slate-100 last:border-0">
-                            <span class="text-sm text-slate-700 flex-1 truncate">{{ h.carreras?.nombre || 'ID: ' + h.carrera_id }}</span>
-                            <input type="time" [value]="h.hora_cierre"
-                              (change)="updateHorarioCierre(h.id, $any($event.target).value)"
-                              class="w-20 py-1 px-2 text-xs rounded-lg bg-slate-50 border border-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono text-slate-700">
-                            <button (click)="toggleHorarioActivo(h.id, !h.activo)"
-                              [class]="h.activo ? 'bg-blue-500' : 'bg-slate-300'"
-                              class="relative w-8 h-4 rounded-full transition-colors cursor-pointer flex-shrink-0">
-                              <div [class]="h.activo ? 'translate-x-4' : 'translate-x-0'"
-                                class="absolute top-0.5 left-0.5 w-3 h-3 bg-white rounded-full shadow transition-transform"></div>
-                            </button>
-                          </div>
-                        }
-                        @if (carrerasHorarios().length === 0) {
-                          <div class="px-3 py-4 text-center text-xs text-slate-400">No hay carreras configuradas para este formulario</div>
-                        }
+                        <div class="max-h-48 overflow-y-auto">
+                          @for (h of carrerasHorarios(); track h.id) {
+                            <div class="flex items-center gap-2 px-3 py-2 border-b border-slate-100 last:border-0">
+                              <span class="text-sm text-slate-700 flex-1 truncate">{{ h.carreras?.nombre || 'ID: ' + h.carrera_id }}</span>
+                              @if (editingHorarioId() === h.id) {
+                                <div class="anim-fade-in flex items-center gap-2">
+                                  <input type="time" [value]="h.hora_cierre"
+                                    (input)="editingHorarioValue.set($any($event.target).value)"
+                                    class="w-32 py-1 px-2 text-xs rounded-lg bg-blue-50 border border-blue-300 focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono text-slate-700">
+                                  <button (click)="saveHorario(h.id, editingHorarioValue() || h.hora_cierre)"
+                                    class="p-1 text-green-600 hover:bg-green-50 rounded-lg cursor-pointer">
+                                    <mat-icon class="text-[16px]">check</mat-icon>
+                                  </button>
+                                  <button (click)="cancelEditHorario()"
+                                    class="p-1 text-red-500 hover:bg-red-50 rounded-lg cursor-pointer">
+                                    <mat-icon class="text-[16px]">close</mat-icon>
+                                  </button>
+                                </div>
+                              } @else {
+                                <div class="anim-fade-in flex items-center gap-2">
+                                  <input type="time" [value]="h.hora_cierre" disabled
+                                    class="w-32 py-1 px-2 text-xs rounded-lg bg-slate-100 border border-slate-200 font-mono text-slate-400 cursor-not-allowed">
+                                  <button (click)="editingHorarioId.set(h.id); editingHorarioValue.set(h.hora_cierre)"
+                                    class="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg cursor-pointer">
+                                    <mat-icon class="text-[16px]">edit</mat-icon>
+                                  </button>
+                                </div>
+                              }
+                            </div>
+                          }
+                          @if (carrerasHorarios().length === 0) {
+                            <div class="px-3 py-4 text-center text-xs text-slate-400">No hay carreras configuradas para este formulario</div>
+                          }
+                        </div>
                       </div>
-                    }
+                      @if (carrerasHorarios().length > 0) {
+                        <button (click)="resetHorariosDefault('refrigerio')"
+                          class="mt-2 w-full py-2 text-xs font-medium text-amber-700 hover:bg-amber-50 border border-amber-300 rounded-xl transition-all cursor-pointer flex items-center justify-center gap-2">
+                          <mat-icon class="text-[14px]">restart_alt</mat-icon>
+                          Restablecer horarios por defecto
+                        </button>
+                      }
+                    </div>
                     <div class="flex items-center justify-between p-3 bg-blue-50 rounded-xl">
                       <span class="text-sm text-blue-700">Respuestas hoy</span>
                       <span class="text-lg font-bold text-blue-800">{{ refrigerioCount() }}</span>
@@ -255,27 +421,122 @@ interface WebConfirmacion {
                   </div>
                   <div class="p-4 space-y-3 bg-white">
                     <div class="flex items-center justify-between">
-                      <span class="text-sm font-medium text-slate-700">Estado</span>
-                      <button (click)="toggleActivo('almuerzo_adea')"
-                        [class]="adeaConfig()?.activo ? 'bg-amber-500' : 'bg-slate-300'"
-                        class="relative w-12 h-6 rounded-full transition-colors cursor-pointer">
-                        <div [class]="adeaConfig()?.activo ? 'translate-x-6' : 'translate-x-0'"
-                          class="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform"></div>
+                      <div class="flex items-center gap-2">
+                        <mat-icon class="text-slate-400 text-[18px]">calendar_today</mat-icon>
+                        <span class="text-xs text-slate-500">{{ adeaConfig()?.dias_activos?.join(', ') || 'No configurado' }}</span>
+                      </div>
+                      <button (click)="openDiasModal('almuerzo_adea')"
+                        class="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-all cursor-pointer">
+                        <mat-icon class="text-[16px]">calendar_month</mat-icon>
                       </button>
                     </div>
-                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
-                      <div class="flex-1">
-                        <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Inicio</label>
-                        <input type="time" [ngModel]="adeaConfig()?.hora_inicio"
-                          (ngModelChange)="updateTime('almuerzo_adea', 'hora_inicio', $event)"
-                          class="w-full py-2 px-3 text-sm rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500 font-mono text-slate-700">
+                    <div class="flex items-end gap-2">
+                      <div class="flex-1 flex flex-col sm:flex-row items-stretch sm:items-end gap-2">
+                        @if (editingAdea()) {
+                          <div class="flex-1">
+                            <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Inicio</label>
+                            <input type="time" [value]="adeaConfig()?.hora_inicio"
+                              (input)="editingAdeaInicio.set($any($event.target).value)"
+                              class="w-full py-2 px-3 text-sm rounded-xl bg-amber-50 border border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-500 font-mono text-slate-700">
+                          </div>
+                          <div class="flex-1">
+                            <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Fin</label>
+                            <input type="time" [value]="adeaConfig()?.hora_fin"
+                              (input)="editingAdeaFin.set($any($event.target).value)"
+                              class="w-full py-2 px-3 text-sm rounded-xl bg-amber-50 border border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-500 font-mono text-slate-700">
+                          </div>
+                        } @else {
+                          <div class="flex-1">
+                            <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Inicio</label>
+                            <input type="time" [value]="adeaConfig()?.hora_inicio" disabled
+                              class="w-full py-2 px-3 text-sm rounded-xl bg-slate-100 border border-slate-200 font-mono text-slate-400 cursor-not-allowed">
+                          </div>
+                          <div class="flex-1">
+                            <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Fin</label>
+                            <input type="time" [value]="adeaConfig()?.hora_fin" disabled
+                              class="w-full py-2 px-3 text-sm rounded-xl bg-slate-100 border border-slate-200 font-mono text-slate-400 cursor-not-allowed">
+                          </div>
+                        }
                       </div>
-                      <div class="flex-1">
-                        <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Fin</label>
-                        <input type="time" [ngModel]="adeaConfig()?.hora_fin"
-                          (ngModelChange)="updateTime('almuerzo_adea', 'hora_fin', $event)"
-                          class="w-full py-2 px-3 text-sm rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500 font-mono text-slate-700">
+                      @if (editingAdea()) {
+                        <div class="anim-fade-in flex items-center gap-1 flex-shrink-0">
+                          <button (click)="saveCardHours('almuerzo_adea', editingAdeaInicio() || adeaConfig()?.hora_inicio, editingAdeaFin() || adeaConfig()?.hora_fin, 'adea')"
+                            class="p-2 text-green-600 hover:bg-green-50 rounded-lg cursor-pointer">
+                            <mat-icon class="text-[18px]">check</mat-icon>
+                          </button>
+                          <button (click)="editingAdea.set(false)"
+                            class="p-2 text-red-500 hover:bg-red-50 rounded-lg cursor-pointer">
+                            <mat-icon class="text-[18px]">close</mat-icon>
+                          </button>
+                        </div>
+                      } @else {
+                        <button class="anim-fade-in p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg cursor-pointer flex-shrink-0"
+                          (click)="editingAdea.set(true); editingAdeaInicio.set(adeaConfig()?.hora_inicio || ''); editingAdeaFin.set(adeaConfig()?.hora_fin || '')">
+                          <mat-icon class="text-[18px]">edit</mat-icon>
+                        </button>
+                      }
+                    </div>
+                    <button (click)="toggleExpandAdea()"
+                      class="flex items-center gap-2 w-full py-2 px-3 text-sm text-slate-600 hover:bg-slate-50 rounded-xl transition-all cursor-pointer">
+                      <mat-icon class="text-[18px] transition-transform duration-300" [class.rotate-180]="expandedAdea()">expand_more</mat-icon>
+                      Horarios por carrera
+                      @if (getCustomCount(adeaHorarios(), adeaConfig()?.hora_fin) > 0) {
+                        <span class="ml-auto px-2 py-0.5 bg-amber-100 text-amber-700 text-[10px] font-bold rounded-full">{{ getCustomCount(adeaHorarios(), adeaConfig()?.hora_fin) }} personalizado{{ getCustomCount(adeaHorarios(), adeaConfig()?.hora_fin) > 1 ? 's' : '' }}</span>
+                      }
+                    </button>
+                    <div class="overflow-hidden transition-all duration-300 ease-in-out" [style.max-height]="expandedAdea() ? '500px' : '0px'" [style.opacity]="expandedAdea() ? '1' : '0'">
+                      <div class="border border-slate-200 rounded-xl mt-2">
+                        <div class="bg-slate-50 px-3 py-2 border-b border-slate-200">
+                          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Horario de cierre por carrera</span>
+                          <p class="text-[9px] text-slate-400 mt-0.5">Hora a la que deja de estar disponible cada carrera</p>
+                        </div>
+                        <div class="bg-slate-50 px-3 py-1.5 border-b border-slate-200 flex">
+                          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 flex-1">Carrera</span>
+                          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 w-32 text-center">Cierre</span>
+                          <span class="w-8"></span>
+                        </div>
+                        <div class="max-h-48 overflow-y-auto">
+                          @for (h of adeaHorarios(); track h.id) {
+                            <div class="flex items-center gap-2 px-3 py-2 border-b border-slate-100 last:border-0">
+                              <span class="text-sm text-slate-700 flex-1 truncate">{{ h.carreras?.nombre || 'ID: ' + h.carrera_id }}</span>
+                              @if (editingHorarioId() === h.id) {
+                                <div class="anim-fade-in flex items-center gap-2">
+                                  <input type="time" [value]="h.hora_cierre"
+                                    (input)="editingHorarioValue.set($any($event.target).value)"
+                                    class="w-32 py-1 px-2 text-xs rounded-lg bg-amber-50 border border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-500 font-mono text-slate-700">
+                                  <button (click)="saveHorario(h.id, editingHorarioValue() || h.hora_cierre)"
+                                    class="p-1 text-green-600 hover:bg-green-50 rounded-lg cursor-pointer">
+                                    <mat-icon class="text-[16px]">check</mat-icon>
+                                  </button>
+                                  <button (click)="cancelEditHorario()"
+                                    class="p-1 text-red-500 hover:bg-red-50 rounded-lg cursor-pointer">
+                                    <mat-icon class="text-[16px]">close</mat-icon>
+                                  </button>
+                                </div>
+                              } @else {
+                                <div class="anim-fade-in flex items-center gap-2">
+                                  <input type="time" [value]="h.hora_cierre" disabled
+                                    class="w-32 py-1 px-2 text-xs rounded-lg bg-slate-100 border border-slate-200 font-mono text-slate-400 cursor-not-allowed">
+                                  <button (click)="editingHorarioId.set(h.id); editingHorarioValue.set(h.hora_cierre)"
+                                    class="p-1 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg cursor-pointer">
+                                    <mat-icon class="text-[16px]">edit</mat-icon>
+                                  </button>
+                                </div>
+                              }
+                            </div>
+                          }
+                          @if (adeaHorarios().length === 0) {
+                            <div class="px-3 py-4 text-center text-xs text-slate-400">No hay carreras configuradas</div>
+                          }
+                        </div>
                       </div>
+                      @if (adeaHorarios().length > 0) {
+                        <button (click)="resetHorariosDefault('almuerzo_adea')"
+                          class="mt-2 w-full py-2 text-xs font-medium text-amber-700 hover:bg-amber-50 border border-amber-300 rounded-xl transition-all cursor-pointer flex items-center justify-center gap-2">
+                          <mat-icon class="text-[14px]">restart_alt</mat-icon>
+                          Restablecer horarios por defecto
+                        </button>
+                      }
                     </div>
                     <div class="flex items-center justify-between p-3 bg-amber-50 rounded-xl">
                       <span class="text-sm text-amber-700">Respuestas hoy</span>
@@ -308,49 +569,250 @@ interface WebConfirmacion {
                     </div>
                   </div>
                   <div class="p-4 space-y-3 bg-white">
-                    <div class="flex items-center justify-between">
-                      <span class="text-sm font-medium text-slate-700">Estado</span>
-                      <button (click)="toggleActivo('refrigerio_finde')"
-                        [class]="findeConfig()?.activo ? 'bg-violet-500' : 'bg-slate-300'"
-                        class="relative w-12 h-6 rounded-full transition-colors cursor-pointer">
-                        <div [class]="findeConfig()?.activo ? 'translate-x-6' : 'translate-x-0'"
-                          class="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform"></div>
-                      </button>
-                    </div>
                     <!-- Sabado Schedule -->
-                    <div class="p-2 bg-violet-50 rounded-xl">
-                      <p class="text-[10px] font-bold uppercase tracking-wider text-violet-600 mb-2">Sabado - Refrigerio</p>
-                      <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
-                        <div class="flex-1">
-                          <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Inicio</label>
-                          <input type="time" [ngModel]="findeConfig()?.hora_inicio"
-                            (ngModelChange)="updateTime('refrigerio_finde', 'hora_inicio', $event)"
-                            class="w-full py-2 px-3 text-sm rounded-xl bg-white border border-violet-200 focus:outline-none focus:ring-2 focus:ring-violet-500 font-mono text-slate-700">
+                    <div class="p-3 bg-violet-50 rounded-xl space-y-2">
+                      <div class="flex items-center justify-between mb-1">
+                        <p class="text-[10px] font-bold uppercase tracking-wider text-violet-600">Sabado - Refrigerio</p>
+                        <div class="flex items-center gap-1">
+                          <button (click)="openDiasModal('refrigerio_finde')"
+                            class="p-1 text-slate-400 hover:text-violet-600 hover:bg-violet-100 rounded-lg cursor-pointer">
+                            <mat-icon class="text-[14px]">calendar_month</mat-icon>
+                          </button>
                         </div>
-                        <div class="flex-1">
-                          <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Fin</label>
-                          <input type="time" [ngModel]="findeConfig()?.hora_fin"
-                            (ngModelChange)="updateTime('refrigerio_finde', 'hora_fin', $event)"
-                            class="w-full py-2 px-3 text-sm rounded-xl bg-white border border-violet-200 focus:outline-none focus:ring-2 focus:ring-violet-500 font-mono text-slate-700">
+                      </div>
+                      <p class="text-[9px] text-slate-400">{{ findeConfig()?.dias_activos?.join(', ') || 'sabados' }}</p>
+                      @if (editingFindeSabado()) {
+                        <div class="anim-fade-in flex items-end gap-2">
+                          <div class="flex-1 flex flex-col sm:flex-row items-stretch sm:items-end gap-2">
+                            <div class="flex-1">
+                              <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Inicio</label>
+                              <input type="time" [value]="findeConfig()?.hora_inicio"
+                                (input)="editingFindeSabadoInicio.set($any($event.target).value)"
+                                class="w-full py-2 px-3 text-sm rounded-xl bg-white border border-violet-300 focus:outline-none focus:ring-2 focus:ring-violet-500 font-mono text-slate-700">
+                            </div>
+                            <div class="flex-1">
+                              <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Fin</label>
+                              <input type="time" [value]="findeConfig()?.hora_fin"
+                                (input)="editingFindeSabadoFin.set($any($event.target).value)"
+                                class="w-full py-2 px-3 text-sm rounded-xl bg-white border border-violet-300 focus:outline-none focus:ring-2 focus:ring-violet-500 font-mono text-slate-700">
+                            </div>
+                          </div>
+                          <div class="flex items-center gap-1 flex-shrink-0">
+                            <button (click)="saveCardHours('refrigerio_finde', editingFindeSabadoInicio() || findeConfig()?.hora_inicio, editingFindeSabadoFin() || findeConfig()?.hora_fin, 'fin_de_semana_sabado')"
+                              class="p-2 text-green-600 hover:bg-green-50 rounded-lg cursor-pointer">
+                              <mat-icon class="text-[18px]">check</mat-icon>
+                            </button>
+                            <button (click)="editingFindeSabado.set(false)"
+                              class="p-2 text-red-500 hover:bg-red-50 rounded-lg cursor-pointer">
+                              <mat-icon class="text-[18px]">close</mat-icon>
+                            </button>
+                          </div>
                         </div>
+                      } @else {
+                        <div class="flex items-end gap-2">
+                          <div class="flex-1 flex flex-col sm:flex-row items-stretch sm:items-end gap-2">
+                            <div class="flex-1">
+                              <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Inicio</label>
+                              <input type="time" [value]="findeConfig()?.hora_inicio" disabled
+                                class="w-full py-2 px-3 text-sm rounded-xl bg-white/60 border border-violet-200 font-mono text-slate-400 cursor-not-allowed">
+                            </div>
+                            <div class="flex-1">
+                              <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Fin</label>
+                              <input type="time" [value]="findeConfig()?.hora_fin" disabled
+                                class="w-full py-2 px-3 text-sm rounded-xl bg-white/60 border border-violet-200 font-mono text-slate-400 cursor-not-allowed">
+                            </div>
+                          </div>
+                          <button class="anim-fade-in p-2 text-slate-400 hover:text-violet-600 hover:bg-violet-100 rounded-lg cursor-pointer flex-shrink-0"
+                            (click)="editingFindeSabado.set(true); editingFindeSabadoInicio.set(findeConfig()?.hora_inicio || ''); editingFindeSabadoFin.set(findeConfig()?.hora_fin || '')">
+                            <mat-icon class="text-[18px]">edit</mat-icon>
+                          </button>
+                        </div>
+                      }
+                      <!-- Sabado Horarios expandable -->
+                      <button (click)="toggleExpandFindeSabado()"
+                        class="flex items-center gap-2 w-full py-1.5 px-2 text-xs text-slate-600 hover:bg-white/60 rounded-lg transition-all cursor-pointer">
+                        <mat-icon class="text-[14px] transition-transform duration-300" [class.rotate-180]="expandedFindeSabado()">expand_more</mat-icon>
+                        Horarios por carrera
+                        @if (getCustomCount(findeSabadoHorarios(), findeConfig()?.hora_fin) > 0) {
+                          <span class="ml-auto px-1.5 py-0.5 bg-amber-100 text-amber-700 text-[9px] font-bold rounded-full">{{ getCustomCount(findeSabadoHorarios(), findeConfig()?.hora_fin) }}personalizado</span>
+                        }
+                      </button>
+                      <div class="overflow-hidden transition-all duration-300 ease-in-out" [style.max-height]="expandedFindeSabado() ? '400px' : '0px'" [style.opacity]="expandedFindeSabado() ? '1' : '0'">
+                        <div class="border border-violet-200 rounded-lg mt-1 bg-white">
+                          <div class="bg-slate-50 px-2 py-1.5 border-b border-slate-200">
+                            <span class="text-[9px] font-bold uppercase tracking-wider text-slate-500">Horario de cierre por carrera</span>
+                            <p class="text-[8px] text-slate-400 mt-0.5">Hora a la que deja de estar disponible cada carrera</p>
+                          </div>
+                          <div class="bg-slate-50 px-2 py-1.5 border-b border-slate-200 flex">
+                            <span class="text-[9px] font-bold uppercase tracking-wider text-slate-500 flex-1">Carrera</span>
+                            <span class="text-[9px] font-bold uppercase tracking-wider text-slate-500 w-28 text-center">Cierre</span>
+                            <span class="w-7"></span>
+                          </div>
+                          <div class="max-h-40 overflow-y-auto">
+                            @for (h of findeSabadoHorarios(); track h.id) {
+                              <div class="flex items-center gap-1.5 px-2 py-1.5 border-b border-slate-100 last:border-0">
+                                <span class="text-xs text-slate-700 flex-1 truncate">{{ h.carreras?.nombre || 'ID: ' + h.carrera_id }}</span>
+                                @if (editingHorarioId() === h.id) {
+                                  <div class="anim-fade-in flex items-center gap-1">
+                                    <input type="time" [value]="h.hora_cierre"
+                                      (input)="editingHorarioValue.set($any($event.target).value)"
+                                      class="w-28 py-0.5 px-1.5 text-[11px] rounded bg-violet-50 border border-violet-300 focus:outline-none focus:ring-1 focus:ring-violet-500 font-mono text-slate-700">
+                                    <button (click)="saveHorario(h.id, editingHorarioValue() || h.hora_cierre)"
+                                      class="p-0.5 text-green-600 hover:bg-green-50 rounded cursor-pointer">
+                                      <mat-icon class="text-[14px]">check</mat-icon>
+                                    </button>
+                                    <button (click)="cancelEditHorario()"
+                                      class="p-0.5 text-red-500 hover:bg-red-50 rounded cursor-pointer">
+                                      <mat-icon class="text-[14px]">close</mat-icon>
+                                    </button>
+                                  </div>
+                                } @else {
+                                  <div class="anim-fade-in flex items-center gap-1">
+                                    <input type="time" [value]="h.hora_cierre" disabled
+                                      class="w-28 py-0.5 px-1.5 text-[11px] rounded bg-slate-100 border border-slate-200 font-mono text-slate-400 cursor-not-allowed">
+                                    <button (click)="editingHorarioId.set(h.id); editingHorarioValue.set(h.hora_cierre)"
+                                      class="p-0.5 text-slate-400 hover:text-violet-600 hover:bg-violet-50 rounded cursor-pointer">
+                                      <mat-icon class="text-[14px]">edit</mat-icon>
+                                    </button>
+                                  </div>
+                                }
+                              </div>
+                            }
+                            @if (findeSabadoHorarios().length === 0) {
+                              <div class="px-2 py-3 text-center text-[10px] text-slate-400">No hay carreras configuradas</div>
+                            }
+                          </div>
+                        </div>
+                        @if (findeSabadoHorarios().length > 0) {
+                          <button (click)="resetHorariosDefault('refrigerio_finde')"
+                            class="mt-1 w-full py-1.5 text-[10px] font-medium text-amber-700 hover:bg-amber-50 border border-amber-300 rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1">
+                            <mat-icon class="text-[12px]">restart_alt</mat-icon>
+                            Restablecer por defecto
+                          </button>
+                        }
                       </div>
                     </div>
                     <!-- Domingo Schedule -->
-                    <div class="p-2 bg-indigo-50 rounded-xl">
-                      <p class="text-[10px] font-bold uppercase tracking-wider text-indigo-600 mb-2">Domingo - Desayuno</p>
-                      <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
-                        <div class="flex-1">
-                          <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Inicio</label>
-                          <input type="time" [ngModel]="desayunoConfig()?.hora_inicio"
-                            (ngModelChange)="updateTime('desayuno_finde', 'hora_inicio', $event)"
-                            class="w-full py-2 px-3 text-sm rounded-xl bg-white border border-indigo-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono text-slate-700">
+                    <div class="p-3 bg-indigo-50 rounded-xl space-y-2">
+                      <div class="flex items-center justify-between mb-1">
+                        <p class="text-[10px] font-bold uppercase tracking-wider text-indigo-600">Domingo - Desayuno</p>
+                        <div class="flex items-center gap-1">
+                          <button (click)="openDiasModal('desayuno_finde')"
+                            class="p-1 text-slate-400 hover:text-indigo-600 hover:bg-indigo-100 rounded-lg cursor-pointer">
+                            <mat-icon class="text-[14px]">calendar_month</mat-icon>
+                          </button>
                         </div>
-                        <div class="flex-1">
-                          <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Fin</label>
-                          <input type="time" [ngModel]="desayunoConfig()?.hora_fin"
-                            (ngModelChange)="updateTime('desayuno_finde', 'hora_fin', $event)"
-                            class="w-full py-2 px-3 text-sm rounded-xl bg-white border border-indigo-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono text-slate-700">
+                      </div>
+                      <p class="text-[9px] text-slate-400">{{ desayunoConfig()?.dias_activos?.join(', ') || 'domingos' }}</p>
+                      @if (editingFindeDomingo()) {
+                        <div class="anim-fade-in flex items-end gap-2">
+                          <div class="flex-1 flex flex-col sm:flex-row items-stretch sm:items-end gap-2">
+                            <div class="flex-1">
+                              <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Inicio</label>
+                              <input type="time" [value]="desayunoConfig()?.hora_inicio"
+                                (input)="editingFindeDomingoInicio.set($any($event.target).value)"
+                                class="w-full py-2 px-3 text-sm rounded-xl bg-white border border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono text-slate-700">
+                            </div>
+                            <div class="flex-1">
+                              <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Fin</label>
+                              <input type="time" [value]="desayunoConfig()?.hora_fin"
+                                (input)="editingFindeDomingoFin.set($any($event.target).value)"
+                                class="w-full py-2 px-3 text-sm rounded-xl bg-white border border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono text-slate-700">
+                            </div>
+                          </div>
+                          <div class="flex items-center gap-1 flex-shrink-0">
+                            <button (click)="saveCardHours('desayuno_finde', editingFindeDomingoInicio() || desayunoConfig()?.hora_inicio, editingFindeDomingoFin() || desayunoConfig()?.hora_fin, 'fin_de_semana_domingo')"
+                              class="p-2 text-green-600 hover:bg-green-50 rounded-lg cursor-pointer">
+                              <mat-icon class="text-[18px]">check</mat-icon>
+                            </button>
+                            <button (click)="editingFindeDomingo.set(false)"
+                              class="p-2 text-red-500 hover:bg-red-50 rounded-lg cursor-pointer">
+                              <mat-icon class="text-[18px]">close</mat-icon>
+                            </button>
+                          </div>
                         </div>
+                      } @else {
+                        <div class="flex items-end gap-2">
+                          <div class="flex-1 flex flex-col sm:flex-row items-stretch sm:items-end gap-2">
+                            <div class="flex-1">
+                              <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Inicio</label>
+                              <input type="time" [value]="desayunoConfig()?.hora_inicio" disabled
+                                class="w-full py-2 px-3 text-sm rounded-xl bg-white/60 border border-indigo-200 font-mono text-slate-400 cursor-not-allowed">
+                            </div>
+                            <div class="flex-1">
+                              <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Fin</label>
+                              <input type="time" [value]="desayunoConfig()?.hora_fin" disabled
+                                class="w-full py-2 px-3 text-sm rounded-xl bg-white/60 border border-indigo-200 font-mono text-slate-400 cursor-not-allowed">
+                            </div>
+                          </div>
+                          <button class="anim-fade-in p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-100 rounded-lg cursor-pointer flex-shrink-0"
+                            (click)="editingFindeDomingo.set(true); editingFindeDomingoInicio.set(desayunoConfig()?.hora_inicio || ''); editingFindeDomingoFin.set(desayunoConfig()?.hora_fin || '')">
+                            <mat-icon class="text-[18px]">edit</mat-icon>
+                          </button>
+                        </div>
+                      }
+                      <!-- Domingo Horarios expandable -->
+                      <button (click)="toggleExpandFindeDomingo()"
+                        class="flex items-center gap-2 w-full py-1.5 px-2 text-xs text-slate-600 hover:bg-white/60 rounded-lg transition-all cursor-pointer">
+                        <mat-icon class="text-[14px] transition-transform duration-300" [class.rotate-180]="expandedFindeDomingo()">expand_more</mat-icon>
+                        Horarios por carrera
+                        @if (getCustomCount(findeDomingoHorarios(), desayunoConfig()?.hora_fin) > 0) {
+                          <span class="ml-auto px-1.5 py-0.5 bg-amber-100 text-amber-700 text-[9px] font-bold rounded-full">{{ getCustomCount(findeDomingoHorarios(), desayunoConfig()?.hora_fin) }}personalizado</span>
+                        }
+                      </button>
+                      <div class="overflow-hidden transition-all duration-300 ease-in-out" [style.max-height]="expandedFindeDomingo() ? '400px' : '0px'" [style.opacity]="expandedFindeDomingo() ? '1' : '0'">
+                        <div class="border border-indigo-200 rounded-lg mt-1 bg-white">
+                          <div class="bg-slate-50 px-2 py-1.5 border-b border-slate-200">
+                            <span class="text-[9px] font-bold uppercase tracking-wider text-slate-500">Horario de cierre por carrera</span>
+                            <p class="text-[8px] text-slate-400 mt-0.5">Hora a la que deja de estar disponible cada carrera</p>
+                          </div>
+                          <div class="bg-slate-50 px-2 py-1.5 border-b border-slate-200 flex">
+                            <span class="text-[9px] font-bold uppercase tracking-wider text-slate-500 flex-1">Carrera</span>
+                            <span class="text-[9px] font-bold uppercase tracking-wider text-slate-500 w-28 text-center">Cierre</span>
+                            <span class="w-7"></span>
+                          </div>
+                          <div class="max-h-40 overflow-y-auto">
+                            @for (h of findeDomingoHorarios(); track h.id) {
+                              <div class="flex items-center gap-1.5 px-2 py-1.5 border-b border-slate-100 last:border-0">
+                                <span class="text-xs text-slate-700 flex-1 truncate">{{ h.carreras?.nombre || 'ID: ' + h.carrera_id }}</span>
+                                @if (editingHorarioId() === h.id) {
+                                  <div class="anim-fade-in flex items-center gap-1">
+                                    <input type="time" [value]="h.hora_cierre"
+                                      (input)="editingHorarioValue.set($any($event.target).value)"
+                                      class="w-28 py-0.5 px-1.5 text-[11px] rounded bg-indigo-50 border border-indigo-300 focus:outline-none focus:ring-1 focus:ring-indigo-500 font-mono text-slate-700">
+                                    <button (click)="saveHorario(h.id, editingHorarioValue() || h.hora_cierre)"
+                                      class="p-0.5 text-green-600 hover:bg-green-50 rounded cursor-pointer">
+                                      <mat-icon class="text-[14px]">check</mat-icon>
+                                    </button>
+                                    <button (click)="cancelEditHorario()"
+                                      class="p-0.5 text-red-500 hover:bg-red-50 rounded cursor-pointer">
+                                      <mat-icon class="text-[14px]">close</mat-icon>
+                                    </button>
+                                  </div>
+                                } @else {
+                                  <div class="anim-fade-in flex items-center gap-1">
+                                    <input type="time" [value]="h.hora_cierre" disabled
+                                      class="w-28 py-0.5 px-1.5 text-[11px] rounded bg-slate-100 border border-slate-200 font-mono text-slate-400 cursor-not-allowed">
+                                    <button (click)="editingHorarioId.set(h.id); editingHorarioValue.set(h.hora_cierre)"
+                                      class="p-0.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded cursor-pointer">
+                                      <mat-icon class="text-[14px]">edit</mat-icon>
+                                    </button>
+                                  </div>
+                                }
+                              </div>
+                            }
+                            @if (findeDomingoHorarios().length === 0) {
+                              <div class="px-2 py-3 text-center text-[10px] text-slate-400">No hay carreras configuradas</div>
+                            }
+                          </div>
+                        </div>
+                        @if (findeDomingoHorarios().length > 0) {
+                          <button (click)="resetHorariosDefault('desayuno_finde')"
+                            class="mt-1 w-full py-1.5 text-[10px] font-medium text-amber-700 hover:bg-amber-50 border border-amber-300 rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1">
+                            <mat-icon class="text-[12px]">restart_alt</mat-icon>
+                            Restablecer por defecto
+                          </button>
+                        }
                       </div>
                     </div>
                     <div class="flex items-center justify-between p-3 bg-violet-50 rounded-xl">
@@ -632,6 +1094,41 @@ interface WebConfirmacion {
         </div>
       </div>
     }
+
+    <!-- Dias Modal -->
+    @if (modalDias()) {
+      <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden">
+          <div class="bg-gradient-to-r from-blue-500 to-blue-600 p-4">
+            <h3 class="text-lg font-bold text-white">Dias de {{ modalDias()?.tipo }}</h3>
+            <p class="text-blue-100 text-xs mt-0.5">Selecciona los dias que funciona</p>
+          </div>
+          <div class="p-4 space-y-2">
+            @for (dia of ALL_DAYS; track dia) {
+              <label class="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 cursor-pointer transition-all"
+                [class.bg-blue-50]="modalDias()?.dias?.includes(dia)"
+                [class.border]="modalDias()?.dias?.includes(dia)"
+                [class.border-blue-300]="modalDias()?.dias?.includes(dia)">
+                <input type="checkbox" [checked]="modalDias()?.dias?.includes(dia)"
+                  (change)="toggleDiaModal(dia)"
+                  class="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+                <span class="text-sm font-medium text-slate-700 capitalize">{{ dia }}</span>
+              </label>
+            }
+          </div>
+          <div class="flex gap-2 p-4 border-t border-slate-100">
+            <button (click)="closeDiasModal()"
+              class="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-sm rounded-xl transition-all cursor-pointer">
+              Cancelar
+            </button>
+            <button (click)="saveDiasModal()"
+              class="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm rounded-xl transition-all cursor-pointer">
+              Guardar
+            </button>
+          </div>
+        </div>
+      </div>
+    }
   `
 })
 export class Formularios implements OnInit {
@@ -651,6 +1148,39 @@ export class Formularios implements OnInit {
   readonly carrerasHorarios = signal<any[]>([]);
   readonly carrerasDisponibles = signal<any[]>([]);
   readonly expandedForm = signal<string | null>(null);
+  readonly modalDias = signal<{ tipo: string; dias: string[] } | null>(null);
+  readonly editingHorarioId = signal<string | number | null>(null);
+  readonly editingGeneralHours = signal<boolean>(false);
+  readonly editingHorarioValue = signal<string>('');
+  readonly editingGeneralInicio = signal<string>('');
+  readonly editingGeneralFin = signal<string>('');
+  readonly editingAlmuerzo = signal<boolean>(false);
+  readonly editingAlmuerzoInicio = signal<string>('');
+  readonly editingAlmuerzoFin = signal<string>('');
+  readonly editingAdea = signal<boolean>(false);
+  readonly editingAdeaInicio = signal<string>('');
+  readonly editingAdeaFin = signal<string>('');
+  readonly editingFindeSabado = signal<boolean>(false);
+  readonly editingFindeSabadoInicio = signal<string>('');
+  readonly editingFindeSabadoFin = signal<string>('');
+  readonly editingFindeDomingo = signal<boolean>(false);
+  readonly editingFindeDomingoInicio = signal<string>('');
+  readonly editingFindeDomingoFin = signal<string>('');
+  readonly almuerzoHorarios = signal<any[]>([]);
+  readonly expandedAlmuerzo = signal<boolean>(false);
+  readonly adeaHorarios = signal<any[]>([]);
+  readonly expandedAdea = signal<boolean>(false);
+  readonly findeSabadoHorarios = signal<any[]>([]);
+  readonly expandedFindeSabado = signal<boolean>(false);
+  readonly findeDomingoHorarios = signal<any[]>([]);
+  readonly expandedFindeDomingo = signal<boolean>(false);
+
+  readonly ALL_DAYS = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'];
+
+  readonly carrerasCustomCount = computed(() => {
+    const defaultHora = (this.refrigerioConfig()?.hora_fin || '19:00').substring(0, 5);
+    return this.carrerasHorarios().filter(h => h.hora_cierre?.substring(0, 5) !== defaultHora).length;
+  });
   readonly modalConf = signal<{
     existe: boolean;
     estado: 'hoy' | 'otro_dia' | 'no_existe';
@@ -720,7 +1250,7 @@ export class Formularios implements OnInit {
   async refreshAll() {
     this.loading.set(true);
     try {
-      const [configData, respuestasData, carrerasData] = await Promise.all([
+      const [configData, respuestasData, carrerasData, horariosData] = await Promise.all([
         this.supabase.fetchFormConfig(),
         Promise.all([
           this.supabase.fetchWebConfirmaciones('almuerzo'),
@@ -728,11 +1258,13 @@ export class Formularios implements OnInit {
           this.supabase.fetchWebConfirmaciones('adea'),
           this.supabase.fetchWebConfirmaciones('fin_de_semana')
         ]).then(([a, r, ad, fs]) => [...a, ...r, ...ad, ...fs]),
-        this.supabase.fetchCarreras()
+        this.supabase.fetchCarreras(),
+        this.supabase.fetchCarreraHorarios('refrigerio')
       ]);
       this.config.set(configData);
       this.cafeteria.webConfirmaciones.set(respuestasData);
       this.carrerasDisponibles.set(carrerasData);
+      this.carrerasHorarios.set(horariosData);
     } catch (err) {
       console.error('[Formularios] Error loading data:', err);
     } finally {
@@ -790,10 +1322,137 @@ export class Formularios implements OnInit {
   toggleExpandForm(formTipo: string) {
     if (this.expandedForm() === formTipo) {
       this.expandedForm.set(null);
-      this.carrerasHorarios.set([]);
     } else {
       this.expandedForm.set(formTipo);
       this.loadCarreraHorarios(formTipo);
+    }
+  }
+
+  async saveCardHours(configTipo: string, horaInicio: string | undefined, horaFin: string | undefined, editSignalType: string) {
+    const cfg = this.config().find(c => c.tipo === configTipo);
+    if (!cfg) return;
+    try {
+      const patch: any = {};
+      if (horaInicio) patch.hora_inicio = horaInicio;
+      if (horaFin) patch.hora_fin = horaFin;
+      await this.supabase.updateFormConfig(cfg.id, patch);
+      this.config.update(cfgs => cfgs.map(c => c.tipo === configTipo ? { ...c, ...patch } : c));
+      if (editSignalType === 'almuerzo') this.editingAlmuerzo.set(false);
+      else if (editSignalType === 'adea') this.editingAdea.set(false);
+      else if (editSignalType === 'fin_de_semana_sabado') this.editingFindeSabado.set(false);
+      else if (editSignalType === 'fin_de_semana_domingo') this.editingFindeDomingo.set(false);
+      this.cafeteria.notify('success', 'Horario actualizado', 'Horarios actualizados');
+    } catch (err) {
+      console.error('[Formularios] Error updating card hours:', err);
+      this.cafeteria.notify('error', 'Error', 'No se pudo actualizar el horario');
+    }
+  }
+
+  openDiasModal(tipo: string) {
+    const cfg = this.config().find(c => c.tipo === tipo);
+    const dias = cfg?.dias_activos || [];
+    this.modalDias.set({ tipo, dias: [...dias] });
+  }
+
+  closeDiasModal() {
+    this.modalDias.set(null);
+  }
+
+  toggleDiaModal(dia: string) {
+    const m = this.modalDias();
+    if (!m) return;
+    const idx = m.dias.indexOf(dia);
+    if (idx >= 0) {
+      m.dias.splice(idx, 1);
+    } else {
+      m.dias.push(dia);
+    }
+    this.modalDias.set({ ...m, dias: [...m.dias] });
+  }
+
+  async saveDiasModal() {
+    const m = this.modalDias();
+    if (!m) return;
+    try {
+      const cfg = this.config().find(c => c.tipo === m.tipo);
+      if (cfg) {
+        await this.supabase.updateFormConfig(cfg.id, { dias_activos: m.dias });
+        this.config.update(configs =>
+          configs.map(c => c.tipo === m.tipo ? { ...c, dias_activos: m.dias } : c)
+        );
+        this.cafeteria.notify('success', 'Dias actualizados', `Dias del formulario ${m.tipo} actualizados`);
+      }
+      this.closeDiasModal();
+    } catch (err) {
+      console.error('[Formularios] Error saving dias:', err);
+      this.cafeteria.notify('error', 'Error', 'No se pudieron guardar los dias');
+    }
+  }
+
+  toggleExpandAlmuerzo() {
+    if (this.expandedAlmuerzo()) {
+      this.expandedAlmuerzo.set(false);
+    } else {
+      this.expandedAlmuerzo.set(true);
+      this.loadCardHorarios('almuerzo', this.almuerzoHorarios);
+    }
+  }
+
+  toggleExpandAdea() {
+    if (this.expandedAdea()) {
+      this.expandedAdea.set(false);
+    } else {
+      this.expandedAdea.set(true);
+      this.loadCardHorarios('almuerzo_adea', this.adeaHorarios);
+    }
+  }
+
+  toggleExpandFindeSabado() {
+    if (this.expandedFindeSabado()) {
+      this.expandedFindeSabado.set(false);
+    } else {
+      this.expandedFindeSabado.set(true);
+      this.loadCardHorarios('refrigerio_finde', this.findeSabadoHorarios);
+    }
+  }
+
+  toggleExpandFindeDomingo() {
+    if (this.expandedFindeDomingo()) {
+      this.expandedFindeDomingo.set(false);
+    } else {
+      this.expandedFindeDomingo.set(true);
+      this.loadCardHorarios('desayuno_finde', this.findeDomingoHorarios);
+    }
+  }
+
+  async loadCardHorarios(formTipo: string, targetSignal: typeof this.carrerasHorarios) {
+    try {
+      const data = await this.supabase.fetchCarreraHorarios(formTipo);
+      targetSignal.set(data);
+    } catch (err) {
+      console.error(`[Formularios] Error loading horarios for ${formTipo}:`, err);
+    }
+  }
+
+  getCustomCount(horarios: any[], defaultHoraFin: string | undefined): number {
+    const defaultHora = (defaultHoraFin || '').substring(0, 5);
+    return horarios.filter(h => h.hora_cierre?.substring(0, 5) !== defaultHora).length;
+  }
+
+  async resetHorariosDefault(formTipo: string) {
+    const cfg = this.config().find(c => c.tipo === formTipo);
+    const defaultHora = cfg?.hora_fin || '19:00';
+    try {
+      for (const h of this.carrerasHorarios()) {
+        if (h.hora_cierre !== defaultHora) {
+          await this.supabase.updateCarreraHorario(h.id, { hora_cierre: defaultHora });
+        }
+      }
+      await this.loadCarreraHorarios(formTipo);
+      this.cafeteria.notify('success', 'Horarios restablecidos', 'Todas las carreras ahora usan la hora general');
+    } catch (err) {
+      console.error('[Formularios] Error resetting:', err);
+      this.cafeteria.notify('error', 'Error', 'No se pudieron restablecer los horarios');
     }
   }
 
@@ -813,10 +1472,11 @@ export class Formularios implements OnInit {
     }
   }
 
-  async updateHorarioCierre(horarioId: number, horaCierre: string) {
+  async saveHorario(horarioId: string | number, horaCierre: string) {
     try {
-      await this.supabase.updateCarreraHorario(horarioId, { hora_cierre: horaCierre });
+      await this.supabase.updateCarreraHorario(Number(horarioId), { hora_cierre: horaCierre });
       this.carrerasHorarios.update(hs => hs.map(h => h.id === horarioId ? { ...h, hora_cierre: horaCierre } : h));
+      this.editingHorarioId.set(null);
       this.cafeteria.notify('success', 'Horario actualizado', 'Hora de cierre actualizada');
     } catch (err) {
       console.error('[Formularios] Error updating horario:', err);
@@ -824,14 +1484,24 @@ export class Formularios implements OnInit {
     }
   }
 
-  async toggleHorarioActivo(horarioId: number, activo: boolean) {
+  cancelEditHorario() {
+    this.editingHorarioId.set(null);
+  }
+
+  async saveGeneralHours(tipo: string, horaInicio: string | undefined, horaFin: string | undefined) {
+    const cfg = this.config().find(c => c.tipo === tipo);
+    if (!cfg) return;
     try {
-      await this.supabase.updateCarreraHorario(horarioId, { activo });
-      this.carrerasHorarios.update(hs => hs.map(h => h.id === horarioId ? { ...h, activo } : h));
-      this.cafeteria.notify('success', activo ? 'Carrera activada' : 'Carrera desactivada', 'Configuracion actualizada');
+      const patch: any = {};
+      if (horaInicio) patch.hora_inicio = horaInicio;
+      if (horaFin) patch.hora_fin = horaFin;
+      await this.supabase.updateFormConfig(cfg.id, patch);
+      this.config.update(cfgs => cfgs.map(c => c.tipo === tipo ? { ...c, ...patch } : c));
+      this.editingGeneralHours.set(false);
+      this.cafeteria.notify('success', 'Horario actualizado', 'Horarios generales actualizados');
     } catch (err) {
-      console.error('[Formularios] Error toggling horario:', err);
-      this.cafeteria.notify('error', 'Error', 'No se pudo actualizar');
+      console.error('[Formularios] Error updating general hours:', err);
+      this.cafeteria.notify('error', 'Error', 'No se pudo actualizar el horario');
     }
   }
 

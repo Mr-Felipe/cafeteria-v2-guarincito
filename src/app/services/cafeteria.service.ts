@@ -123,7 +123,8 @@ export class CafeteriaService {
       }
     }
 
-    const porcentaje = totalConfirmados > 0 ? Math.round((totalEntregados / totalConfirmados) * 100) : 0;
+    const baseParaPorcentaje = Math.max(totalConfirmados, totalEntregados);
+    const porcentaje = baseParaPorcentaje > 0 ? Math.round((totalEntregados / baseParaPorcentaje) * 100) : 0;
 
     return {
       totalConfirmados,
