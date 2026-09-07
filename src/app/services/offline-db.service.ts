@@ -190,6 +190,20 @@ export class OfflineDbService {
     await this.db.syncQueue.update(id, updates);
   }
 
+  async removePendingInsertsForCodigo(codigoId: string, fecha: string): Promise<void> {
+    const norm = (codigoId || '').replace(/^0+/, '') || '0';
+    const pending = await this.db.syncQueue
+      .where('tabla').equals('entregas')
+      .and(item => item.operacion === 'INSERT')
+      .toArray();
+    for (const item of pending) {
+      const datos = item.datos as Record<string, unknown>;
+      if (datos['codigo_id'] === norm && datos['fecha'] === fecha && item.id) {
+        await this.db.syncQueue.delete(item.id);
+      }
+    }
+  }
+
   async clearAllLocalData(): Promise<void> {
     await this.db.confirmaciones.clear();
     await this.db.entregas.clear();

@@ -561,6 +561,8 @@ export class CafeteriaService {
           await this.refreshPendingSyncCount();
         }
       } else {
+        // Cancel any pending INSERT for this same delivery in the sync queue
+        await this.offlineDb.removePendingInsertsForCodigo(entrega?.codigo_id || '', this.selectedDate());
         await this.offlineDb.addToSyncQueue({
           tabla: 'entregas', operacion: 'DELETE', datos: { id: entregaId, supabase_id: entrega?.supabase_id }
         });
