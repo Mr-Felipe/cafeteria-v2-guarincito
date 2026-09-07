@@ -131,12 +131,8 @@ export class OfflineDbService {
             codigo_id: norm 
           });
         } else {
-          // Don't pass id - let Dexie auto-generate it
-          const { id: _supabaseId, ...confWithoutId } = conf;
-          await this.db.confirmaciones.add({ 
-            ...confWithoutId, 
-            codigo_id: norm 
-          });
+          // Use Supabase ID if available for consistency with remote data
+          await this.db.confirmaciones.add({ ...conf, codigo_id: norm });
         }
       }
     });

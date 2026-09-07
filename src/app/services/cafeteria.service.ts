@@ -150,7 +150,16 @@ export class CafeteriaService {
       // Always try to load from local storage first (instant UI)
       const localConfs = await this.offlineDb.getConfirmacionesByFecha(fecha);
       const localEnts = await this.offlineDb.getEntregasByFecha(fecha);
-      this.confirmaciones.set(localConfs);
+
+      // Dedup local confirmaciones by codigo_id (old Dexie entries may have auto-generated IDs)
+      const confByCode = new Map<string, typeof localConfs[0]>();
+      for (const c of localConfs) {
+        const existing = confByCode.get(c.codigo_id);
+        if (!existing || (c.id && existing.id && c.id > existing.id)) {
+          confByCode.set(c.codigo_id, c);
+        }
+      }
+      this.confirmaciones.set(Array.from(confByCode.values()));
       this.entregas.set(localEnts);
 
       // If online, fetch fresh data from Supabase and update
@@ -160,8 +169,17 @@ export class CafeteriaService {
           this.supabase.fetchEntregas(fecha)
         ]);
         if (remoteConfs.status === 'fulfilled' && remoteConfs.value.length > 0) {
-          this.confirmaciones.set(remoteConfs.value);
-          await this.offlineDb.saveConfirmaciones(remoteConfs.value);
+          // Deduplicate by codigo_id (keep latest by id) before setting
+          const remoteByCode = new Map<string, typeof remoteConfs.value[0]>();
+          for (const c of remoteConfs.value) {
+            const existing = remoteByCode.get(c.codigo_id);
+            if (!existing || (c.id && existing.id && c.id > existing.id)) {
+              remoteByCode.set(c.codigo_id, c);
+            }
+          }
+          const deduped = Array.from(remoteByCode.values());
+          this.confirmaciones.set(deduped);
+          await this.offlineDb.saveConfirmaciones(deduped);
         }
         if (remoteEnts.status === 'fulfilled' && remoteEnts.value.length > 0) {
           this.entregas.set(remoteEnts.value);
@@ -198,8 +216,9 @@ export class CafeteriaService {
         const fechaHoy = this.selectedDate();
         const fechaHoyFmt = fechaHoy.split('-').reverse().join('/').substring(0, 10);
         if (newConf.fecha && newConf.fecha.startsWith(fechaHoyFmt)) {
+          // Dedup by codigo_id (not just id) to avoid duplicates from Dexie auto-generated IDs
           this.confirmaciones.update(list => {
-            if (list.some(c => c.id === newConf.id)) return list;
+            if (list.some(c => c.codigo_id === newConf.codigo_id)) return list;
             return [...list, newConf];
           });
           if (newConf.origen === 'WEB_FORM' && newConf.formulario_tipo) {
