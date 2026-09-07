@@ -212,19 +212,16 @@ export class CafeteriaService {
     const channel = client
       .channel('confirmaciones-changes')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'confirmaciones' }, (payload: any) => {
-        const newConf = payload.new as Confirmacion;
+        const raw = payload.new as any;
         const fechaHoy = this.selectedDate();
         const fechaHoyFmt = fechaHoy.split('-').reverse().join('/').substring(0, 10);
-        if (newConf.fecha && newConf.fecha.startsWith(fechaHoyFmt)) {
-          // Dedup by codigo_id (not just id) to avoid duplicates from Dexie auto-generated IDs
-          this.confirmaciones.update(list => {
-            if (list.some(c => c.codigo_id === newConf.codigo_id)) return list;
-            return [...list, newConf];
-          });
-          if (newConf.origen === 'WEB_FORM' && newConf.formulario_tipo) {
+        if (raw.fecha && raw.fecha.startsWith(fechaHoyFmt)) {
+          // Re-fetch full data with joins to avoid missing nombre/carrera
+          this.loadFechaData(fechaHoy);
+          if (raw.origen === 'WEB_FORM' && raw.formulario_tipo) {
             this.webConfirmaciones.update(list => {
-              if (list.some(c => c.id === newConf.id)) return list;
-              return [...list, newConf];
+              if (list.some(c => c.id === raw.id)) return list;
+              return [...list, raw];
             });
           }
         }
