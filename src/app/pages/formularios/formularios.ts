@@ -960,12 +960,24 @@ interface WebConfirmacion {
               <table class="w-full text-sm">
                 <thead>
                   <tr class="border-b border-slate-100 bg-slate-50/50">
-                    <th class="text-left py-3 px-4 text-[10px] font-bold uppercase tracking-wider text-slate-500">CONF</th>
-                    <th class="text-left py-3 px-4 text-[10px] font-bold uppercase tracking-wider text-slate-500">Codigo</th>
-                    <th class="text-left py-3 px-4 text-[10px] font-bold uppercase tracking-wider text-slate-500">Nombre</th>
-                    <th class="text-left py-3 px-4 text-[10px] font-bold uppercase tracking-wider text-slate-500">Carrera</th>
-                    <th class="text-left py-3 px-4 text-[10px] font-bold uppercase tracking-wider text-slate-500">Tipo</th>
-                    <th class="text-left py-3 px-4 text-[10px] font-bold uppercase tracking-wider text-slate-500">Fecha/Hora</th>
+                    <th (click)="toggleSort('id')" class="text-left py-3 px-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 cursor-pointer hover:text-slate-700 select-none transition-colors">
+                      <span class="inline-flex items-center gap-1">CONF <mat-icon class="text-[12px]">{{ sortIcon('id') }}</mat-icon></span>
+                    </th>
+                    <th (click)="toggleSort('codigo_id')" class="text-left py-3 px-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 cursor-pointer hover:text-slate-700 select-none transition-colors">
+                      <span class="inline-flex items-center gap-1">Codigo <mat-icon class="text-[12px]">{{ sortIcon('codigo_id') }}</mat-icon></span>
+                    </th>
+                    <th (click)="toggleSort('nombre_en_form')" class="text-left py-3 px-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 cursor-pointer hover:text-slate-700 select-none transition-colors">
+                      <span class="inline-flex items-center gap-1">Nombre <mat-icon class="text-[12px]">{{ sortIcon('nombre_en_form') }}</mat-icon></span>
+                    </th>
+                    <th (click)="toggleSort('carrera_en_form')" class="text-left py-3 px-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 cursor-pointer hover:text-slate-700 select-none transition-colors">
+                      <span class="inline-flex items-center gap-1">Carrera <mat-icon class="text-[12px]">{{ sortIcon('carrera_en_form') }}</mat-icon></span>
+                    </th>
+                    <th (click)="toggleSort('formulario_tipo')" class="text-left py-3 px-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 cursor-pointer hover:text-slate-700 select-none transition-colors">
+                      <span class="inline-flex items-center gap-1">Tipo <mat-icon class="text-[12px]">{{ sortIcon('formulario_tipo') }}</mat-icon></span>
+                    </th>
+                    <th (click)="toggleSort('fecha')" class="text-left py-3 px-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 cursor-pointer hover:text-slate-700 select-none transition-colors">
+                      <span class="inline-flex items-center gap-1">Fecha/Hora <mat-icon class="text-[12px]">{{ sortIcon('fecha') }}</mat-icon></span>
+                    </th>
                     <th class="text-center py-3 px-4 text-[10px] font-bold uppercase tracking-wider text-slate-500">Estado</th>
                     <th class="w-10"></th>
                   </tr>
@@ -1145,6 +1157,8 @@ export class Formularios implements OnInit {
   readonly filtroConf = signal('');
   readonly filtroFecha = signal(this.getTodayString());
   readonly highlightConf = signal<number | null>(null);
+  readonly sortColumn = signal<'id' | 'codigo_id' | 'nombre_en_form' | 'carrera_en_form' | 'formulario_tipo' | 'fecha'>('id');
+  readonly sortDirection = signal<'asc' | 'desc'>('desc');
   readonly carrerasHorarios = signal<any[]>([]);
   readonly carrerasDisponibles = signal<any[]>([]);
   readonly expandedForm = signal<string | null>(null);
@@ -1216,6 +1230,8 @@ export class Formularios implements OnInit {
     const busqueda = this.filtroGeneral().toLowerCase().trim();
     const conf = this.filtroConf().trim();
     const fechaFiltro = this.filtroFecha();
+    const sortCol = this.sortColumn();
+    const sortDir = this.sortDirection();
     let all = this.respuestas();
 
     if (tipo === 'almuerzo') all = all.filter(r => r.formulario_tipo === 'almuerzo');
@@ -1240,8 +1256,41 @@ export class Formularios implements OnInit {
       all = all.filter(r => String(r.id).padStart(4, '0') === conf.padStart(4, '0'));
     }
 
+    const getVal = (r: WebConfirmacion, col: string): string => {
+      switch (col) {
+        case 'id': return String(r.id).padStart(6, '0');
+        case 'codigo_id': return r.codigo_id || '';
+        case 'nombre_en_form': return r.nombre_en_form || '';
+        case 'carrera_en_form': return r.carrera_en_form || '';
+        case 'formulario_tipo': return r.formulario_tipo || '';
+        case 'fecha': return r.fecha || '';
+        default: return '';
+      }
+    };
+
+    all = [...all].sort((a, b) => {
+      const va = getVal(a, sortCol);
+      const vb = getVal(b, sortCol);
+      const cmp = va.localeCompare(vb, 'es', { numeric: true });
+      return sortDir === 'asc' ? cmp : -cmp;
+    });
+
     return all;
   });
+
+  toggleSort(col: 'id' | 'codigo_id' | 'nombre_en_form' | 'carrera_en_form' | 'formulario_tipo' | 'fecha') {
+    if (this.sortColumn() === col) {
+      this.sortDirection.update(d => d === 'asc' ? 'desc' : 'asc');
+    } else {
+      this.sortColumn.set(col);
+      this.sortDirection.set('desc');
+    }
+  }
+
+  sortIcon(col: string): string {
+    if (this.sortColumn() !== col) return 'unfold_more';
+    return this.sortDirection() === 'asc' ? 'expand_less' : 'expand_more';
+  }
 
   ngOnInit() {
     this.refreshAll();
