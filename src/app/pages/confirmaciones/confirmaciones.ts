@@ -740,10 +740,18 @@ export class Confirmaciones {
 
   readonly pendientesPorSubsidio = computed(() => {
     const tipo = this.filtroSubsidio();
-    const confs = this.cafeteriaService.confirmaciones().filter(c => c.es_beneficiario_valido && !c.motivo_alerta);
-    const filtered = tipo === 'Todos' ? confs : confs.filter(c => c.tipo_comida_nombre === tipo);
+    const all = this.cafeteriaService.confirmaciones().filter(c => c.es_beneficiario_valido && !c.motivo_alerta);
+    const filtered = tipo === 'Todos' ? all : all.filter(c => c.tipo_comida_nombre === tipo);
+    // Deduplicate by codigo_id (keep latest), same as confirmadosValidos
+    const latestByCode = new Map<string, typeof filtered[0]>();
+    for (const c of filtered) {
+      const existing = latestByCode.get(c.codigo_id);
+      if (!existing || (c.id && existing.id && c.id > existing.id)) {
+        latestByCode.set(c.codigo_id, c);
+      }
+    }
     const entregados = this.entregadasPorSubsidio();
-    return Math.max(0, filtered.length - entregados);
+    return Math.max(0, latestByCode.size - entregados);
   });
 
   readonly confirmadosExtranos = computed(() => {
