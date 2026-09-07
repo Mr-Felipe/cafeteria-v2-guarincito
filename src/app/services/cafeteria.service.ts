@@ -6,14 +6,12 @@ import {
   Confirmacion,
   DeliverySearchResult,
   Entrega,
-  Formulario,
   Carrera,
   TipoComida,
   Operador
 } from '../models/cafeteria.models';
 import {
   CARRERAS_INIT,
-  FORMULARIOS_INIT,
   OPERADORES_PREDETERMINADOS,
   TIPOS_COMIDA_INIT,
   getTodayDateStr
@@ -34,8 +32,7 @@ export class CafeteriaService {
   readonly webConfirmaciones = signal<any[]>([]);
   readonly carreras = signal<Carrera[]>(CARRERAS_INIT);
   readonly tiposComida = signal<TipoComida[]>(TIPOS_COMIDA_INIT);
-  readonly formularios = signal<Formulario[]>(FORMULARIOS_INIT);
-  
+
   readonly operadores = signal<Operador[]>(OPERADORES_PREDETERMINADOS);
   readonly currentOperador = signal<Operador>(OPERADORES_PREDETERMINADOS[0]);
   readonly selectedDate = signal<string>(getTodayDateStr());
@@ -255,13 +252,12 @@ export class CafeteriaService {
       const fecha = this.selectedDate();
 
       // Fetch master tables
-      const [remoteBens, remoteConfs, remoteEnts, remoteCarreras, remoteTipos, remoteForms] = await Promise.allSettled([
+      const [remoteBens, remoteConfs, remoteEnts, remoteCarreras, remoteTipos] = await Promise.allSettled([
         this.supabase.fetchBeneficiarios(),
         this.supabase.fetchConfirmaciones(fecha),
         this.supabase.fetchEntregas(fecha),
         this.supabase.fetchCarreras(),
-        this.supabase.fetchTiposComida(),
-        this.supabase.fetchFormularios()
+        this.supabase.fetchTiposComida()
       ]);
 
       if (remoteCarreras.status === 'fulfilled' && remoteCarreras.value.length > 0) {
@@ -279,9 +275,6 @@ export class CafeteriaService {
       }
       if (remoteTipos.status === 'fulfilled' && remoteTipos.value.length > 0) {
         this.tiposComida.set(remoteTipos.value);
-      }
-      if (remoteForms.status === 'fulfilled' && remoteForms.value.length > 0) {
-        this.formularios.set(remoteForms.value);
       }
 
       if (remoteBens.status === 'fulfilled' && remoteBens.value.length > 0) {

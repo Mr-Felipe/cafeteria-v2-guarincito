@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { SUPABASE_CONFIG } from '../data/initial-data';
-import { Beneficiario, Confirmacion, Entrega, Formulario, Carrera, TipoComida } from '../models/cafeteria.models';
+import { Beneficiario, Confirmacion, Entrega, Carrera, TipoComida } from '../models/cafeteria.models';
 
 interface SupabaseBeneficiarioRow {
   id?: number;
@@ -362,19 +362,6 @@ export class SupabaseService {
       .delete()
       .eq('id', id);
     if (error) throw error;
-  }
-
-  // --- Formularios ---
-  async fetchFormularios(): Promise<Formulario[]> {
-    if (!this.client) return [];
-    try {
-      const { data, error } = await this.client.from('formularios').select('*');
-      if (error) throw error;
-      return (data || []) as Formulario[];
-    } catch (err) {
-      console.warn('[Supabase] fetchFormularios falló:', err);
-      return [];
-    }
   }
 
   // --- Carreras & Tipos de Comida ---

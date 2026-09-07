@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import Dexie, { Table } from 'dexie';
-import { Beneficiario, Confirmacion, Entrega, SyncQueueItem, Carrera, TipoComida, Formulario } from '../models/cafeteria.models';
-import { BENEFICIARIOS_SEED, CARRERAS_INIT, FORMULARIOS_INIT, generateSeedConfirmaciones, generateSeedEntregas, TIPOS_COMIDA_INIT } from '../data/initial-data';
+import { Beneficiario, Confirmacion, Entrega, SyncQueueItem, Carrera, TipoComida } from '../models/cafeteria.models';
+import { BENEFICIARIOS_SEED, CARRERAS_INIT, generateSeedConfirmaciones, generateSeedEntregas, TIPOS_COMIDA_INIT } from '../data/initial-data';
 
 export class CafeteriaDexieDB extends Dexie {
   beneficiarios!: Table<Beneficiario, number>;
@@ -10,7 +10,6 @@ export class CafeteriaDexieDB extends Dexie {
   syncQueue!: Table<SyncQueueItem, number>;
   carreras!: Table<Carrera, number>;
   tiposComida!: Table<TipoComida, number>;
-  formularios!: Table<Formulario, number>;
 
   constructor() {
     super('CafeteriaDB');
@@ -20,8 +19,7 @@ export class CafeteriaDexieDB extends Dexie {
       entregas: '++id, supabase_id, codigo_id, fecha, [codigo_id+fecha], estado, tipo_comida_id',
       syncQueue: '++id, tabla, operacion, timestamp, reintentos',
       carreras: '++id, nombre, jornada',
-      tiposComida: '++id, nombre',
-      formularios: '++id, slug'
+      tiposComida: '++id, nombre'
     });
   }
 }
@@ -48,7 +46,6 @@ export class OfflineDbService {
         // Use bulkPut which handles existing records gracefully
         await this.db.carreras.bulkPut(CARRERAS_INIT);
         await this.db.tiposComida.bulkPut(TIPOS_COMIDA_INIT);
-        await this.db.formularios.bulkPut(FORMULARIOS_INIT);
         console.log('[OfflineDB] Base de datos local inicializada con éxito.');
       }
     } catch (err) {

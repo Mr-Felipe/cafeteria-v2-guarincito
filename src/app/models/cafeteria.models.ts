@@ -92,20 +92,6 @@ export interface Entrega {
   created_offline?: boolean;
 }
 
-export interface Formulario {
-  id: number;
-  nombre: string;
-  slug: string;
-  tipo_comida_id: number;
-  tipo_jornada?: string;
-  url_sheet: string;
-  url_form?: string;
-  horario?: string;
-  activo: boolean;
-  ultima_sincronizacion?: string;
-  total_respuestas: number;
-}
-
 export interface SyncQueueItem {
   id?: number;
   tabla: 'entregas' | 'confirmaciones' | 'beneficiarios';

@@ -1,4 +1,4 @@
-import { Carrera, TipoComida, Formulario, Beneficiario, Confirmacion, Entrega, Operador } from '../models/cafeteria.models';
+import { Carrera, TipoComida, Beneficiario, Confirmacion, Entrega, Operador } from '../models/cafeteria.models';
 
 export const SUPABASE_CONFIG = {
   url: 'https://doztchubrnjlcxpzbhgt.supabase.co',
@@ -31,61 +31,6 @@ export const CARRERAS_INIT: Carrera[] = [
   { id: 9, nombre: 'ADEA', jornada: 'Fin de semana', activo: true, servicioDefecto: 'Almuerzo', diasServicio: 'Sábados' },
   { id: 10, nombre: 'REGENCIA', jornada: 'Fin de semana', activo: true, servicioDefecto: 'Refrigerio/Desayuno', diasServicio: 'Sáb (Ref) / Dom (Des)' },
   { id: 11, nombre: 'TECNICO EN PROCESOS', jornada: 'Fin de semana', activo: true, servicioDefecto: 'Refrigerio/Desayuno', diasServicio: 'Sáb (Ref) / Dom (Des)' }
-];
-
-export const FORMULARIOS_INIT: Formulario[] = [
-  {
-    id: 1,
-    nombre: 'Almuerzo Diurno',
-    slug: 'almuerzo-diurno',
-    tipo_comida_id: 2,
-    tipo_jornada: 'Diurna',
-    url_sheet: '',
-    url_form: '',
-    horario: '11:30 AM - 02:30 PM',
-    activo: true,
-    ultima_sincronizacion: new Date().toISOString(),
-    total_respuestas: 0
-  },
-  {
-    id: 2,
-    nombre: 'Refrigerio Nocturno',
-    slug: 'refrigerio-noche',
-    tipo_comida_id: 3,
-    tipo_jornada: 'Nocturna',
-    url_sheet: '',
-    url_form: '',
-    horario: '06:30 PM - 08:30 PM',
-    activo: true,
-    ultima_sincronizacion: new Date().toISOString(),
-    total_respuestas: 0
-  },
-  {
-    id: 3,
-    nombre: 'ADEA - Almuerzo Sabado',
-    slug: 'adea-almuerzo',
-    tipo_comida_id: 2,
-    tipo_jornada: 'Fin de semana',
-    url_sheet: '',
-    url_form: '',
-    horario: 'Sabado 05:00 AM - 10:08 AM',
-    activo: true,
-    ultima_sincronizacion: new Date().toISOString(),
-    total_respuestas: 0
-  },
-  {
-    id: 4,
-    nombre: 'Fin de Semana - Regencia / Tecnico',
-    slug: 'fin-de-semana',
-    tipo_comida_id: 3,
-    tipo_jornada: 'Fin de semana',
-    url_sheet: '',
-    url_form: '',
-    horario: 'Sab Refrigerio 5AM-6PM | Dom Desayuno 5AM-8:30AM',
-    activo: true,
-    ultima_sincronizacion: new Date().toISOString(),
-    total_respuestas: 0
-  }
 ];
 
 export const BENEFICIARIOS_SEED: Beneficiario[] = [
