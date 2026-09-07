@@ -263,14 +263,13 @@ import { getVisualCarrera } from '../../models/cafeteria.models';
                   <span class="flex items-center gap-1">Tipo Servicio <span class="text-[9px] text-slate-400">{{ sortIcon('tipo') }}</span></span>
                 </th>
                 <th class="py-3 px-4">Confirmacion</th>
-                <th class="py-3 px-4">Estado</th>
                 <th class="py-3 px-4 text-center">Acciones</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100 font-normal text-slate-700">
               @if (filteredEntregas().length === 0) {
                 <tr>
-                  <td colspan="9" class="py-12 text-center text-slate-400">
+                  <td colspan="8" class="py-12 text-center text-slate-400">
                     <div class="w-16 h-16 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-3">
                       <mat-icon [style.fontSize.px]="32">task_alt</mat-icon>
                     </div>
@@ -367,21 +366,6 @@ import { getVisualCarrera } from '../../models/cafeteria.models';
                         <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300">
                           <mat-icon [style.fontSize.px]="12">warning</mat-icon>
                           SIN CONFIRMAR
-                        </span>
-                      }
-                    </td>
-
-                    <!-- Estado -->
-                    <td class="py-3 px-4">
-                      @if (entrega.estado === 'ENTREGADO') {
-                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-bold text-[10px] bg-emerald-100 text-emerald-800 border border-emerald-300">
-                          <mat-icon [style.fontSize.px]="12">check</mat-icon>
-                          ENTREGADO
-                        </span>
-                      } @else {
-                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-bold text-[10px] bg-red-100 text-red-800 border border-red-300">
-                          <mat-icon [style.fontSize.px]="12">undo</mat-icon>
-                          REVERTIDO
                         </span>
                       }
                     </td>
