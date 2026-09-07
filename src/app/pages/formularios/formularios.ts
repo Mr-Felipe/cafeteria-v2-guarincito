@@ -961,22 +961,22 @@ interface WebConfirmacion {
                 <thead>
                   <tr class="border-b border-slate-100 bg-slate-50/50">
                     <th (click)="toggleSort('id')" class="text-left py-3 px-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 cursor-pointer hover:text-slate-700 select-none transition-colors">
-                      <span class="inline-flex items-center gap-1">CONF <mat-icon class="text-[12px]">{{ sortIcon('id') }}</mat-icon></span>
+                      <span class="flex items-center gap-1">CONF <span class="text-[9px] text-slate-400">{{ sortIcon('id') }}</span></span>
                     </th>
                     <th (click)="toggleSort('codigo_id')" class="text-left py-3 px-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 cursor-pointer hover:text-slate-700 select-none transition-colors">
-                      <span class="inline-flex items-center gap-1">Codigo <mat-icon class="text-[12px]">{{ sortIcon('codigo_id') }}</mat-icon></span>
+                      <span class="flex items-center gap-1">Codigo <span class="text-[9px] text-slate-400">{{ sortIcon('codigo_id') }}</span></span>
                     </th>
                     <th (click)="toggleSort('nombre_en_form')" class="text-left py-3 px-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 cursor-pointer hover:text-slate-700 select-none transition-colors">
-                      <span class="inline-flex items-center gap-1">Nombre <mat-icon class="text-[12px]">{{ sortIcon('nombre_en_form') }}</mat-icon></span>
+                      <span class="flex items-center gap-1">Nombre <span class="text-[9px] text-slate-400">{{ sortIcon('nombre_en_form') }}</span></span>
                     </th>
                     <th (click)="toggleSort('carrera_en_form')" class="text-left py-3 px-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 cursor-pointer hover:text-slate-700 select-none transition-colors">
-                      <span class="inline-flex items-center gap-1">Carrera <mat-icon class="text-[12px]">{{ sortIcon('carrera_en_form') }}</mat-icon></span>
+                      <span class="flex items-center gap-1">Carrera <span class="text-[9px] text-slate-400">{{ sortIcon('carrera_en_form') }}</span></span>
                     </th>
                     <th (click)="toggleSort('formulario_tipo')" class="text-left py-3 px-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 cursor-pointer hover:text-slate-700 select-none transition-colors">
-                      <span class="inline-flex items-center gap-1">Tipo <mat-icon class="text-[12px]">{{ sortIcon('formulario_tipo') }}</mat-icon></span>
+                      <span class="flex items-center gap-1">Tipo <span class="text-[9px] text-slate-400">{{ sortIcon('formulario_tipo') }}</span></span>
                     </th>
                     <th (click)="toggleSort('fecha')" class="text-left py-3 px-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 cursor-pointer hover:text-slate-700 select-none transition-colors">
-                      <span class="inline-flex items-center gap-1">Fecha/Hora <mat-icon class="text-[12px]">{{ sortIcon('fecha') }}</mat-icon></span>
+                      <span class="flex items-center gap-1">Fecha/Hora <span class="text-[9px] text-slate-400">{{ sortIcon('fecha') }}</span></span>
                     </th>
                     <th class="text-center py-3 px-4 text-[10px] font-bold uppercase tracking-wider text-slate-500">Estado</th>
                     <th class="w-10"></th>
@@ -1288,8 +1288,8 @@ export class Formularios implements OnInit {
   }
 
   sortIcon(col: string): string {
-    if (this.sortColumn() !== col) return 'unfold_more';
-    return this.sortDirection() === 'asc' ? 'expand_less' : 'expand_more';
+    if (this.sortColumn() !== col) return '';
+    return this.sortDirection() === 'asc' ? '▲' : '▼';
   }
 
   ngOnInit() {
