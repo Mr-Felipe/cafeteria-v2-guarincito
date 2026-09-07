@@ -150,15 +150,25 @@ export class CafeteriaService {
 
   private async loadFechaData(fecha: string): Promise<void> {
     try {
-      const [remoteConfs, remoteEnts] = await Promise.allSettled([
-        this.supabase.fetchConfirmaciones(fecha),
-        this.supabase.fetchEntregas(fecha)
-      ]);
-      if (remoteConfs.status === 'fulfilled') {
-        this.confirmaciones.set(remoteConfs.value);
-      }
-      if (remoteEnts.status === 'fulfilled') {
-        this.entregas.set(remoteEnts.value);
+      // Always try to load from local storage first (instant UI)
+      const localConfs = await this.offlineDb.getConfirmacionesByFecha(fecha);
+      const localEnts = await this.offlineDb.getEntregasByFecha(fecha);
+      this.confirmaciones.set(localConfs);
+      this.entregas.set(localEnts);
+
+      // If online, fetch fresh data from Supabase and update
+      if (this.isOnline() && this.supabase.isConnected) {
+        const [remoteConfs, remoteEnts] = await Promise.allSettled([
+          this.supabase.fetchConfirmaciones(fecha),
+          this.supabase.fetchEntregas(fecha)
+        ]);
+        if (remoteConfs.status === 'fulfilled' && remoteConfs.value.length > 0) {
+          this.confirmaciones.set(remoteConfs.value);
+          await this.offlineDb.saveConfirmaciones(remoteConfs.value);
+        }
+        if (remoteEnts.status === 'fulfilled' && remoteEnts.value.length > 0) {
+          this.entregas.set(remoteEnts.value);
+        }
       }
     } catch (err) {
       console.warn('[CafeteriaService] Error cargando datos por fecha:', err);
@@ -531,8 +541,13 @@ export class CafeteriaService {
       // Use database function for atomic operation
       if (this.isOnline() && this.supabase.isConnected) {
         try {
-          const supabaseId = entrega?.supabase_id || entregaId;
-          await this.supabase.rpc('fn_revertir_entrega', { p_entrega_id: supabaseId });
+          const supabaseId = entrega?.supabase_id;
+          if (supabaseId) {
+            await this.supabase.rpc('fn_revertir_entrega', { p_entrega_id: supabaseId });
+          } else {
+            // Delivery was created offline and not synced yet - just remove from sync queue INSERT if exists
+            console.log('[CafeteriaService] Entrega sin supabase_id, omitiendo RPC');
+          }
         } catch {
           await this.offlineDb.addToSyncQueue({
             tabla: 'entregas', operacion: 'DELETE', datos: { id: entregaId, supabase_id: entrega?.supabase_id }
@@ -841,9 +856,12 @@ export class CafeteriaService {
         } else if (item.tabla === 'entregas' && item.operacion === 'DELETE') {
           const rawData = item.datos as Record<string, unknown>;
           const localId = rawData['id'] as number;
-          // Buscar la entrega local para obtener el supabase_id
-          const entregaLocal = await this.offlineDb.rawDb.entregas.get(localId);
-          const supabaseId = entregaLocal?.supabase_id || rawData['supabase_id'];
+          // Try to get supabase_id from local DB first, then from queue data
+          let supabaseId = rawData['supabase_id'] as number | undefined;
+          if (!supabaseId && localId) {
+            const entregaLocal = await this.offlineDb.rawDb.entregas.get(localId);
+            supabaseId = entregaLocal?.supabase_id ?? undefined;
+          }
           if (supabaseId) {
             await this.supabase.rpc('fn_revertir_entrega', { p_entrega_id: supabaseId });
           }
