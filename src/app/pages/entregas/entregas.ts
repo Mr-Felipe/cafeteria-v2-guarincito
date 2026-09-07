@@ -211,13 +211,20 @@ import { getVisualCarrera } from '../../models/cafeteria.models';
             </button>
           </div>
           <div class="flex items-center gap-1.5 text-xs ml-auto">
-            <span class="text-slate-400 font-semibold">Ordenar:</span>
-            <select id="filter-entregas-orden" [formControl]="ordenControl" class="bg-slate-50 border border-slate-200 text-slate-700 text-xs rounded-md px-2 py-1.5 focus:bg-white cursor-pointer">
-              <option value="hora_desc">Mas recientes</option>
-              <option value="hora_asc">Mas antiguos</option>
-              <option value="nombre">Nombre (A-Z)</option>
-              <option value="codigo">Codigo ID</option>
-            </select>
+            <span class="text-slate-400 font-semibold">Confirmacion:</span>
+            <div class="flex bg-slate-100 rounded-lg p-0.5 gap-0.5">
+              @for (opt of ['Todos', 'Confirmado', 'Sin Confirmar']; track opt) {
+                <button type="button" (click)="filtroConfirmacion.set(opt)"
+                  class="px-2.5 py-1 rounded-md text-[11px] font-medium transition-all cursor-pointer"
+                  [class.bg-white]="filtroConfirmacion() === opt"
+                  [class.shadow-xs]="filtroConfirmacion() === opt"
+                  [class.text-slate-900]="filtroConfirmacion() === opt"
+                  [class.font-bold]="filtroConfirmacion() === opt"
+                  [class.text-slate-500]="filtroConfirmacion() !== opt">
+                  {{ opt }}
+                </button>
+              }
+            </div>
           </div>
         </div>
       </div>
@@ -227,9 +234,8 @@ import { getVisualCarrera } from '../../models/cafeteria.models';
         <div class="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
           <div class="flex items-center gap-2">
             <mat-icon [style.fontSize.px]="20" class="text-emerald-600">fact_check</mat-icon>
-            <h3 class="text-sm font-bold text-slate-800">
-              Listado de Raciones Despachadas ({{ filteredEntregas().length }})
-            </h3>
+            <h3 class="text-sm font-bold text-slate-800">Listado de Raciones Despachadas</h3>
+            <span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded-full text-xs font-bold">{{ filteredEntregas().length }}</span>
           </div>
           <span class="text-xs text-slate-500 font-medium">
             Fecha: {{ cafeteriaService.selectedDate() }}
@@ -478,12 +484,11 @@ export class Entregas {
 
   readonly searchControl = new FormControl<string>('');
   readonly carreraControl = new FormControl<string>('TODAS', { nonNullable: true });
-  readonly ordenControl = new FormControl<string>('hora_desc', { nonNullable: true });
 
   readonly searchQuery = toSignal(this.searchControl.valueChanges, { initialValue: '' });
   readonly selectedCarrera = toSignal(this.carreraControl.valueChanges, { initialValue: 'TODAS' });
-  readonly selectedOrden = toSignal(this.ordenControl.valueChanges, { initialValue: 'hora_desc' });
   readonly filtroSubsidio = signal<string>('Todos');
+  readonly filtroConfirmacion = signal<string>('Todos');
   readonly busquedaConf = signal('');
   readonly resultadoConf = signal<{existe: boolean; confId?: number; codigo?: string; nombre?: string; carrera?: string; hora?: string; tipo?: string; mensaje?: string} | null>(null);
 
@@ -528,7 +533,7 @@ export class Entregas {
     const query = (this.searchQuery() || '').trim().toLowerCase();
     const carrera = this.selectedCarrera() || 'TODAS';
     const subsidio = this.filtroSubsidio();
-    const orden = this.selectedOrden() || 'hora_desc';
+    const filtroConf = this.filtroConfirmacion();
 
     let filtered = list.filter(e => {
       if (query) {
@@ -547,12 +552,19 @@ export class Entregas {
         if (e.tipo_comida_nombre !== subsidio) return false;
       }
 
+      if (filtroConf === 'Confirmado') {
+        if (!e.confirmacion_id) return false;
+      } else if (filtroConf === 'Sin Confirmar') {
+        if (e.confirmacion_id) return false;
+      }
+
       return true;
     });
 
-    // Sort
-    const [col, dir] = orden.split('_');
-    if (col && dir) {
+    // Sort by column header click
+    const col = this.sortColumn();
+    const dir = this.sortDirection();
+    if (col) {
       filtered.sort((a, b) => {
         let av: string;
         let bv: string;
@@ -561,6 +573,7 @@ export class Entregas {
           case 'codigo': av = a.codigo_id; bv = b.codigo_id; break;
           case 'nombre': av = a.beneficiario_nombre || ''; bv = b.beneficiario_nombre || ''; break;
           case 'carrera': av = a.carrera_nombre || ''; bv = b.carrera_nombre || ''; break;
+          case 'tipo': av = a.tipo_comida_nombre || ''; bv = b.tipo_comida_nombre || ''; break;
           default: return 0;
         }
         const cmp = av.localeCompare(bv, 'es', { sensitivity: 'base' });

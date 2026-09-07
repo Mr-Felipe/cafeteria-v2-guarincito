@@ -52,7 +52,7 @@ import { Beneficiario, Confirmacion, getVisualCarrera } from '../../models/cafet
         </div>
       }
 
-      <!-- FILTROS: TIPO + FECHA -->
+      <!-- FILTROS: TIPO + FECHA + ORDEN -->
       <div class="bg-white border border-slate-200 rounded-xl shadow-sm p-4 sm:p-5">
         <div class="flex flex-col md:flex-row md:items-end gap-4">
           <!-- Tipo de Subsidio -->
@@ -62,6 +62,23 @@ import { Beneficiario, Confirmacion, getVisualCarrera } from '../../models/cafet
               @for (op of subsidioOpciones(); track op.key) {
                 <button type="button" (click)="filtroSubsidio.set(op.key)" class="py-2 px-1 sm:px-2.5 rounded-md text-[11px] sm:text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer font-medium overflow-hidden" [class.bg-white]="filtroSubsidio() === op.key" [class.text-slate-900]="op.color === 'slate' && filtroSubsidio() === op.key" [class.text-emerald-700]="op.color === 'emerald' && filtroSubsidio() === op.key" [class.text-blue-700]="op.color === 'blue' && filtroSubsidio() === op.key" [class.text-orange-700]="op.color === 'orange' && filtroSubsidio() === op.key" [class.font-bold]="filtroSubsidio() === op.key" [class.shadow-xs]="filtroSubsidio() === op.key" [class.text-slate-600]="filtroSubsidio() !== op.key">
                   <mat-icon [style.fontSize.px]="20" class="shrink-0">{{ op.icon }}</mat-icon><span class="hidden sm:inline truncate">{{ op.label }}</span>
+                </button>
+              }
+            </div>
+          </div>
+          <!-- Ordenar por -->
+          <div class="w-full md:w-auto">
+            <span class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">Ordenar por</span>
+            <div class="flex bg-slate-100 p-1 rounded-lg gap-1 border border-slate-200">
+              @for (opt of [{key:'hora', label:'Hora'}, {key:'codigo', label:'Codigo'}, {key:'nombre', label:'Nombre'}, {key:'carrera', label:'Carrera'}]; track opt.key) {
+                <button type="button" (click)="onSort(opt.key)"
+                  class="px-2.5 py-1.5 rounded-md text-[11px] font-medium transition-all cursor-pointer flex items-center gap-1"
+                  [class.bg-white]="sortColumn() === opt.key"
+                  [class.shadow-xs]="sortColumn() === opt.key"
+                  [class.text-slate-900]="sortColumn() === opt.key"
+                  [class.font-bold]="sortColumn() === opt.key"
+                  [class.text-slate-500]="sortColumn() !== opt.key">
+                  {{ opt.label }} <span class="text-[9px]">{{ sortIcon(opt.key) }}</span>
                 </button>
               }
             </div>
@@ -627,6 +644,8 @@ export class Confirmaciones {
   private readonly supabase = inject(SupabaseService);
 
   readonly filtroSubsidio = signal<string>('Todos');
+  readonly sortColumn = signal<string>('hora');
+  readonly sortDirection = signal<'asc' | 'desc'>('desc');
 
   readonly subsidioOpciones = computed(() => {
     const dow = this.cafeteriaService.selectedDayOfWeek();
@@ -789,6 +808,25 @@ export class Confirmaciones {
         (c.carrera_nombre && c.carrera_nombre.toLowerCase().includes(busq))
       );
     }
+
+    const col = this.sortColumn();
+    const dir = this.sortDirection();
+    if (col) {
+      list = [...list].sort((a, b) => {
+        let av: string;
+        let bv: string;
+        switch (col) {
+          case 'hora': av = a.fecha || ''; bv = b.fecha || ''; break;
+          case 'codigo': av = a.codigo_id; bv = b.codigo_id; break;
+          case 'nombre': av = a.beneficiario_nombre || a.nombre_en_form || ''; bv = b.beneficiario_nombre || b.nombre_en_form || ''; break;
+          case 'carrera': av = a.carrera_nombre || ''; bv = b.carrera_nombre || ''; break;
+          default: return 0;
+        }
+        const cmp = av.localeCompare(bv, 'es', { sensitivity: 'base' });
+        return dir === 'asc' ? cmp : -cmp;
+      });
+    }
+
     return list;
   });
 
@@ -806,6 +844,25 @@ export class Confirmaciones {
         (c.beneficiario_nombre && c.beneficiario_nombre.toLowerCase().includes(busq))
       );
     }
+
+    const col = this.sortColumn();
+    const dir = this.sortDirection();
+    if (col) {
+      list = [...list].sort((a, b) => {
+        let av: string;
+        let bv: string;
+        switch (col) {
+          case 'hora': av = a.fecha || ''; bv = b.fecha || ''; break;
+          case 'codigo': av = a.codigo_id; bv = b.codigo_id; break;
+          case 'nombre': av = a.beneficiario_nombre || a.nombre_en_form || ''; bv = b.beneficiario_nombre || b.nombre_en_form || ''; break;
+          case 'carrera': av = a.carrera_en_form || a.carrera_nombre || ''; bv = b.carrera_en_form || b.carrera_nombre || ''; break;
+          default: return 0;
+        }
+        const cmp = av.localeCompare(bv, 'es', { sensitivity: 'base' });
+        return dir === 'asc' ? cmp : -cmp;
+      });
+    }
+
     return list;
   });
 
@@ -846,6 +903,20 @@ export class Confirmaciones {
     const parts = name.trim().split(' ').filter(Boolean);
     if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
     return name.slice(0, 2).toUpperCase();
+  }
+
+  onSort(col: string): void {
+    if (this.sortColumn() === col) {
+      this.sortDirection.update(d => d === 'asc' ? 'desc' : 'asc');
+    } else {
+      this.sortColumn.set(col);
+      this.sortDirection.set('desc');
+    }
+  }
+
+  sortIcon(col: string): string {
+    if (this.sortColumn() !== col) return '';
+    return this.sortDirection() === 'asc' ? '\u25B2' : '\u25BC';
   }
 
   onDateChange(e: Event): void {
