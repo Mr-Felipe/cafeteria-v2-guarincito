@@ -906,12 +906,14 @@ interface WebConfirmacion {
                 <p class="text-xs text-slate-500 mt-0.5">Confirmaciones enviadas desde formularios web</p>
               </div>
               <div class="flex flex-wrap items-center gap-3">
-                <!-- Date filter -->
-                <div class="flex items-center gap-2">
-                  <mat-icon class="text-slate-400 text-[18px]">calendar_today</mat-icon>
+                <!-- Date filter with arrows -->
+                <div class="flex items-center gap-1.5">
+                  <button type="button" (click)="shiftDate(-1)" class="p-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg border border-slate-200 transition-colors cursor-pointer shrink-0"><mat-icon [style.fontSize.px]="20">chevron_left</mat-icon></button>
                   <input type="date" [value]="filtroFecha()" (input)="filtroFecha.set($any($event.target).value)"
-                    class="py-1.5 px-3 text-xs font-medium rounded-lg bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-500 text-slate-700 cursor-pointer">
-                  @if (filtroFecha()) {
+                    class="py-1.5 px-3 text-xs font-semibold rounded-lg bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-500 text-slate-800 cursor-pointer"/>
+                  <button type="button" (click)="shiftDate(1)" class="p-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg border border-slate-200 transition-colors cursor-pointer shrink-0"><mat-icon [style.fontSize.px]="20">chevron_right</mat-icon></button>
+                  <button type="button" (click)="filtroFecha.set(getTodayString())" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg border border-slate-200 cursor-pointer shrink-0">Hoy</button>
+                  @if (filtroFecha() !== getTodayString()) {
                     <button (click)="filtroFecha.set('')"
                       class="p-1 bg-slate-200 hover:bg-slate-300 text-slate-600 rounded-md cursor-pointer transition-colors">
                       <mat-icon class="text-[12px]">close</mat-icon>
@@ -1560,10 +1562,18 @@ export class Formularios implements OnInit {
     return parts.length > 1 ? parts[1] : fecha;
   }
 
-  private getTodayString(): string {
+  getTodayString(): string {
     const now = new Date();
     const pad = (n: number) => String(n).padStart(2, '0');
     return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+  }
+
+  shiftDate(days: number): void {
+    const current = this.filtroFecha() || this.getTodayString();
+    const d = new Date(current + 'T12:00:00');
+    d.setDate(d.getDate() + days);
+    const pad = (n: number) => String(n).padStart(2, '0');
+    this.filtroFecha.set(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`);
   }
 
   private isToday(fecha: string): boolean {
