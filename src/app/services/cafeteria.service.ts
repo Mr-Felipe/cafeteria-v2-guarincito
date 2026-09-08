@@ -331,6 +331,11 @@ export class CafeteriaService {
     return withoutLeadingZeros || '0';
   }
 
+  removeAccents(text: string): string {
+    if (!text) return '';
+    return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  }
+
   searchBeneficiarioOrConfirmacion(query: string): DeliverySearchResult | null {
     if (!query || !query.trim()) return null;
 

@@ -193,6 +193,10 @@ import { getVisualCarrera } from '../../models/cafeteria.models';
               type="text"
               [formControl]="searchControl"
               placeholder="Buscar por nombre, codigo o carrera..."
+              autocorrect="off"
+              autocapitalize="off"
+              spellcheck="false"
+              inputmode="search"
               class="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
             />
           </div>
@@ -523,8 +527,8 @@ export class Entregas {
       if (query) {
         const normCode = this.cafeteriaService.normalizeCode(e.codigo_id);
         const matchCode = e.codigo_id.includes(query) || normCode.includes(query);
-        const matchName = e.beneficiario_nombre?.toLowerCase().includes(query);
-        const matchCarrera = e.carrera_nombre?.toLowerCase().includes(query);
+        const matchName = this.cafeteriaService.removeAccents(e.beneficiario_nombre || '').toLowerCase().includes(this.cafeteriaService.removeAccents(query));
+        const matchCarrera = this.cafeteriaService.removeAccents(e.carrera_nombre || '').toLowerCase().includes(this.cafeteriaService.removeAccents(query));
         if (!matchCode && !matchName && !matchCarrera) return false;
       }
 

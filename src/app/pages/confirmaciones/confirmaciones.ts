@@ -138,7 +138,7 @@ import { Beneficiario, Confirmacion, getVisualCarrera } from '../../models/cafet
           </div>
           <div class="flex-1 flex items-center gap-2">
             <div class="relative flex-1">
-              <input type="text" [formControl]="busquedaDespacho" (input)="buscarParaDespachar()" placeholder="Codigo ID o nombre del estudiante..." class="w-full bg-slate-950/80 border border-slate-700 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 text-white placeholder-slate-400 text-sm rounded-lg px-3 py-2 pl-9 font-mono uppercase transition-all"/>
+              <input type="text" [formControl]="busquedaDespacho" (input)="buscarParaDespachar()" placeholder="Codigo ID o nombre del estudiante..." autocorrect="off" autocapitalize="off" spellcheck="false" inputmode="search" class="w-full bg-slate-950/80 border border-slate-700 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 text-white placeholder-slate-400 text-sm rounded-lg px-3 py-2 pl-9 font-mono uppercase transition-all"/>
               <mat-icon class="absolute left-2.5 top-2.5 text-slate-400 text-sm">search</mat-icon>
             </div>
           </div>
@@ -224,7 +224,7 @@ import { Beneficiario, Confirmacion, getVisualCarrera } from '../../models/cafet
                 <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3">
                   <div class="relative flex-1 max-w-md">
                     <mat-icon class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</mat-icon>
-                    <input #busqValidos type="text" [value]="busquedaValidos()" (input)="busquedaValidos.set($any($event.target).value)" placeholder="Buscar por codigo, nombre..." class="w-full pl-9 pr-8 py-2 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20"/>
+                    <input #busqValidos type="text" [value]="busquedaValidos()" (input)="busquedaValidos.set($any($event.target).value)" placeholder="Buscar por codigo, nombre..." autocorrect="off" autocapitalize="off" spellcheck="false" inputmode="search" class="w-full pl-9 pr-8 py-2 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20"/>
                     @if (busquedaValidos()) {
                       <button type="button" (click)="busquedaValidos.set(''); busqValidos.focus()" class="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 text-slate-400 hover:text-slate-600 cursor-pointer"><mat-icon class="text-base">close</mat-icon></button>
                     }
@@ -309,7 +309,7 @@ import { Beneficiario, Confirmacion, getVisualCarrera } from '../../models/cafet
                 <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3">
                   <div class="relative flex-1 max-w-md">
                     <mat-icon class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</mat-icon>
-                    <input #busqExtr type="text" [value]="busquedaExtranos()" (input)="busquedaExtranos.set($any($event.target).value)" placeholder="Buscar por codigo, nombre..." class="w-full pl-9 pr-8 py-2 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/20"/>
+                    <input #busqExtr type="text" [value]="busquedaExtranos()" (input)="busquedaExtranos.set($any($event.target).value)" placeholder="Buscar por codigo, nombre..." autocorrect="off" autocapitalize="off" spellcheck="false" inputmode="search" class="w-full pl-9 pr-8 py-2 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/20"/>
                     @if (busquedaExtranos()) {
                       <button type="button" (click)="busquedaExtranos.set(''); busqExtr.focus()" class="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 text-slate-400 hover:text-slate-600 cursor-pointer"><mat-icon class="text-base">close</mat-icon></button>
                     }
@@ -421,7 +421,7 @@ import { Beneficiario, Confirmacion, getVisualCarrera } from '../../models/cafet
                 <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3">
                   <div class="relative flex-1 max-w-md">
                     <mat-icon class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</mat-icon>
-                    <input #busqNoConf type="text" [value]="busquedaNoConfirmaron()" (input)="busquedaNoConfirmaron.set($any($event.target).value)" placeholder="Buscar por codigo, nombre..." class="w-full pl-9 pr-8 py-2 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20"/>
+                    <input #busqNoConf type="text" [value]="busquedaNoConfirmaron()" (input)="busquedaNoConfirmaron.set($any($event.target).value)" placeholder="Buscar por codigo, nombre..." autocorrect="off" autocapitalize="off" spellcheck="false" inputmode="search" class="w-full pl-9 pr-8 py-2 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20"/>
                     @if (busquedaNoConfirmaron()) {
                       <button type="button" (click)="busquedaNoConfirmaron.set(''); busqNoConf.focus()" class="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 text-slate-400 hover:text-slate-600 cursor-pointer"><mat-icon class="text-base">close</mat-icon></button>
                     }
@@ -799,7 +799,7 @@ export class Confirmaciones {
 
   readonly confirmadosValidosFiltrados = computed(() => {
     let list = this.confirmadosValidos();
-    const busq = this.busquedaValidos().toLowerCase().trim();
+    const busq = this.cafeteriaService.removeAccents(this.busquedaValidos()).toLowerCase().trim();
     const carrera = this.carreraValidos();
     const tipoFiltro = this.filtroSubsidio();
 
@@ -812,8 +812,8 @@ export class Confirmaciones {
     if (busq) {
       list = list.filter(c =>
         c.codigo_id.toLowerCase().includes(busq) ||
-        (c.beneficiario_nombre && c.beneficiario_nombre.toLowerCase().includes(busq)) ||
-        (c.carrera_nombre && c.carrera_nombre.toLowerCase().includes(busq))
+        this.cafeteriaService.removeAccents(c.beneficiario_nombre || '').toLowerCase().includes(busq) ||
+        this.cafeteriaService.removeAccents(c.carrera_nombre || '').toLowerCase().includes(busq)
       );
     }
 
@@ -840,7 +840,7 @@ export class Confirmaciones {
 
   readonly confirmadosExtranosFiltrados = computed(() => {
     let list = this.confirmadosExtranos();
-    const busq = this.busquedaExtranos().toLowerCase().trim();
+    const busq = this.cafeteriaService.removeAccents(this.busquedaExtranos()).toLowerCase().trim();
     const carrera = this.carreraExtranos();
 
     if (carrera !== 'TODAS') {
@@ -849,7 +849,7 @@ export class Confirmaciones {
     if (busq) {
       list = list.filter(c =>
         c.codigo_id.toLowerCase().includes(busq) ||
-        (c.beneficiario_nombre && c.beneficiario_nombre.toLowerCase().includes(busq))
+        this.cafeteriaService.removeAccents(c.beneficiario_nombre || '').toLowerCase().includes(busq)
       );
     }
 
@@ -884,8 +884,8 @@ export class Confirmaciones {
     if (busq) {
       list = list.filter(b =>
         b.codigo_id.toLowerCase().includes(busq) ||
-        b.nombre.toLowerCase().includes(busq) ||
-        (b.carrera_nombre && b.carrera_nombre.toLowerCase().includes(busq))
+        this.cafeteriaService.removeAccents(b.nombre).toLowerCase().includes(busq) ||
+        this.cafeteriaService.removeAccents(b.carrera_nombre || '').toLowerCase().includes(busq)
       );
     }
     return list;
@@ -949,14 +949,15 @@ export class Confirmaciones {
   buscarParaDespachar(): void {
     const raw = this.busquedaDespacho.value?.trim();
     if (!raw) { this.resultadoDespacho.set(null); return; }
-    const code = raw.toLowerCase().replace(/^0+/g, '');
+    const norm = this.cafeteriaService.removeAccents(raw).toLowerCase();
+    const code = norm.replace(/^0+/g, '');
     const all = this.cafeteriaService.confirmaciones();
-    const match = all.find(c => c.codigo_id.trim().toLowerCase().replace(/^0+/g, '') === code || (c.beneficiario_nombre && c.beneficiario_nombre.toLowerCase().includes(code)));
+    const match = all.find(c => c.codigo_id.trim().toLowerCase().replace(/^0+/g, '') === code || this.cafeteriaService.removeAccents(c.beneficiario_nombre || '').toLowerCase().includes(norm));
     if (match) {
       this.resultadoDespacho.set({ success: !match.entregado, message: match.entregado ? `Ya entregado a las ${match.hora_entrega}` : 'Listo para entregar', conf: match, tipo: 'confirmado' });
     } else {
       // Buscar en padrón (sin importar si confirmó o no)
-      const padron = this.cafeteriaService.beneficiarios().find(b => b.codigo_id.trim().toLowerCase().replace(/^0+/g, '') === code || b.nombre.toLowerCase().includes(code));
+      const padron = this.cafeteriaService.beneficiarios().find(b => b.codigo_id.trim().toLowerCase().replace(/^0+/g, '') === code || this.cafeteriaService.removeAccents(b.nombre).toLowerCase().includes(norm));
       if (padron) {
         // Verificar si ya se le entregó hoy
         const yaEntregado = this.cafeteriaService.entregas().some(e =>

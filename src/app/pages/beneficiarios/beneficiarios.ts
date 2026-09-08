@@ -574,8 +574,8 @@ export class Beneficiarios {
       if (query) {
         const normCode = this.cafeteriaService.normalizeCode(b.codigo_id);
         const matchCode = b.codigo_id.includes(query) || normCode.includes(query);
-        const matchName = b.nombre?.toLowerCase().includes(query);
-        const matchCarrera = (b.carrera_nombre || '').toLowerCase().includes(query);
+        const matchName = this.cafeteriaService.removeAccents(b.nombre || '').toLowerCase().includes(this.cafeteriaService.removeAccents(query));
+        const matchCarrera = this.cafeteriaService.removeAccents(b.carrera_nombre || '').toLowerCase().includes(this.cafeteriaService.removeAccents(query));
         const matchEmail = b.email?.toLowerCase().includes(query);
         const matchTarjeta = b.num_tarjeta?.toLowerCase().includes(query);
         if (!matchCode && !matchName && !matchCarrera && !matchEmail && !matchTarjeta) return false;
