@@ -128,7 +128,7 @@ import { Beneficiario, Confirmacion, getVisualCarrera } from '../../models/cafet
       <div class="space-y-4">
 
         <!-- 1: CONFIRMADOS VALIDOS -->
-        <div class="bg-slate-50 border border-slate-200 rounded-xl shadow-sm overflow-hidden max-h-[calc(100vh-4rem)] flex flex-col">
+        <div class="bg-slate-50 border border-slate-200 rounded-xl shadow-sm overflow-hidden flex flex-col">
           <button type="button" class="w-full text-left p-4 sm:p-5 hover:bg-slate-100/70 transition-colors flex items-center justify-between cursor-pointer border-b border-slate-200 shrink-0 bg-slate-50" (click)="toggleAccordionValidos()">
             <div class="flex items-center gap-3">
               <div class="w-8 h-8 rounded-lg bg-green-100 text-green-700 flex items-center justify-center shrink-0"><mat-icon [style.fontSize.px]="24">verified</mat-icon></div>
@@ -213,7 +213,7 @@ import { Beneficiario, Confirmacion, getVisualCarrera } from '../../models/cafet
         </div>
 
         <!-- 2: EXTRANOS -->
-        <div class="bg-amber-50/30 border border-amber-200 rounded-xl shadow-sm overflow-hidden max-h-[calc(100vh-4rem)] flex flex-col">
+        <div class="bg-amber-50/30 border border-amber-200 rounded-xl shadow-sm overflow-hidden flex flex-col">
           <button type="button" class="w-full text-left p-4 sm:p-5 hover:bg-amber-50/50 transition-colors flex items-center justify-between cursor-pointer border-b border-amber-200 shrink-0 bg-amber-50" (click)="toggleAccordionExtranos()">
             <div class="flex items-center gap-3">
               <div class="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center shrink-0"><mat-icon [style.fontSize.px]="24">warning_amber</mat-icon></div>
@@ -325,7 +325,7 @@ import { Beneficiario, Confirmacion, getVisualCarrera } from '../../models/cafet
         </div>
 
         <!-- 3: NO CONFIRMARON -->
-        <div class="bg-slate-50 border border-slate-200 rounded-xl shadow-sm overflow-hidden max-h-[calc(100vh-4rem)] flex flex-col">
+        <div class="bg-slate-50 border border-slate-200 rounded-xl shadow-sm overflow-hidden flex flex-col">
           <button type="button" class="w-full text-left p-4 sm:p-5 hover:bg-slate-100/70 transition-colors flex items-center justify-between cursor-pointer border-b border-slate-200 shrink-0 bg-slate-50" (click)="toggleAccordionNoConfirmaron()">
             <div class="flex items-center gap-3">
               <div class="w-8 h-8 rounded-lg bg-slate-200 text-slate-700 flex items-center justify-center shrink-0"><mat-icon [style.fontSize.px]="24">person_off</mat-icon></div>
