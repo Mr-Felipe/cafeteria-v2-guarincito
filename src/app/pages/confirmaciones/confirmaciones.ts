@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, signal, computed, ViewChild, ElementRef } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
-import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { CafeteriaService } from '../../services/cafeteria.service';
 import { SupabaseService } from '../../services/supabase.service';
 import { Beneficiario, Confirmacion, getVisualCarrera } from '../../models/cafeteria.models';
@@ -123,82 +123,6 @@ import { Beneficiario, Confirmacion, getVisualCarrera } from '../../models/cafet
           <div class="text-xs text-amber-600 mt-2 font-medium">{{ noConfirmaronPorSubsidio() }} en padrón sin confirmar</div>
         </div>
       </section>
-
-      <!-- DESPACHO POR BUSQUEDA -->
-      <div class="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 rounded-xl p-4 sm:p-5 text-white shadow-md">
-        <div class="flex flex-col sm:flex-row sm:items-center gap-4">
-          <div class="flex items-center gap-3 shrink-0">
-            <div class="w-10 h-10 rounded-lg bg-emerald-600 flex items-center justify-center text-white shadow-xs">
-              <mat-icon [style.fontSize.px]="24">qr_code_scanner</mat-icon>
-            </div>
-            <div>
-              <h3 class="text-sm font-bold text-white leading-tight">Despacho Rapido</h3>
-              <p class="text-xs text-slate-300">Buscar y entregar al instante</p>
-            </div>
-          </div>
-          <div class="flex-1 flex items-center gap-2">
-            <div class="relative flex-1">
-              <input type="text" [formControl]="busquedaDespacho" (input)="buscarParaDespachar()" placeholder="Codigo ID o nombre del estudiante..." autocorrect="off" autocapitalize="off" spellcheck="false" inputmode="search" class="w-full bg-slate-950/80 border border-slate-700 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 text-white placeholder-slate-400 text-sm rounded-lg px-3 py-2 pl-9 font-mono uppercase transition-all"/>
-              <mat-icon class="absolute left-2.5 top-2.5 text-slate-400 text-sm">search</mat-icon>
-            </div>
-          </div>
-        </div>
-        @if (resultadoDespacho()) {
-          <div class="mt-3 p-3 rounded-lg border flex items-center justify-between gap-3"
-            [class.bg-emerald-900/40]="resultadoDespacho()!.success && resultadoDespacho()!.tipo === 'confirmado'"
-            [class.border-emerald-700]="resultadoDespacho()!.success && resultadoDespacho()!.tipo === 'confirmado'"
-            [class.bg-amber-900/40]="resultadoDespacho()!.tipo === 'sin_confirmar'"
-            [class.border-amber-700]="resultadoDespacho()!.tipo === 'sin_confirmar'"
-            [class.bg-red-900/40]="resultadoDespacho()!.tipo === 'no_encontrado' || (!resultadoDespacho()!.success && resultadoDespacho()!.tipo !== 'sin_confirmar')"
-            [class.border-red-700]="resultadoDespacho()!.tipo === 'no_encontrado' || (!resultadoDespacho()!.success && resultadoDespacho()!.tipo !== 'sin_confirmar')">
-            <div class="flex items-center gap-3">
-              @if (resultadoDespacho()!.conf) {
-                @let c = resultadoDespacho()!.conf!;
-                @let visual = getVisual(c.carrera_nombre || c.carrera_real || c.carrera_en_form || '');
-                <div class="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0" [class]="resultadoDespacho()!.success ? 'bg-emerald-600' : 'bg-red-600'">
-                  {{ getInitials(c.beneficiario_nombre || '') }}
-                </div>
-                <div>
-                  <p class="text-sm font-bold text-white">{{ c.beneficiario_nombre }}</p>
-                  <div class="flex items-center gap-2 mt-0.5">
-                    <span class="font-mono text-[10px] text-slate-300 bg-slate-800 px-1.5 py-0.5 rounded">ID: {{ c.codigo_id }}</span>
-                    <span class="px-1.5 py-0.5 text-[10px] font-semibold rounded border" [class]="visual.badgeClass">{{ c.carrera_nombre || 'Sin Carrera' }}</span>
-                  </div>
-                </div>
-              } @else if (resultadoDespacho()!.tipo === 'sin_confirmar' && resultadoDespacho()!.beneficiario) {
-                @let b = resultadoDespacho()!.beneficiario!;
-                @let visual = getVisual(b.carrera_nombre || '');
-                <div class="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0 bg-amber-600">
-                  {{ getInitials(b.nombre || '') }}
-                </div>
-                <div>
-                  <p class="text-sm font-bold text-white">{{ b.nombre }}</p>
-                  <div class="flex items-center gap-2 mt-0.5">
-                    <span class="font-mono text-[10px] text-slate-300 bg-slate-800 px-1.5 py-0.5 rounded">ID: {{ b.codigo_id }}</span>
-                    <span class="px-1.5 py-0.5 text-[10px] font-semibold rounded border" [class]="visual.badgeClass">{{ b.carrera_nombre || 'Sin Carrera' }}</span>
-                    <span class="px-1.5 py-0.5 text-[10px] font-bold rounded bg-amber-800 text-amber-200">SIN CONFIRMAR</span>
-                  </div>
-                </div>
-              } @else {
-                <mat-icon class="text-lg" [class.text-emerald-400]="resultadoDespacho()!.success" [class.text-red-400]="!resultadoDespacho()!.success">{{ resultadoDespacho()!.success ? 'check_circle' : 'warning' }}</mat-icon>
-                <p class="text-sm font-semibold text-white">{{ resultadoDespacho()!.message }}</p>
-              }
-            </div>
-            <div class="flex items-center gap-2 shrink-0">
-              @if (resultadoDespacho()!.tipo === 'confirmado' && resultadoDespacho()!.conf && !resultadoDespacho()!.conf!.entregado) {
-                <button type="button" (click)="entregarDesdeBusqueda()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg flex items-center gap-1.5 transition-colors shadow-sm cursor-pointer">
-                  <mat-icon class="text-sm">check_circle</mat-icon><span>Entregar</span>
-                </button>
-              } @else if (resultadoDespacho()!.tipo === 'sin_confirmar') {
-                <button type="button" (click)="entregarSinConfirmacion()" class="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold rounded-lg flex items-center gap-1.5 transition-colors shadow-sm cursor-pointer">
-                  <mat-icon class="text-sm">add_circle</mat-icon><span>Entregar Sin Confirmación</span>
-                </button>
-              }
-              <button type="button" (click)="resultadoDespacho.set(null)" class="p-1.5 text-slate-400 hover:text-white rounded-lg cursor-pointer"><mat-icon class="text-base">close</mat-icon></button>
-            </div>
-          </div>
-        }
-      </div>
 
       <!-- ACORDEONES -->
       <div class="space-y-4">
@@ -677,9 +601,6 @@ export class Confirmaciones {
   accordionExtranosOpen = signal<boolean>(true);
   accordionNoConfirmaronOpen = signal<boolean>(true);
 
-  readonly busquedaDespacho = new FormControl('');
-  readonly resultadoDespacho = signal<{ success: boolean; message: string; conf?: Confirmacion; beneficiario?: Beneficiario; tipo: 'confirmado' | 'sin_confirmar' | 'no_encontrado' } | null>(null);
-
   busquedaValidos = signal('');
   carreraValidos = signal('TODAS');
   busquedaExtranos = signal('');
@@ -914,13 +835,6 @@ export class Confirmaciones {
     return parts.length > 1 ? parts[1] : fecha;
   }
 
-  getInitials(name: string): string {
-    if (!name) return 'ES';
-    const parts = name.trim().split(' ').filter(Boolean);
-    if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
-    return name.slice(0, 2).toUpperCase();
-  }
-
   onSort(col: string): void {
     if (this.sortColumn() === col) {
       this.sortDirection.update(d => d === 'asc' ? 'desc' : 'asc');
@@ -954,59 +868,10 @@ export class Confirmaciones {
     this.cafeteriaService.setSelectedDate(dStr);
   }
 
-  buscarParaDespachar(): void {
-    const raw = this.busquedaDespacho.value?.trim();
-    if (!raw) { this.resultadoDespacho.set(null); return; }
-    const norm = this.cafeteriaService.removeAccents(raw).toLowerCase();
-    const code = norm.replace(/^0+/g, '');
-    const all = this.cafeteriaService.confirmaciones();
-    const match = all.find(c => c.codigo_id.trim().toLowerCase().replace(/^0+/g, '') === code || this.cafeteriaService.removeAccents(c.beneficiario_nombre || '').toLowerCase().includes(norm));
-    if (match) {
-      this.resultadoDespacho.set({ success: !match.entregado, message: match.entregado ? `Ya entregado a las ${match.hora_entrega}` : 'Listo para entregar', conf: match, tipo: 'confirmado' });
-    } else {
-      // Buscar en padrón (sin importar si confirmó o no)
-      const padron = this.cafeteriaService.beneficiarios().find(b => b.codigo_id.trim().toLowerCase().replace(/^0+/g, '') === code || this.cafeteriaService.removeAccents(b.nombre).toLowerCase().includes(norm));
-      if (padron) {
-        // Verificar si ya se le entregó hoy
-        const yaEntregado = this.cafeteriaService.entregas().some(e =>
-          e.codigo_id === padron.codigo_id && e.estado === 'ENTREGADO' && e.fecha === this.cafeteriaService.selectedDate()
-        );
-        if (yaEntregado) {
-          this.resultadoDespacho.set({ success: false, message: `${padron.nombre} ya recibió su ración hoy.`, tipo: 'no_encontrado' });
-        } else {
-          this.resultadoDespacho.set({ success: true, message: `${padron.nombre} - ${padron.carrera_nombre || 'Sin carrera'} (sin confirmar)`, beneficiario: padron, tipo: 'sin_confirmar' });
-        }
-      } else {
-        this.resultadoDespacho.set({ success: false, message: `Codigo [${raw}] no encontrado en padrón.`, tipo: 'no_encontrado' });
-      }
-    }
-  }
-
-  entregarDesdeBusqueda(): void {
-    const res = this.resultadoDespacho();
-    if (res?.conf && !res.conf.entregado) {
-      this.entregarDirecto(res.conf);
-      this.resultadoDespacho.set({ success: true, message: `Entregado! ${res.conf.beneficiario_nombre}`, conf: { ...res.conf, entregado: true }, tipo: 'confirmado' });
-      this.busquedaDespacho.setValue('');
-    }
-  }
-
   async entregarDirecto(c: Confirmacion): Promise<void> {
     const result = await this.cafeteriaService.searchBeneficiarioOrConfirmacion(c.codigo_id);
     if (result) {
       await this.cafeteriaService.registrarEntrega(result);
-    }
-  }
-
-  async entregarSinConfirmacion(): Promise<void> {
-    const res = this.resultadoDespacho();
-    if (res?.tipo === 'sin_confirmar' && res.beneficiario) {
-      const result = await this.cafeteriaService.searchBeneficiarioOrConfirmacion(res.beneficiario.codigo_id);
-      if (result) {
-        await this.cafeteriaService.registrarEntrega(result);
-        this.resultadoDespacho.set({ success: true, message: `Entregado a ${res.beneficiario.nombre} (sin confirmación)`, tipo: 'confirmado' });
-        this.busquedaDespacho.setValue('');
-      }
     }
   }
 
