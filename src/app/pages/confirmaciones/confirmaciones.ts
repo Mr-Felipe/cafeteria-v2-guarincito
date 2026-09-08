@@ -125,7 +125,7 @@ import { Beneficiario, Confirmacion, getVisualCarrera } from '../../models/cafet
       </section>
 
       <!-- DESPACHO POR BUSQUEDA -->
-      <div class="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 rounded-xl p-4 sm:p-5 text-white shadow-md">
+      <div class="sticky top-0 z-10 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 rounded-xl p-4 sm:p-5 text-white shadow-md backdrop-blur-sm">
         <div class="flex flex-col sm:flex-row sm:items-center gap-4">
           <div class="flex items-center gap-3 shrink-0">
             <div class="w-10 h-10 rounded-lg bg-emerald-600 flex items-center justify-center text-white shadow-xs">

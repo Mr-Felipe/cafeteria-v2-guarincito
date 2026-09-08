@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, signal, computed } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal, computed, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormControl } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -185,20 +185,22 @@ import { getVisualCarrera } from '../../models/cafeteria.models';
         </div>
 
         <!-- Busqueda + Orden -->
-        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3 pt-2 border-t border-slate-100">
-          <div class="relative flex-1 max-w-md">
-            <mat-icon [style.fontSize.px]="20" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</mat-icon>
-            <input
-              id="filter-entregas-search"
-              type="text"
-              [formControl]="searchControl"
-              placeholder="Buscar por nombre, codigo o carrera..."
-              autocorrect="off"
-              autocapitalize="off"
-              spellcheck="false"
-              inputmode="search"
-              class="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-            />
+        <div class="sticky top-0 z-10 bg-slate-50/95 backdrop-blur-sm rounded-xl border border-slate-200/90 shadow-sm p-3 sm:p-4 -mx-1">
+          <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+            <div class="relative flex-1 max-w-md">
+              <mat-icon [style.fontSize.px]="20" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</mat-icon>
+              <input
+                id="filter-entregas-search"
+                type="text"
+                [formControl]="searchControl"
+                (input)="scrollToResults()"
+                placeholder="Buscar por nombre, codigo o carrera..."
+                autocorrect="off"
+                autocapitalize="off"
+                spellcheck="false"
+                inputmode="search"
+                class="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+              />
           </div>
           <!-- CONF Code Search -->
           <div class="flex items-center gap-2">
@@ -234,7 +236,7 @@ import { getVisualCarrera } from '../../models/cafeteria.models';
       </div>
 
       <!-- TABLA DE ENTREGADOS CON HORA -->
-      <div class="bg-white rounded-xl border border-slate-200/90 shadow-xs overflow-hidden">
+      <div #tablaEntregas class="bg-white rounded-xl border border-slate-200/90 shadow-xs overflow-hidden">
         <div class="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
           <div class="flex items-center gap-2">
             <mat-icon [style.fontSize.px]="20" class="text-emerald-600">fact_check</mat-icon>
@@ -469,6 +471,14 @@ import { getVisualCarrera } from '../../models/cafeteria.models';
 export class Entregas {
   readonly cafeteriaService = inject(CafeteriaService);
   private readonly supabase = inject(SupabaseService);
+
+  @ViewChild('tablaEntregas') tablaEntregas?: ElementRef<HTMLElement>;
+
+  scrollToResults(): void {
+    setTimeout(() => {
+      this.tablaEntregas?.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+  }
 
   readonly searchControl = new FormControl<string>('');
   readonly carreraControl = new FormControl<string>('TODAS', { nonNullable: true });
