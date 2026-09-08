@@ -193,7 +193,7 @@ import { getVisualCarrera } from '../../models/cafeteria.models';
                 id="filter-entregas-search"
                 type="text"
                 [formControl]="searchControl"
-                (input)="scrollToResults()"
+                (input)="scrollToTop()"
                 placeholder="Buscar por nombre, codigo o carrera..."
                 autocorrect="off"
                 autocapitalize="off"
@@ -474,9 +474,10 @@ export class Entregas {
 
   @ViewChild('tablaEntregas') tablaEntregas?: ElementRef<HTMLElement>;
 
-  scrollToResults(): void {
+  scrollToTop(): void {
     setTimeout(() => {
-      this.tablaEntregas?.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      this.tablaEntregas?.nativeElement.closest('.overflow-y-auto')?.scrollTo({ top: 0, behavior: 'smooth' })
+        ?? window.scrollTo({ top: 0, behavior: 'smooth' });
     }, 100);
   }
 
