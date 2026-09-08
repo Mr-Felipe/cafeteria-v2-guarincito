@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, signal, computed, ViewChild, ElementRef } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal, computed } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -148,9 +148,9 @@ import { Beneficiario, Confirmacion, getVisualCarrera } from '../../models/cafet
                 <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3">
                   <div class="relative flex-1 max-w-md">
                     <mat-icon class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</mat-icon>
-                    <input #busqValidos type="text" [value]="busquedaValidos()" (input)="busquedaValidos.set($any($event.target).value)" (focus)="scrollToTop()" placeholder="Buscar por codigo, nombre..." autocorrect="off" autocapitalize="off" spellcheck="false" inputmode="search" class="w-full pl-9 pr-8 py-2 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20"/>
+                    <input #busqValidos type="text" [value]="busquedaValidos()" (input)="busquedaValidos.set($any($event.target).value)" placeholder="Buscar por codigo, nombre..." autocorrect="off" autocapitalize="off" spellcheck="false" inputmode="search" class="w-full pl-9 pr-8 py-2 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20"/>
                     @if (busquedaValidos()) {
-                      <button type="button" (click)="busquedaValidos.set(''); busqValidos.focus(); scrollToTop()" class="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 text-slate-400 hover:text-slate-600 cursor-pointer"><mat-icon class="text-base">close</mat-icon></button>
+                      <button type="button" (click)="busquedaValidos.set(''); busqValidos.focus()" class="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 text-slate-400 hover:text-slate-600 cursor-pointer"><mat-icon class="text-base">close</mat-icon></button>
                     }
                   </div>
                   <select [ngModel]="carreraValidos()" (ngModelChange)="carreraValidos.set($event)" class="p-2 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 focus:outline-none">
@@ -566,14 +566,6 @@ import { Beneficiario, Confirmacion, getVisualCarrera } from '../../models/cafet
 export class Confirmaciones {
   readonly cafeteriaService = inject(CafeteriaService);
   private readonly supabase = inject(SupabaseService);
-
-  @ViewChild('tablaValidos') tablaValidos?: ElementRef<HTMLElement>;
-
-  scrollToTop(): void {
-    setTimeout(() => {
-      this.tablaValidos?.nativeElement.closest('.overflow-y-auto')?.scrollTo({ top: 0, behavior: 'smooth' });
-    }, 100);
-  }
 
   readonly filtroSubsidio = signal<string>('Todos');
   readonly sortColumn = signal<string>('hora');

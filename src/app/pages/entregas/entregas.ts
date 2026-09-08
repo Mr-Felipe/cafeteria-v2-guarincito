@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, signal, computed, ViewChild, ElementRef } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormControl } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -193,7 +193,6 @@ import { getVisualCarrera } from '../../models/cafeteria.models';
                 id="filter-entregas-search"
                 type="text"
                 [formControl]="searchControl"
-                (input)="scrollToTop()"
                 placeholder="Buscar por nombre, codigo o carrera..."
                 autocorrect="off"
                 autocapitalize="off"
@@ -236,7 +235,7 @@ import { getVisualCarrera } from '../../models/cafeteria.models';
       </div>
 
       <!-- TABLA DE ENTREGADOS CON HORA -->
-      <div #tablaEntregas class="bg-white rounded-xl border border-slate-200/90 shadow-xs overflow-hidden">
+      <div class="bg-white rounded-xl border border-slate-200/90 shadow-xs overflow-hidden">
         <div class="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
           <div class="flex items-center gap-2">
             <mat-icon [style.fontSize.px]="20" class="text-emerald-600">fact_check</mat-icon>
@@ -471,15 +470,6 @@ import { getVisualCarrera } from '../../models/cafeteria.models';
 export class Entregas {
   readonly cafeteriaService = inject(CafeteriaService);
   private readonly supabase = inject(SupabaseService);
-
-  @ViewChild('tablaEntregas') tablaEntregas?: ElementRef<HTMLElement>;
-
-  scrollToTop(): void {
-    setTimeout(() => {
-      this.tablaEntregas?.nativeElement.closest('.overflow-y-auto')?.scrollTo({ top: 0, behavior: 'smooth' })
-        ?? window.scrollTo({ top: 0, behavior: 'smooth' });
-    }, 100);
-  }
 
   readonly searchControl = new FormControl<string>('');
   readonly carreraControl = new FormControl<string>('TODAS', { nonNullable: true });
