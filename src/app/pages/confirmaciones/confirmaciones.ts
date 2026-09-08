@@ -143,7 +143,7 @@ import { Beneficiario, Confirmacion, getVisualCarrera } from '../../models/cafet
             <mat-icon class="text-slate-400 transition-transform duration-200" [class.rotate-180]="accordionValidosOpen()">expand_more</mat-icon>
           </button>
           @if (accordionValidosOpen()) {
-            <div class="flex flex-col flex-1">
+            <div class="flex flex-col flex-1 overflow-y-auto min-h-0">
               <div class="sticky top-0 z-10 p-4 sm:p-5 bg-slate-50 border-b border-slate-200">
                 <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3">
                   <div class="relative flex-1 max-w-md">
@@ -228,7 +228,7 @@ import { Beneficiario, Confirmacion, getVisualCarrera } from '../../models/cafet
             <mat-icon class="text-slate-400 transition-transform duration-200" [class.rotate-180]="accordionExtranosOpen()">expand_more</mat-icon>
           </button>
           @if (accordionExtranosOpen()) {
-            <div class="flex flex-col flex-1">
+            <div class="flex flex-col flex-1 overflow-y-auto min-h-0">
               <div class="sticky top-0 z-10 p-4 sm:p-5 bg-amber-50 border-b border-amber-200">
                 <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3">
                   <div class="relative flex-1 max-w-md">
@@ -340,7 +340,7 @@ import { Beneficiario, Confirmacion, getVisualCarrera } from '../../models/cafet
             <mat-icon class="text-slate-400 transition-transform duration-200" [class.rotate-180]="accordionNoConfirmaronOpen()">expand_more</mat-icon>
           </button>
           @if (accordionNoConfirmaronOpen()) {
-            <div class="flex flex-col flex-1">
+            <div class="flex flex-col flex-1 overflow-y-auto min-h-0">
               <div class="sticky top-0 z-10 p-4 sm:p-5 bg-slate-50 border-b border-slate-200">
                 <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3">
                   <div class="relative flex-1 max-w-md">
