@@ -17,6 +17,11 @@ const ROUTE_INFO_MAP: Record<string, RouteInfo> = {
     subtitle: 'Control de asistencia, despacho rapido y entregas en tiempo real',
     icon: 'how_to_reg'
   },
+  '/entrega-rapida': {
+    title: 'Entrega Rapida',
+    subtitle: 'Busca por codigo y marca entrega al instante',
+    icon: 'flash_on'
+  },
   '/entregas': {
     title: 'Registro de Raciones Entregadas',
     subtitle: 'Auditoria en tiempo real con hora exacta de entrega',

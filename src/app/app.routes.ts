@@ -17,6 +17,11 @@ export const routes: Routes = [
     title: 'Entregas del Dia - Cafeteria Guarincito'
   },
   {
+    path: 'entrega-rapida',
+    loadComponent: () => import('./pages/entrega-rapida/entrega-rapida').then(m => m.EntregaRapida),
+    title: 'Entrega Rapida - Cafeteria Guarincito'
+  },
+  {
     path: 'beneficiarios',
     loadComponent: () => import('./pages/beneficiarios/beneficiarios').then(m => m.Beneficiarios),
     title: 'Padron de Beneficiarios - Cafeteria Guarincito'
