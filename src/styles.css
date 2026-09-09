@@ -39,3 +39,11 @@
   background: rgba(100, 116, 139, 0.8);
 }
 
+/* Hide header when search is focused on mobile */
+html.search-active app-header {
+  display: none !important;
+}
+html.search-active main {
+  padding-top: 0 !important;
+}
+
