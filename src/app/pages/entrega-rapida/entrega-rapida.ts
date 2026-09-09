@@ -20,7 +20,7 @@ import { getVisualCarrera } from '../../models/cafeteria.models';
             Despacho Rapido
           </span>
           <h2 class="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">Entrega Rapida</h2>
-          <p class="text-sm text-slate-600">Busca por codigo y marca entrega al instante</p>
+          <p class="text-sm text-slate-600">Busca por codigo o nombre y marca entrega al instante</p>
         </div>
         <div class="flex flex-wrap items-center gap-2">
           <a routerLink="/confirmaciones" class="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg flex items-center gap-2 transition-colors shadow-sm cursor-pointer">
@@ -34,7 +34,7 @@ import { getVisualCarrera } from '../../models/cafeteria.models';
         <div class="bg-amber-50 border border-amber-200 rounded-2xl shadow-sm p-4 flex items-center gap-3">
           <mat-icon class="text-amber-500 animate-spin">sync</mat-icon>
           <div>
-            <p class="text-sm font-bold text-amber-800">Cargando padrón y confirmaciones...</p>
+            <p class="text-sm font-bold text-amber-800">Cargando padron y confirmaciones...</p>
             <p class="text-xs text-amber-600">Espera un momento antes de buscar.</p>
           </div>
         </div>
@@ -46,21 +46,19 @@ import { getVisualCarrera } from '../../models/cafeteria.models';
         [class.border-amber-200]="cafeteriaService.isLoadingData()"
       >
         <div class="max-w-xl mx-auto">
-          <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Codigo del Estudiante</label>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Codigo o Nombre del Estudiante</label>
           <div class="relative">
             <mat-icon class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" [style.fontSize.px]="28">search</mat-icon>
             <input
               type="text"
-              [(ngModel)]="searchCode"
+              [(ngModel)]="searchQuery"
               (ngModelChange)="onSearch($event)"
-              placeholder="Escribe el codigo..."
-              maxlength="6"
-              inputmode="numeric"
+              placeholder="Escribe codigo o nombre..."
               [disabled]="cafeteriaService.isLoadingData()"
               [attr.autofocus]="cafeteriaService.isLoadingData() ? null : ''"
-              class="w-full pl-14 pr-14 py-4 text-2xl font-mono font-bold text-slate-800 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-400 transition-all placeholder:text-slate-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              class="w-full pl-14 pr-14 py-4 text-2xl font-mono font-bold text-slate-800 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-400 transition-all placeholder:text-slate-300 placeholder:text-lg placeholder:font-normal disabled:opacity-50 disabled:cursor-not-allowed"
             />
-            @if (searchCode()) {
+            @if (searchQuery()) {
               <button type="button" (click)="clearSearch()" class="absolute right-4 top-1/2 -translate-y-1/2 p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer">
                 <mat-icon [style.fontSize.px]="24">close</mat-icon>
               </button>
@@ -72,138 +70,97 @@ import { getVisualCarrera } from '../../models/cafeteria.models';
         </div>
       </div>
 
-      <!-- SEARCH RESULT -->
-      @if (searchResult()) {
-        <div class="bg-white border rounded-2xl shadow-sm overflow-hidden transition-all"
-          [class.border-emerald-200]="searchResult()!.type === 'confirmed'"
-          [class.border-amber-200]="searchResult()!.type === 'extraño'"
-          [class.border-slate-200]="searchResult()!.type === 'no_confirmacion'"
-        >
-          <!-- Result Header -->
-          <div class="p-5 sm:p-6"
-            [class.bg-emerald-50]="searchResult()!.type === 'confirmed'"
-            [class.bg-amber-50]="searchResult()!.type === 'extraño'"
-            [class.bg-slate-50]="searchResult()!.type === 'no_confirmacion'"
-          >
-            <div class="flex items-start justify-between gap-4">
-              <div class="flex items-center gap-4">
-                <!-- Avatar -->
-                <div class="w-14 h-14 rounded-xl flex items-center justify-center shrink-0"
-                  [class.bg-emerald-100]="searchResult()!.type === 'confirmed'"
-                  [class.bg-emerald-700]="searchResult()!.type === 'confirmed'"
-                  [class.bg-amber-100]="searchResult()!.type === 'extraño'"
-                  [class.bg-amber-700]="searchResult()!.type === 'extraño'"
-                  [class.bg-slate-200]="searchResult()!.type === 'no_confirmacion'"
-                  [class.text-white]="searchResult()!.type === 'confirmed' || searchResult()!.type === 'extraño'"
-                  [class.text-slate-500]="searchResult()!.type === 'no_confirmacion'"
+      <!-- SEARCH RESULTS LIST -->
+      @if (searchResults().length > 0) {
+        <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+          <div class="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <mat-icon class="text-slate-400">search</mat-icon>
+              <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider">Resultados</h3>
+              <span class="px-2.5 py-0.5 bg-emerald-100 text-emerald-700 rounded-full text-xs font-bold">{{ searchResults().length }}</span>
+            </div>
+            <span class="text-xs text-slate-400">{{ searchQuery() }}</span>
+          </div>
+          <div class="max-h-[60vh] overflow-y-auto">
+            <div class="p-4 sm:p-5 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+              @for (item of searchResults(); track item.codigo) {
+                @let visual = getVisual(item.carrera);
+                <div class="bg-white border rounded-xl p-4 flex flex-col justify-between hover:shadow-sm transition-all"
+                  [class.border-emerald-200]="item.type === 'confirmed'"
+                  [class.border-amber-200]="item.type === 'extraño'"
+                  [class.border-slate-200]="item.type === 'no_confirmacion'"
+                  [class.border-emerald-100]="item.alreadyDelivered"
                 >
-                  @if (searchResult()!.type === 'confirmed') {
-                    <mat-icon [style.fontSize.px]="32">verified</mat-icon>
-                  } @else if (searchResult()!.type === 'extraño') {
-                    <mat-icon [style.fontSize.px]="32">warning_amber</mat-icon>
-                  } @else {
-                    <mat-icon [style.fontSize.px]="32">person_off</mat-icon>
-                  }
-                </div>
-                <div>
-                  <div class="flex items-center gap-2 mb-1">
-                    <span class="font-mono text-sm font-bold"
-                      [class.text-emerald-700]="searchResult()!.type === 'confirmed'"
-                      [class.text-amber-700]="searchResult()!.type === 'extraño'"
-                      [class.text-slate-700]="searchResult()!.type === 'no_confirmacion'"
-                    >ID: {{ searchResult()!.codigo }}</span>
-                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold"
-                      [class.bg-emerald-100]="searchResult()!.type === 'confirmed'"
-                      [class.text-emerald-700]="searchResult()!.type === 'confirmed'"
-                      [class.bg-amber-100]="searchResult()!.type === 'extraño'"
-                      [class.text-amber-700]="searchResult()!.type === 'extraño'"
-                      [class.bg-slate-100]="searchResult()!.type === 'no_confirmacion'"
-                      [class.text-slate-600]="searchResult()!.type === 'no_confirmacion'"
-                    >
-                      {{ searchResult()!.type === 'confirmed' ? 'CONFIRMADO' : searchResult()!.type === 'extraño' ? 'EXTERNO' : 'SIN CONFIRMACION' }}
-                    </span>
+                  <div>
+                    <div class="flex items-center justify-between gap-1.5 mb-2">
+                      <span class="font-mono text-xs font-bold bg-slate-100 border border-slate-200 px-2 py-0.5 rounded text-slate-700">ID: {{ item.codigo }}</span>
+                      <div class="flex items-center gap-1">
+                        <span class="px-2 py-0.5 text-[10px] font-semibold rounded border flex items-center gap-1 {{ visual.badgeClass }}">
+                          <mat-icon [style.fontSize.px]="20" class="w-5 h-5 flex items-center justify-center">{{ visual.icono }}</mat-icon>
+                          <span class="truncate max-w-[90px]">{{ item.carrera || 'Sin Carrera' }}</span>
+                        </span>
+                        @if (item.horaConfirmacion) {
+                          <span class="font-mono text-[10px] text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">{{ item.horaConfirmacion }}</span>
+                        }
+                      </div>
+                    </div>
+                    <h4 class="font-semibold text-sm text-slate-900">{{ item.nombre }}</h4>
+                    <div class="flex flex-wrap items-center gap-1.5 mt-2">
+                      @if (item.type === 'confirmed') {
+                        <span class="px-2.5 py-0.5 bg-green-100 text-green-700 rounded-full text-[10px] font-bold">CONFIRMADO</span>
+                      } @else if (item.type === 'extraño') {
+                        <span class="px-2.5 py-0.5 bg-amber-100 text-amber-700 rounded-full text-[10px] font-bold">EXTERNO</span>
+                      } @else {
+                        <span class="px-2.5 py-0.5 bg-slate-100 text-slate-600 rounded-full text-[10px] font-bold">SIN CONFIRMACION</span>
+                      }
+                      @if (item.tipoComida === 'Almuerzo') {
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">Almuerzo</span>
+                      } @else if (item.tipoComida === 'Refrigerio') {
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200">Refrigerio</span>
+                      } @else if (item.tipoComida) {
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-orange-50 text-orange-700 border border-orange-200">{{ item.tipoComida }}</span>
+                      }
+                    </div>
                   </div>
-                  <h3 class="text-lg font-bold text-slate-900">{{ searchResult()!.nombre }}</h3>
-                  <div class="flex items-center gap-2 mt-1">
-                    @if (searchResult()!.carrera) {
-                      @let v = getVisual(searchResult()!.carrera);
-                      <span class="px-2 py-0.5 text-[10px] font-semibold rounded border flex items-center gap-1" [class]="v.badgeClass">
-                        <mat-icon [style.fontSize.px]="16">{{ v.icono }}</mat-icon>
-                        {{ searchResult()!.carrera }}
-                      </span>
-                    }
-                    @if (searchResult()!.tipoComida) {
-                      <span class="px-2 py-0.5 rounded-full text-[10px] font-medium"
-                        [class.bg-emerald-50]="searchResult()!.tipoComida === 'Almuerzo'"
-                        [class.text-emerald-700]="searchResult()!.tipoComida === 'Almuerzo'"
-                        [class.border]="true"
-                        [class.border-emerald-200]="searchResult()!.tipoComida === 'Almuerzo'"
-                        [class.bg-blue-50]="searchResult()!.tipoComida === 'Refrigerio'"
-                        [class.text-blue-700]="searchResult()!.tipoComida === 'Refrigerio'"
-                        [class.border-blue-200]="searchResult()!.tipoComida === 'Refrigerio'"
-                        [class.bg-orange-50]="searchResult()!.tipoComida === 'Desayuno'"
-                        [class.text-orange-700]="searchResult()!.tipoComida === 'Desayuno'"
-                        [class.border-orange-200]="searchResult()!.tipoComida === 'Desayuno'"
-                      >{{ searchResult()!.tipoComida }}</span>
+                  <div class="mt-3 pt-2.5 border-t border-slate-100">
+                    @if (item.alreadyDelivered) {
+                      <div class="w-full px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 bg-emerald-100 text-emerald-700">
+                        <mat-icon class="text-sm">check</mat-icon><span>Entregado {{ item.horaEntrega ? 'a las ' + item.horaEntrega.substring(0,5) : '' }}</span>
+                      </div>
+                    } @else {
+                      <button
+                        type="button"
+                        (click)="deliverItem(item)"
+                        [disabled]="deliveringCodigo() === item.codigo"
+                        class="w-full px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-xs disabled:opacity-50 disabled:cursor-not-allowed"
+                        [class.bg-emerald-600]="item.type === 'confirmed'"
+                        [class.hover:bg-emerald-700]="item.type === 'confirmed'"
+                        [class.text-white]="item.type === 'confirmed'"
+                        [class.bg-amber-500]="item.type === 'extraño'"
+                        [class.hover:bg-amber-600]="item.type === 'extraño'"
+                        [class.bg-slate-600]="item.type === 'no_confirmacion'"
+                        [class.hover:bg-slate-700]="item.type === 'no_confirmacion'"
+                        [class.text-white]="true"
+                      >
+                        @if (deliveringCodigo() === item.codigo) {
+                          <mat-icon class="animate-spin text-sm">refresh</mat-icon><span>Entregando...</span>
+                        } @else {
+                          <mat-icon class="text-sm">check_circle</mat-icon>
+                          <span>{{ item.type === 'no_confirmacion' ? 'Entregar Sin Confirmar' : 'Marcar Entrega' }}</span>
+                        }
+                      </button>
                     }
                   </div>
                 </div>
-              </div>
-              @if (searchResult()!.horaConfirmacion) {
-                <span class="text-xs text-slate-400 font-mono shrink-0">{{ searchResult()!.horaConfirmacion }}</span>
               }
             </div>
           </div>
-
-          <!-- Result Actions -->
-          <div class="p-4 sm:p-5 border-t"
-            [class.border-emerald-100]="searchResult()!.type === 'confirmed'"
-            [class.border-amber-100]="searchResult()!.type === 'extraño'"
-            [class.border-slate-100]="searchResult()!.type === 'no_confirmacion'"
-          >
-            @if (searchResult()!.alreadyDelivered) {
-              <div class="flex items-center justify-center gap-2 py-3 rounded-xl bg-emerald-50 text-emerald-700 font-semibold text-sm">
-                <mat-icon>check_circle</mat-icon>
-                Ya fue entregado a las {{ searchResult()!.horaEntrega }}
-              </div>
-            } @else if (searchResult()!.type === 'confirmed' || searchResult()!.type === 'extraño') {
-              <button
-                type="button"
-                (click)="markDelivery()"
-                [disabled]="delivering()"
-                class="w-full py-3.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
-                [class.bg-emerald-600]="searchResult()!.type === 'confirmed'"
-                [class.hover:bg-emerald-700]="searchResult()!.type === 'confirmed'"
-                [class.text-white]="searchResult()!.type === 'confirmed'"
-                [class.bg-amber-500]="searchResult()!.type === 'extraño'"
-                [class.hover:bg-amber-600]="searchResult()!.type === 'extraño'"
-                [class.text-white]="searchResult()!.type === 'extraño'"
-              >
-                @if (delivering()) {
-                  <mat-icon class="animate-spin">refresh</mat-icon>
-                  <span>Entregando...</span>
-                } @else {
-                  <mat-icon>check_circle</mat-icon>
-                  <span>Marcar Entrega</span>
-                }
-              </button>
-            } @else {
-              <button
-                type="button"
-                (click)="markDelivery()"
-                [disabled]="delivering()"
-                class="w-full py-3.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-sm bg-slate-600 hover:bg-slate-700 text-white"
-              >
-                @if (delivering()) {
-                  <mat-icon class="animate-spin">refresh</mat-icon>
-                  <span>Entregando...</span>
-                } @else {
-                  <mat-icon>add_circle</mat-icon>
-                  <span>Entregar Sin Confirmar</span>
-                }
-              </button>
-            }
-          </div>
+        </div>
+      } @else if (searchQuery() && searchQuery()!.length >= 3 && !cafeteriaService.isLoadingData()) {
+        <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-12 text-center">
+          <mat-icon class="text-5xl text-slate-300 mb-3">search_off</mat-icon>
+          <p class="text-sm font-semibold text-slate-500">Sin resultados para "{{ searchQuery() }}"</p>
+          <p class="text-xs text-slate-400 mt-1">No se encontro nadie con ese codigo o nombre en el padron ni en las confirmaciones de hoy.</p>
         </div>
       }
 
@@ -275,20 +232,111 @@ import { getVisualCarrera } from '../../models/cafeteria.models';
 export class EntregaRapida {
   readonly cafeteriaService = inject(CafeteriaService);
 
-  searchCode = signal<string>('');
-  delivering = signal<boolean>(false);
+  searchQuery = signal<string>('');
+  deliveringCodigo = signal<string | null>(null);
 
-  searchResult = signal<{
-    codigo: string;
-    nombre: string;
-    carrera: string;
-    tipoComida: string;
-    type: 'confirmed' | 'extraño' | 'no_confirmacion';
-    confirmacionId?: number;
-    horaConfirmacion?: string;
-    alreadyDelivered?: boolean;
-    horaEntrega?: string;
-  } | null>(null);
+  readonly searchResults = computed(() => {
+    const q = this.searchQuery();
+    if (!q || q.length < 3) return [];
+    const lower = q.toLowerCase();
+    const norm = this.cafeteriaService.normalizeCode(q);
+    const isCode = /^\d+$/.test(q);
+    const fecha = this.cafeteriaService.selectedDate();
+
+    const results: Array<{
+      codigo: string;
+      nombre: string;
+      carrera: string;
+      tipoComida: string;
+      type: 'confirmed' | 'extraño' | 'no_confirmacion';
+      horaConfirmacion?: string;
+      alreadyDelivered: boolean;
+      horaEntrega?: string;
+    }> = [];
+
+    // 1. Check already delivered today
+    const entregasHoy = this.cafeteriaService.entregas().filter(e =>
+      e.estado === 'ENTREGADO' && e.fecha === fecha
+    );
+
+    // 2. Get all confirmations for today
+    const confs = this.cafeteriaService.confirmaciones();
+    const bens = this.cafeteriaService.beneficiarios();
+
+    // Build matched codes set
+    const matchedCodes = new Set<string>();
+
+    // Search confirmations
+    for (const c of confs) {
+      const cNorm = this.cafeteriaService.normalizeCode(c.codigo_id);
+      const matchesCode = cNorm === norm || c.codigo_id === q;
+      const matchesName = !isCode && c.beneficiario_nombre && c.beneficiario_nombre.toLowerCase().includes(lower);
+      if (!matchesCode && !matchesName) continue;
+
+      const alreadyDelivered = entregasHoy.some(e => {
+        const eNorm = this.cafeteriaService.normalizeCode(e.codigo_id);
+        return eNorm === cNorm || e.codigo_id === c.codigo_id;
+      });
+
+      let type: 'confirmed' | 'extraño' | 'no_confirmacion' = 'confirmed';
+      if (c.motivo_alerta && !c.corregido) {
+        type = 'extraño';
+      }
+
+      results.push({
+        codigo: c.codigo_id,
+        nombre: c.beneficiario_nombre || c.nombre_en_form || 'Sin nombre',
+        carrera: c.carrera_nombre || c.carrera_real || c.carrera_en_form || '',
+        tipoComida: c.tipo_comida_nombre || '',
+        type,
+        horaConfirmacion: c.fecha ? this.getHora(c.fecha) : undefined,
+        alreadyDelivered,
+        horaEntrega: entregasHoy.find(e => {
+          const eNorm = this.cafeteriaService.normalizeCode(e.codigo_id);
+          return eNorm === cNorm || e.codigo_id === c.codigo_id;
+        })?.hora
+      });
+      matchedCodes.add(c.codigo_id);
+    }
+
+    // 3. Search beneficiarios not in confirmations
+    for (const b of bens) {
+      if (matchedCodes.has(b.codigo_id)) continue;
+      const bNorm = this.cafeteriaService.normalizeCode(b.codigo_id);
+      const matchesCode = bNorm === norm || b.codigo_id === q;
+      const matchesName = !isCode && b.nombre && b.nombre.toLowerCase().includes(lower);
+      if (!matchesCode && !matchesName) continue;
+
+      const alreadyDelivered = entregasHoy.some(e => {
+        const eNorm = this.cafeteriaService.normalizeCode(e.codigo_id);
+        return eNorm === bNorm || e.codigo_id === b.codigo_id;
+      });
+
+      const tipoComidaObj = this.cafeteriaService.tiposComida().find(t => t.id === b.tipo_comida_id);
+
+      results.push({
+        codigo: b.codigo_id,
+        nombre: b.nombre,
+        carrera: b.carrera_nombre || '',
+        tipoComida: tipoComidaObj?.nombre || '',
+        type: 'no_confirmacion',
+        alreadyDelivered,
+        horaEntrega: entregasHoy.find(e => {
+          const eNorm = this.cafeteriaService.normalizeCode(e.codigo_id);
+          return eNorm === bNorm || e.codigo_id === b.codigo_id;
+        })?.hora
+      });
+      matchedCodes.add(b.codigo_id);
+    }
+
+    // Sort: not delivered first, then by name
+    results.sort((a, b) => {
+      if (a.alreadyDelivered !== b.alreadyDelivered) return a.alreadyDelivered ? 1 : -1;
+      return a.nombre.localeCompare(b.nombre);
+    });
+
+    return results;
+  });
 
   readonly totalEntregadas = computed(() => {
     return this.cafeteriaService.entregas().filter(e => e.estado === 'ENTREGADO').length;
@@ -309,65 +357,27 @@ export class EntregaRapida {
     return entregas.slice(0, 20);
   });
 
-  async onSearch(code: string): Promise<void> {
-    this.searchCode.set(code);
-    if (!code || code.length < 3 || this.cafeteriaService.isLoadingData()) {
-      this.searchResult.set(null);
-      return;
-    }
-
-    const result = await this.cafeteriaService.searchBeneficiarioOrConfirmacion(code);
-    if (!result || result.status === 'NOT_IN_PADRON') {
-      this.searchResult.set(null);
-      return;
-    }
-
-    const alreadyDelivered = result.status === 'ALREADY_DELIVERED';
-    const benef = result.beneficiario;
-    const conf = result.confirmacion;
-
-    let type: 'confirmed' | 'extraño' | 'no_confirmacion' = 'confirmed';
-    if (result.status === 'VALID_READY' || result.status === 'VALID_ALERT') {
-      type = (!conf?.es_beneficiario_valido || conf?.motivo_alerta) ? 'extraño' : 'confirmed';
-    } else if (result.status === 'NOT_CONFIRMED') {
-      type = 'no_confirmacion';
-    }
-
-    this.searchResult.set({
-      codigo: result.codigo_id,
-      nombre: benef?.nombre || conf?.beneficiario_nombre || conf?.nombre_en_form || 'Sin nombre',
-      carrera: benef?.carrera_nombre || conf?.carrera_nombre || conf?.carrera_en_form || '',
-      tipoComida: result.tipoComidaNombre || conf?.tipo_comida_nombre || '',
-      type,
-      confirmacionId: conf?.id,
-      horaConfirmacion: conf?.fecha ? this.getHora(conf.fecha) : undefined,
-      alreadyDelivered,
-      horaEntrega: result.entrega?.hora || ''
-    });
+  onSearch(query: string): void {
+    this.searchQuery.set(query);
   }
 
-  async markDelivery(): Promise<void> {
-    const result = this.searchResult();
-    if (!result || this.delivering()) return;
-
-    this.delivering.set(true);
+  async deliverItem(item: { codigo: string }): Promise<void> {
+    if (this.deliveringCodigo()) return;
+    this.deliveringCodigo.set(item.codigo);
     try {
-      const searchResult = await this.cafeteriaService.searchBeneficiarioOrConfirmacion(result.codigo);
-      if (searchResult) {
-        await this.cafeteriaService.registrarEntrega(searchResult);
+      const result = await this.cafeteriaService.searchBeneficiarioOrConfirmacion(item.codigo);
+      if (result) {
+        await this.cafeteriaService.registrarEntrega(result);
       }
-      // Refresh search to show delivered status
-      await this.onSearch(this.searchCode());
     } catch (e) {
       console.error('Error marking delivery:', e);
     } finally {
-      this.delivering.set(false);
+      this.deliveringCodigo.set(null);
     }
   }
 
   clearSearch(): void {
-    this.searchCode.set('');
-    this.searchResult.set(null);
+    this.searchQuery.set('');
   }
 
   getVisual(carrera: string) {
