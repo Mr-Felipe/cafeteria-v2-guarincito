@@ -613,12 +613,19 @@ export class CafeteriaService {
       // Use database function for atomic operation
       if (this.isOnline() && this.supabase.isConnected) {
         try {
-          const supabaseId = entrega?.supabase_id;
+          // Find the Supabase ID by codigo_id + fecha since local id may differ
+          const { data: remoteEntrega } = await (this.supabase as any).client
+            .from('entregas')
+            .select('id')
+            .eq('codigo_id', entrega?.codigo_id || '')
+            .eq('fecha', this.selectedDate())
+            .eq('estado', 'ENTREGADO')
+            .maybeSingle();
+          const supabaseId = remoteEntrega?.id;
           if (supabaseId) {
             await this.supabase.rpc('fn_revertir_entrega', { p_entrega_id: supabaseId });
           } else {
-            // Delivery was created offline and not synced yet - just remove from sync queue INSERT if exists
-            console.log('[CafeteriaService] Entrega sin supabase_id, omitiendo RPC');
+            console.log('[CafeteriaService] Entrega no encontrada en Supabase');
           }
         } catch {
           await this.offlineDb.addToSyncQueue({
