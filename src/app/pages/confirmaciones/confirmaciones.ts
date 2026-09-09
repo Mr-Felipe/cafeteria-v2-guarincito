@@ -111,7 +111,7 @@ import { Beneficiario, Confirmacion, getVisualCarrera } from '../../models/cafet
           <div class="w-full bg-slate-100 h-1.5 rounded-full mt-3 overflow-hidden"><div class="bg-orange-500 h-full" [style.width.%]="totalConfirmadosPorSubsidio() > 0 ? (pendientesPorSubsidio() / totalConfirmadosPorSubsidio() * 100) : 0"></div></div>
         </div>
         <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
-          <div><div class="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">En Padrón</div><div class="text-2xl font-bold text-slate-900">{{ cafeteriaService.beneficiarios().length }}</div></div>
+          <div><div class="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">En Padrón</div><div class="text-2xl font-bold text-slate-900">{{ padronPorSubsidio() }}</div></div>
           <div class="w-full bg-slate-100 h-1.5 rounded-full mt-3 overflow-hidden"><div class="bg-blue-500 h-full" [style.width.%]="100"></div></div>
         </div>
         <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between" [class.bg-purple-50]="extranosPorSubsidio() > 0" [class.border-purple-200]="extranosPorSubsidio() > 0">
@@ -645,6 +645,16 @@ export class Confirmaciones {
     return tipo === 'Todos' ? this.confirmadosExtranos().length : this.confirmadosExtranos().filter(c => c.tipo_comida_nombre === tipo).length;
   });
 
+  readonly padronPorSubsidio = computed(() => {
+    const tipo = this.filtroSubsidio();
+    const all = this.cafeteriaService.filteredBeneficiarios();
+    if (tipo === 'Todos') return all.length;
+    return all.filter(b => {
+      const tipoBen = b.tipo_comida_id === 2 ? 'Almuerzo' : b.tipo_comida_id === 3 ? 'Refrigerio' : 'Desayuno';
+      return tipoBen === tipo;
+    }).length;
+  });
+
   readonly noConfirmaronPorSubsidio = computed(() => {
     return this.noConfirmaron().length;
   });
@@ -698,9 +708,12 @@ export class Confirmaciones {
 
   readonly entregadosSinConfirmar = computed(() => {
     const confCodes = new Set(this.cafeteriaService.confirmaciones().map(c => c.codigo_id));
-    return this.cafeteriaService.entregas().filter(e =>
-      e.estado === 'ENTREGADO' && !confCodes.has(e.codigo_id)
-    );
+    const tipoFiltro = this.filtroSubsidio();
+    return this.cafeteriaService.entregas().filter(e => {
+      if (e.estado !== 'ENTREGADO' || confCodes.has(e.codigo_id)) return false;
+      if (tipoFiltro !== 'Todos' && e.tipo_comida_nombre !== tipoFiltro) return false;
+      return true;
+    });
   });
 
   readonly carrerasEnConfirmaciones = computed(() => {
