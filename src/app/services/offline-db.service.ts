@@ -171,6 +171,17 @@ export class OfflineDbService {
     return await this.db.entregas.where('fecha').equals(fecha).toArray();
   }
 
+  async saveEntregas(entregas: Entrega[]): Promise<void> {
+    if (entregas.length === 0) return;
+    const fecha = entregas[0].fecha;
+    // Delete old local entries for this date, then insert fresh from Supabase
+    await this.db.entregas.where('fecha').equals(fecha).delete();
+    for (const e of entregas) {
+      const { id: _localId, ...rest } = e;
+      await this.db.entregas.add(rest);
+    }
+  }
+
   async addEntrega(entrega: Entrega): Promise<number> {
     const id = await this.db.entregas.add(entrega);
     return id as number;

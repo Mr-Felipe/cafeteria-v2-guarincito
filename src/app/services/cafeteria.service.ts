@@ -184,6 +184,7 @@ export class CafeteriaService {
         }
         if (remoteEnts.status === 'fulfilled' && remoteEnts.value.length > 0) {
           this.entregas.set(remoteEnts.value);
+          await this.offlineDb.saveEntregas(remoteEnts.value);
         }
       }
     } catch (err) {
@@ -308,6 +309,7 @@ export class CafeteriaService {
 
       if (remoteEnts.status === 'fulfilled' && remoteEnts.value.length > 0) {
         this.entregas.set(remoteEnts.value);
+        await this.offlineDb.saveEntregas(remoteEnts.value);
       }
 
       // Process any pending offline sync queue
