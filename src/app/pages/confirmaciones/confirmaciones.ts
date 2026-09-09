@@ -140,12 +140,23 @@ import { Beneficiario, Confirmacion, getVisualCarrera } from '../../models/cafet
                     <option value="TODAS">Todas las carreras</option>
                     @for (c of carrerasEnConfirmaciones(); track c) { <option [value]="c">{{ c }}</option> }
                   </select>
-                  <select [ngModel]="sortValidos()" (ngModelChange)="sortValidos.set($event)" class="p-2 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 focus:outline-none cursor-pointer">
-                    <option value="hora">🕐 Hora</option>
-                    <option value="codigo"># Codigo</option>
-                    <option value="nombre">👤 Nombre</option>
-                    <option value="carrera">🎓 Carrera</option>
-                  </select>
+                  <div class="relative" (mouseleave)="closeSortDropdown()">
+                    <button type="button" (click)="toggleSortDropdown('sortValidos')" class="p-2 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 focus:outline-none cursor-pointer flex items-center gap-1.5 hover:border-slate-300">
+                      <mat-icon class="text-sm text-slate-500">{{ getSortIcon('validos') }}</mat-icon>
+                      <span>{{ getSortLabel('validos') }}</span>
+                      <mat-icon class="text-xs text-slate-400">expand_more</mat-icon>
+                    </button>
+                    @if (openSortDropdown() === 'sortValidos') {
+                      <div class="absolute right-0 mt-1 w-40 bg-white border border-slate-200 rounded-lg shadow-lg z-50 py-1">
+                        @for (opt of sortOptions; track opt.key) {
+                          <button type="button" (click)="setSort('validos', opt.key)" class="w-full px-3 py-2 text-left text-xs font-medium flex items-center gap-2 hover:bg-slate-50 transition-colors" [class.bg-blue-50]="sortValidos() === opt.key" [class.text-blue-700]="sortValidos() === opt.key">
+                            <mat-icon class="text-sm text-slate-400">{{ opt.icon }}</mat-icon>
+                            <span>{{ opt.label }}</span>
+                          </button>
+                        }
+                      </div>
+                    }
+                  </div>
                 </div>
               </div>
               <div #tablaValidos class="p-4 sm:p-5 space-y-4">
@@ -231,12 +242,23 @@ import { Beneficiario, Confirmacion, getVisualCarrera } from '../../models/cafet
                     <option value="TODAS">Todas las carreras</option>
                     @for (c of carrerasEnExtranos(); track c) { <option [value]="c">{{ c }}</option> }
                   </select>
-                  <select [ngModel]="sortExtranos()" (ngModelChange)="sortExtranos.set($event)" class="p-2 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 focus:outline-none cursor-pointer">
-                    <option value="hora">🕐 Hora</option>
-                    <option value="codigo"># Codigo</option>
-                    <option value="nombre">👤 Nombre</option>
-                    <option value="carrera">🎓 Carrera</option>
-                  </select>
+                  <div class="relative" (mouseleave)="closeSortDropdown()">
+                    <button type="button" (click)="toggleSortDropdown('sortExtranos')" class="p-2 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 focus:outline-none cursor-pointer flex items-center gap-1.5 hover:border-slate-300">
+                      <mat-icon class="text-sm text-slate-500">{{ getSortIcon('extranos') }}</mat-icon>
+                      <span>{{ getSortLabel('extranos') }}</span>
+                      <mat-icon class="text-xs text-slate-400">expand_more</mat-icon>
+                    </button>
+                    @if (openSortDropdown() === 'sortExtranos') {
+                      <div class="absolute right-0 mt-1 w-40 bg-white border border-slate-200 rounded-lg shadow-lg z-50 py-1">
+                        @for (opt of sortOptions; track opt.key) {
+                          <button type="button" (click)="setSort('extranos', opt.key)" class="w-full px-3 py-2 text-left text-xs font-medium flex items-center gap-2 hover:bg-slate-50 transition-colors" [class.bg-blue-50]="sortExtranos() === opt.key" [class.text-blue-700]="sortExtranos() === opt.key">
+                            <mat-icon class="text-sm text-slate-400">{{ opt.icon }}</mat-icon>
+                            <span>{{ opt.label }}</span>
+                          </button>
+                        }
+                      </div>
+                    }
+                  </div>
                 </div>
               </div>
               <div class="p-4 sm:p-5 space-y-4">
@@ -349,12 +371,23 @@ import { Beneficiario, Confirmacion, getVisualCarrera } from '../../models/cafet
                     <option value="TODAS">Todas las carreras</option>
                     @for (c of carrerasEnNoConfirmaron(); track c) { <option [value]="c">{{ c }}</option> }
                   </select>
-                  <select [ngModel]="sortNoConfirmaron()" (ngModelChange)="sortNoConfirmaron.set($event)" class="p-2 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 focus:outline-none cursor-pointer">
-                    <option value="hora">🕐 Hora</option>
-                    <option value="codigo"># Codigo</option>
-                    <option value="nombre">👤 Nombre</option>
-                    <option value="carrera">🎓 Carrera</option>
-                  </select>
+                  <div class="relative" (mouseleave)="closeSortDropdown()">
+                    <button type="button" (click)="toggleSortDropdown('sortNoConfirmaron')" class="p-2 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 focus:outline-none cursor-pointer flex items-center gap-1.5 hover:border-slate-300">
+                      <mat-icon class="text-sm text-slate-500">{{ getSortIcon('noConfirmaron') }}</mat-icon>
+                      <span>{{ getSortLabel('noConfirmaron') }}</span>
+                      <mat-icon class="text-xs text-slate-400">expand_more</mat-icon>
+                    </button>
+                    @if (openSortDropdown() === 'sortNoConfirmaron') {
+                      <div class="absolute right-0 mt-1 w-40 bg-white border border-slate-200 rounded-lg shadow-lg z-50 py-1">
+                        @for (opt of sortOptions; track opt.key) {
+                          <button type="button" (click)="setSort('noConfirmaron', opt.key)" class="w-full px-3 py-2 text-left text-xs font-medium flex items-center gap-2 hover:bg-slate-50 transition-colors" [class.bg-blue-50]="sortNoConfirmaron() === opt.key" [class.text-blue-700]="sortNoConfirmaron() === opt.key">
+                            <mat-icon class="text-sm text-slate-400">{{ opt.icon }}</mat-icon>
+                            <span>{{ opt.label }}</span>
+                          </button>
+                        }
+                      </div>
+                    }
+                  </div>
                 </div>
               </div>
               <div class="p-4 sm:p-5 space-y-4">
@@ -575,6 +608,14 @@ export class Confirmaciones {
   readonly sortDirExtranos = signal<'asc' | 'desc'>('desc');
   readonly sortNoConfirmaron = signal<string>('hora');
   readonly sortDirNoConfirmaron = signal<'asc' | 'desc'>('desc');
+  readonly openSortDropdown = signal<string | null>(null);
+
+  readonly sortOptions = [
+    { key: 'hora', label: 'Hora', icon: 'schedule' },
+    { key: 'codigo', label: 'Codigo', icon: 'tag' },
+    { key: 'nombre', label: 'Nombre', icon: 'person' },
+    { key: 'carrera', label: 'Carrera', icon: 'school' }
+  ];
 
   readonly subsidioOpciones = computed(() => {
     const dow = this.cafeteriaService.selectedDayOfWeek();
@@ -870,6 +911,31 @@ export class Confirmaciones {
 
   onSearchBlur(): void {
     document.documentElement.classList.remove('search-active');
+  }
+
+  toggleSortDropdown(id: string): void {
+    this.openSortDropdown.set(this.openSortDropdown() === id ? null : id);
+  }
+
+  closeSortDropdown(): void {
+    this.openSortDropdown.set(null);
+  }
+
+  setSort(signal: 'validos' | 'extranos' | 'noConfirmaron', value: string): void {
+    if (signal === 'validos') this.sortValidos.set(value);
+    else if (signal === 'extranos') this.sortExtranos.set(value);
+    else this.sortNoConfirmaron.set(value);
+    this.openSortDropdown.set(null);
+  }
+
+  getSortLabel(signal: 'validos' | 'extranos' | 'noConfirmaron'): string {
+    const val = signal === 'validos' ? this.sortValidos() : signal === 'extranos' ? this.sortExtranos() : this.sortNoConfirmaron();
+    return this.sortOptions.find(o => o.key === val)?.label || '';
+  }
+
+  getSortIcon(signal: 'validos' | 'extranos' | 'noConfirmaron'): string {
+    const val = signal === 'validos' ? this.sortValidos() : signal === 'extranos' ? this.sortExtranos() : this.sortNoConfirmaron();
+    return this.sortOptions.find(o => o.key === val)?.icon || 'sort';
   }
 
   getVisual(carrera: string) {
