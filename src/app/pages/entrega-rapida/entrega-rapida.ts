@@ -261,7 +261,6 @@ export class EntregaRapida {
 
     // 2. Get all confirmations for today
     const confs = this.cafeteriaService.confirmaciones();
-    const bens = this.cafeteriaService.beneficiarios();
 
     // Build matched codes set
     const matchedCodes = new Set<string>();
@@ -299,8 +298,8 @@ export class EntregaRapida {
       matchedCodes.add(c.codigo_id);
     }
 
-    // 3. Search beneficiarios not in confirmations
-    for (const b of bens) {
+    // 3. Search beneficiarios not in confirmations (filtered by day of week)
+    for (const b of this.cafeteriaService.filteredBeneficiarios()) {
       if (matchedCodes.has(b.codigo_id)) continue;
       const bNorm = this.cafeteriaService.normalizeCode(b.codigo_id);
       const matchesCode = bNorm === norm || b.codigo_id === q;
