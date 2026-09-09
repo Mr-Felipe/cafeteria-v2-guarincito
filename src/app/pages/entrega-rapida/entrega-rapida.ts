@@ -77,13 +77,13 @@ import { getVisualCarrera } from '../../models/cafeteria.models';
         <div class="bg-white border rounded-2xl shadow-sm overflow-hidden transition-all"
           [class.border-emerald-200]="searchResult()!.type === 'confirmed'"
           [class.border-amber-200]="searchResult()!.type === 'extraño'"
-          [class.border-slate-200]="searchResult()!.type === 'not_found' || searchResult()!.type === 'no_confirmacion'"
+          [class.border-slate-200]="searchResult()!.type === 'no_confirmacion'"
         >
           <!-- Result Header -->
           <div class="p-5 sm:p-6"
             [class.bg-emerald-50]="searchResult()!.type === 'confirmed'"
             [class.bg-amber-50]="searchResult()!.type === 'extraño'"
-            [class.bg-slate-50]="searchResult()!.type === 'not_found' || searchResult()!.type === 'no_confirmacion'"
+            [class.bg-slate-50]="searchResult()!.type === 'no_confirmacion'"
           >
             <div class="flex items-start justify-between gap-4">
               <div class="flex items-center gap-4">
@@ -93,18 +93,16 @@ import { getVisualCarrera } from '../../models/cafeteria.models';
                   [class.bg-emerald-700]="searchResult()!.type === 'confirmed'"
                   [class.bg-amber-100]="searchResult()!.type === 'extraño'"
                   [class.bg-amber-700]="searchResult()!.type === 'extraño'"
-                  [class.bg-slate-200]="searchResult()!.type === 'not_found' || searchResult()!.type === 'no_confirmacion'"
+                  [class.bg-slate-200]="searchResult()!.type === 'no_confirmacion'"
                   [class.text-white]="searchResult()!.type === 'confirmed' || searchResult()!.type === 'extraño'"
-                  [class.text-slate-500]="searchResult()!.type === 'not_found' || searchResult()!.type === 'no_confirmacion'"
+                  [class.text-slate-500]="searchResult()!.type === 'no_confirmacion'"
                 >
                   @if (searchResult()!.type === 'confirmed') {
                     <mat-icon [style.fontSize.px]="32">verified</mat-icon>
                   } @else if (searchResult()!.type === 'extraño') {
                     <mat-icon [style.fontSize.px]="32">warning_amber</mat-icon>
-                  } @else if (searchResult()!.type === 'no_confirmacion') {
-                    <mat-icon [style.fontSize.px]="32">person_off</mat-icon>
                   } @else {
-                    <mat-icon [style.fontSize.px]="32">person_search</mat-icon>
+                    <mat-icon [style.fontSize.px]="32">person_off</mat-icon>
                   }
                 </div>
                 <div>
@@ -112,17 +110,17 @@ import { getVisualCarrera } from '../../models/cafeteria.models';
                     <span class="font-mono text-sm font-bold"
                       [class.text-emerald-700]="searchResult()!.type === 'confirmed'"
                       [class.text-amber-700]="searchResult()!.type === 'extraño'"
-                      [class.text-slate-700]="searchResult()!.type === 'not_found' || searchResult()!.type === 'no_confirmacion'"
+                      [class.text-slate-700]="searchResult()!.type === 'no_confirmacion'"
                     >ID: {{ searchResult()!.codigo }}</span>
                     <span class="px-2 py-0.5 rounded-full text-[10px] font-bold"
                       [class.bg-emerald-100]="searchResult()!.type === 'confirmed'"
                       [class.text-emerald-700]="searchResult()!.type === 'confirmed'"
                       [class.bg-amber-100]="searchResult()!.type === 'extraño'"
                       [class.text-amber-700]="searchResult()!.type === 'extraño'"
-                      [class.bg-slate-100]="searchResult()!.type === 'not_found' || searchResult()!.type === 'no_confirmacion'"
-                      [class.text-slate-600]="searchResult()!.type === 'not_found' || searchResult()!.type === 'no_confirmacion'"
+                      [class.bg-slate-100]="searchResult()!.type === 'no_confirmacion'"
+                      [class.text-slate-600]="searchResult()!.type === 'no_confirmacion'"
                     >
-                      {{ searchResult()!.type === 'confirmed' ? 'CONFIRMADO' : searchResult()!.type === 'extraño' ? 'EXTERNO' : searchResult()!.type === 'no_confirmacion' ? 'SIN CONFIRMACION' : 'NO EN PADRON' }}
+                      {{ searchResult()!.type === 'confirmed' ? 'CONFIRMADO' : searchResult()!.type === 'extraño' ? 'EXTERNO' : 'SIN CONFIRMACION' }}
                     </span>
                   </div>
                   <h3 class="text-lg font-bold text-slate-900">{{ searchResult()!.nombre }}</h3>
@@ -161,7 +159,7 @@ import { getVisualCarrera } from '../../models/cafeteria.models';
           <div class="p-4 sm:p-5 border-t"
             [class.border-emerald-100]="searchResult()!.type === 'confirmed'"
             [class.border-amber-100]="searchResult()!.type === 'extraño'"
-            [class.border-slate-100]="searchResult()!.type === 'not_found' || searchResult()!.type === 'no_confirmacion'"
+            [class.border-slate-100]="searchResult()!.type === 'no_confirmacion'"
           >
             @if (searchResult()!.alreadyDelivered) {
               <div class="flex items-center justify-center gap-2 py-3 rounded-xl bg-emerald-50 text-emerald-700 font-semibold text-sm">
@@ -189,7 +187,7 @@ import { getVisualCarrera } from '../../models/cafeteria.models';
                   <span>Marcar Entrega</span>
                 }
               </button>
-            } @else if (searchResult()!.type === 'no_confirmacion') {
+            } @else {
               <button
                 type="button"
                 (click)="markDelivery()"
@@ -204,10 +202,6 @@ import { getVisualCarrera } from '../../models/cafeteria.models';
                   <span>Entregar Sin Confirmar</span>
                 }
               </button>
-            } @else {
-              <div class="text-center py-3 text-slate-400 text-sm font-medium">
-                Codigo no encontrado en el sistema
-              </div>
             }
           </div>
         </div>
@@ -289,7 +283,7 @@ export class EntregaRapida {
     nombre: string;
     carrera: string;
     tipoComida: string;
-    type: 'confirmed' | 'extraño' | 'not_found' | 'no_confirmacion';
+    type: 'confirmed' | 'extraño' | 'no_confirmacion';
     confirmacionId?: number;
     horaConfirmacion?: string;
     alreadyDelivered?: boolean;
@@ -323,14 +317,8 @@ export class EntregaRapida {
     }
 
     const result = this.cafeteriaService.searchBeneficiarioOrConfirmacion(code);
-    if (!result) {
-      this.searchResult.set({
-        codigo: code,
-        nombre: 'No encontrado',
-        carrera: '',
-        tipoComida: '',
-        type: 'not_found'
-      });
+    if (!result || result.status === 'NOT_IN_PADRON') {
+      this.searchResult.set(null);
       return;
     }
 
@@ -338,13 +326,11 @@ export class EntregaRapida {
     const benef = result.beneficiario;
     const conf = result.confirmacion;
 
-    let type: 'confirmed' | 'extraño' | 'not_found' | 'no_confirmacion' = 'not_found';
+    let type: 'confirmed' | 'extraño' | 'no_confirmacion' = 'confirmed';
     if (result.status === 'VALID_READY' || result.status === 'VALID_ALERT') {
       type = (!conf?.es_beneficiario_valido || conf?.motivo_alerta) ? 'extraño' : 'confirmed';
     } else if (result.status === 'NOT_CONFIRMED') {
       type = 'no_confirmacion';
-    } else if (result.status === 'NOT_IN_PADRON') {
-      type = 'not_found';
     }
 
     this.searchResult.set({
