@@ -3,8 +3,13 @@ import { Routes } from '@angular/router';
 export const routes: Routes = [
   {
     path: '',
-    redirectTo: 'confirmaciones',
+    redirectTo: 'asistencia',
     pathMatch: 'full'
+  },
+  {
+    path: 'asistencia',
+    loadComponent: () => import('./pages/asistencia/asistencia').then(m => m.Asistencia),
+    title: 'Control de Asistencia - Cafeteria Guarincito'
   },
   {
     path: 'confirmaciones',
@@ -43,6 +48,6 @@ export const routes: Routes = [
   },
   {
     path: '**',
-    redirectTo: 'confirmaciones'
+    redirectTo: 'asistencia'
   }
 ];

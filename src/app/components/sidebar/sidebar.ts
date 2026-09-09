@@ -102,7 +102,7 @@ import { filter } from 'rxjs/operators';
               [routerLink]="item.route"
               (click)="onItemClick()"
               routerLinkActive="active-nav-link"
-              [routerLinkActiveOptions]="{exact: item.route === '/confirmaciones'}"
+              [routerLinkActiveOptions]="{exact: item.route === '/asistencia'}"
               class="group relative flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-colors duration-150 cursor-pointer"
               [class.justify-center]="collapsed() && !mobileOpen()"
             >
@@ -212,7 +212,8 @@ export class Sidebar implements OnInit, OnDestroy {
   }
 
   readonly navItems = [
-    { label: 'Confirmaciones', route: '/confirmaciones', icon: 'how_to_reg', badge: 'Principal' },
+    { label: 'Control de Asistencia', route: '/asistencia', icon: 'analytics', badge: 'Principal' },
+    { label: 'Confirmaciones', route: '/confirmaciones', icon: 'how_to_reg', badge: 'En Vivo' },
     { label: 'Entrega Rapida', route: '/entrega-rapida', icon: 'flash_on' },
     { label: 'Entregas del Dia', route: '/entregas', icon: 'task_alt' },
     { label: 'Beneficiarios', route: '/beneficiarios', icon: 'badge' },
