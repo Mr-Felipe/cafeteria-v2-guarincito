@@ -364,6 +364,46 @@ export class SupabaseService {
     if (error) throw error;
   }
 
+  async findEntregaByCodigoFecha(codigoId: string, fecha: string): Promise<{ id: number } | null> {
+    if (!this.client) return null;
+    const { data } = await this.client
+      .from('entregas')
+      .select('id')
+      .eq('codigo_id', codigoId)
+      .eq('fecha', fecha)
+      .eq('estado', 'ENTREGADO')
+      .maybeSingle();
+    return data;
+  }
+
+  async fetchBeneficiarioByCodigo(codigoId: string): Promise<Beneficiario | null> {
+    if (!this.client) return null;
+    const { data, error } = await this.client
+      .from('beneficiarios')
+      .select('*, carreras(nombre)')
+      .eq('codigo_id', codigoId)
+      .maybeSingle();
+    if (error || !data) return null;
+    const b = data as unknown as SupabaseBeneficiarioRow;
+    return {
+      id: b.id,
+      codigo_id: b.codigo_id,
+      nombre: b.nombre,
+      genero: b.genero,
+      carrera_id: b.carrera_id,
+      tipo_comida_id: b.tipo_comida_id,
+      activo: b.activo ?? true,
+      telefono: b.telefono,
+      email: b.email,
+      fecha_vigencia: b.fecha_vigencia,
+      fecha_caducidad: b.fecha_caducidad,
+      num_tarjeta: b.num_tarjeta,
+      num_habitacion: b.num_habitacion,
+      num_piso: b.num_piso,
+      carrera_nombre: b.carreras?.nombre || ''
+    };
+  }
+
   // --- Carreras & Tipos de Comida ---
   async fetchCarreras(): Promise<Carrera[]> {
     if (!this.client) return [];

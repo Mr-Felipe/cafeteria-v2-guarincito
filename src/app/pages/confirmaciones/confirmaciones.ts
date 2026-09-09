@@ -694,8 +694,6 @@ export class Confirmaciones {
     ];
   });
 
-  modalPegarOpen = signal<boolean>(false);
-
   accordionValidosOpen = signal<boolean>(true);
   accordionExtranosOpen = signal<boolean>(true);
   accordionNoConfirmaronOpen = signal<boolean>(true);
@@ -1025,12 +1023,6 @@ export class Confirmaciones {
     return getVisualCarrera(val).icono;
   }
 
-  getCarrerasList(signal: 'validos' | 'extranos' | 'noConfirmaron'): string[] {
-    if (signal === 'validos') return this.carrerasEnConfirmaciones();
-    if (signal === 'extranos') return this.carrerasEnExtranos();
-    return this.carrerasEnNoConfirmaron();
-  }
-
   getVisual(carrera: string) {
     return getVisualCarrera(carrera);
   }
@@ -1062,23 +1054,35 @@ export class Confirmaciones {
   }
 
   async entregarDirecto(c: Confirmacion): Promise<void> {
-    const result = await this.cafeteriaService.searchBeneficiarioOrConfirmacion(c.codigo_id);
-    if (result) {
-      await this.cafeteriaService.registrarEntrega(result);
+    try {
+      const result = await this.cafeteriaService.searchBeneficiarioOrConfirmacion(c.codigo_id);
+      if (result) {
+        await this.cafeteriaService.registrarEntrega(result);
+      }
+    } catch (e) {
+      console.error('[Confirmaciones] Error en entregarDirecto:', e);
     }
   }
 
   async entregarDesdeNoConfirmaron(b: Beneficiario): Promise<void> {
-    const result = await this.cafeteriaService.searchBeneficiarioOrConfirmacion(b.codigo_id);
-    if (result) {
-      await this.cafeteriaService.registrarEntrega(result);
+    try {
+      const result = await this.cafeteriaService.searchBeneficiarioOrConfirmacion(b.codigo_id);
+      if (result) {
+        await this.cafeteriaService.registrarEntrega(result);
+      }
+    } catch (e) {
+      console.error('[Confirmaciones] Error en entregarDesdeNoConfirmaron:', e);
     }
   }
 
   async entregarExtrano(c: Confirmacion): Promise<void> {
-    const result = await this.cafeteriaService.searchBeneficiarioOrConfirmacion(c.codigo_id);
-    if (result) {
-      await this.cafeteriaService.registrarEntrega(result);
+    try {
+      const result = await this.cafeteriaService.searchBeneficiarioOrConfirmacion(c.codigo_id);
+      if (result) {
+        await this.cafeteriaService.registrarEntrega(result);
+      }
+    } catch (e) {
+      console.error('[Confirmaciones] Error en entregarExtrano:', e);
     }
   }
 

@@ -29,7 +29,6 @@ export class CafeteriaService {
   readonly beneficiarios = signal<Beneficiario[]>([]);
   readonly confirmaciones = signal<Confirmacion[]>([]);
   readonly entregas = signal<Entrega[]>([]);
-  readonly webConfirmaciones = signal<any[]>([]);
   readonly carreras = signal<Carrera[]>(CARRERAS_INIT);
   readonly tiposComida = signal<TipoComida[]>(TIPOS_COMIDA_INIT);
 
@@ -220,12 +219,6 @@ export class CafeteriaService {
         if (raw.fecha && raw.fecha.startsWith(fechaHoyFmt)) {
           // Re-fetch full data with joins to avoid missing nombre/carrera
           this.loadFechaData(fechaHoy);
-          if (raw.origen === 'WEB_FORM' && raw.formulario_tipo) {
-            this.webConfirmaciones.update(list => {
-              if (list.some(c => c.id === raw.id)) return list;
-              return [...list, raw];
-            });
-          }
         }
       })
       .subscribe();
@@ -461,29 +454,8 @@ export class CafeteriaService {
     // For code queries: do a live Supabase fallback when online (fixes Dexie corruption)
     if (isCode && this.isOnline() && this.supabase.isConnected) {
       try {
-        const { data, error } = await (this.supabase as any).client
-          .from('beneficiarios')
-          .select('*, carreras(nombre)')
-          .eq('codigo_id', norm)
-          .single();
-        if (!error && data) {
-          const supBen: Beneficiario = {
-            id: data.id,
-            codigo_id: data.codigo_id,
-            nombre: data.nombre,
-            genero: data.genero,
-            carrera_id: data.carrera_id,
-            tipo_comida_id: data.tipo_comida_id,
-            activo: data.activo ?? true,
-            telefono: data.telefono,
-            email: data.email,
-            fecha_vigencia: data.fecha_vigencia,
-            fecha_caducidad: data.fecha_caducidad,
-            num_tarjeta: data.num_tarjeta,
-            num_habitacion: data.num_habitacion,
-            num_piso: data.num_piso,
-            carrera_nombre: data.carreras?.nombre || ''
-          };
+        const supBen = await this.supabase.fetchBeneficiarioByCodigo(norm);
+        if (supBen) {
           return {
             status: 'NOT_CONFIRMED',
             codigo_id: supBen.codigo_id,
@@ -613,14 +585,7 @@ export class CafeteriaService {
       // Use database function for atomic operation
       if (this.isOnline() && this.supabase.isConnected) {
         try {
-          // Find the Supabase ID by codigo_id + fecha since local id may differ
-          const { data: remoteEntrega } = await (this.supabase as any).client
-            .from('entregas')
-            .select('id')
-            .eq('codigo_id', entrega?.codigo_id || '')
-            .eq('fecha', this.selectedDate())
-            .eq('estado', 'ENTREGADO')
-            .maybeSingle();
+          const remoteEntrega = await this.supabase.findEntregaByCodigoFecha(entrega?.codigo_id || '', this.selectedDate());
           const supabaseId = remoteEntrega?.id;
           if (supabaseId) {
             await this.supabase.rpc('fn_revertir_entrega', { p_entrega_id: supabaseId });
@@ -643,7 +608,7 @@ export class CafeteriaService {
         // Cancel any pending INSERT for this same delivery in the sync queue
         await this.offlineDb.removePendingInsertsForCodigo(entrega?.codigo_id || '', this.selectedDate());
         await this.offlineDb.addToSyncQueue({
-          tabla: 'entregas', operacion: 'DELETE', datos: { id: entregaId, supabase_id: entrega?.supabase_id }
+          tabla: 'entregas', operacion: 'DELETE', datos: { id: entregaId, codigo_id: entrega?.codigo_id, fecha: this.selectedDate() }
         });
         if (entrega?.confirmacion_id) {
           await this.offlineDb.addToSyncQueue({
@@ -936,15 +901,13 @@ export class CafeteriaService {
           }
         } else if (item.tabla === 'entregas' && item.operacion === 'DELETE') {
           const rawData = item.datos as Record<string, unknown>;
-          const localId = rawData['id'] as number;
-          // Try to get supabase_id from local DB first, then from queue data
-          let supabaseId = rawData['supabase_id'] as number | undefined;
-          if (!supabaseId && localId) {
-            const entregaLocal = await this.offlineDb.rawDb.entregas.get(localId);
-            supabaseId = entregaLocal?.supabase_id ?? undefined;
-          }
-          if (supabaseId) {
-            await this.supabase.rpc('fn_revertir_entrega', { p_entrega_id: supabaseId });
+          const codigoId = rawData['codigo_id'] as string;
+          const fecha = rawData['fecha'] as string;
+          if (codigoId && fecha) {
+            const remoteEntrega = await this.supabase.findEntregaByCodigoFecha(codigoId, fecha);
+            if (remoteEntrega?.id) {
+              await this.supabase.rpc('fn_revertir_entrega', { p_entrega_id: remoteEntrega.id });
+            }
           }
           if (item.id) await this.offlineDb.removeSyncQueueItem(item.id);
         } else if (item.tabla === 'confirmaciones' && item.operacion === 'UPDATE') {

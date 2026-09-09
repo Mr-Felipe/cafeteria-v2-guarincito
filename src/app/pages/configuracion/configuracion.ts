@@ -1169,7 +1169,7 @@ export class Configuracion implements OnInit {
   readonly loading = signal(true);
   readonly configExpanded = signal(true);
   readonly config = signal<FormConfig[]>([]);
-  readonly respuestas = computed(() => this.cafeteriaService.webConfirmaciones() as WebConfirmacion[]);
+  readonly respuestas = computed(() => this.cafeteriaService.confirmaciones() as WebConfirmacion[]);
   readonly filtroTipo = signal<'todos' | 'almuerzo' | 'refrigerio' | 'adea' | 'fin_de_semana'>('todos');
   readonly filtroGeneral = signal('');
   readonly filtroConf = signal('');
@@ -1349,7 +1349,7 @@ export class Configuracion implements OnInit {
         this.supabase.fetchCarreraHorarios('refrigerio')
       ]);
       this.config.set(configData);
-      this.cafeteriaService.webConfirmaciones.set(respuestasData);
+      this.cafeteriaService.confirmaciones.set(respuestasData);
       this.carrerasDisponibles.set(carrerasData);
       this.carrerasHorarios.set(horariosData);
     } catch (err) {
@@ -1664,7 +1664,7 @@ export class Configuracion implements OnInit {
   async eliminarConfirmacion(id: number) {
     try {
       await this.supabase.deleteConfirmacion(id);
-      this.cafeteriaService.webConfirmaciones.update(list => list.filter((r: any) => r.id !== id));
+      this.cafeteriaService.confirmaciones.update(list => list.filter((r: any) => r.id !== id));
       this.cafeteriaService.confirmaciones.update(list => list.filter(c => c.id !== id));
       this.cafeteriaService.notify('success', 'Eliminado', 'Registro eliminado correctamente');
     } catch (err) {
