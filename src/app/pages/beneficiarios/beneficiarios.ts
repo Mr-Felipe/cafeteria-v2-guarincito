@@ -269,14 +269,28 @@ import { Beneficiario } from '../../models/cafeteria.models';
 
                     <!-- Actions -->
                     <td class="py-3 px-4 text-right">
-                      <button
-                        type="button"
-                        (click)="openEditModal(ben)"
-                        class="p-1.5 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-colors"
-                        title="Editar datos del beneficiario"
-                      >
-                        <mat-icon class="text-base">edit</mat-icon>
-                      </button>
+                      <div class="flex items-center justify-end gap-1">
+                        <button
+                          type="button"
+                          (click)="openEditModal(ben)"
+                          class="p-1.5 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                          title="Editar datos del beneficiario"
+                        >
+                          <mat-icon class="text-base">edit</mat-icon>
+                        </button>
+                        <button
+                          type="button"
+                          (click)="toggleActivo(ben)"
+                          class="p-1.5 rounded-lg transition-colors"
+                          [class.text-red-500]="ben.activo !== false"
+                          [class.hover:bg-red-50]="ben.activo !== false"
+                          [class.text-green-500]="ben.activo === false"
+                          [class.hover:bg-green-50]="ben.activo === false"
+                          [title]="ben.activo !== false ? 'Desactivar beneficiario' : 'Reactivar beneficiario'"
+                        >
+                          <mat-icon class="text-base">{{ ben.activo !== false ? 'person_remove' : 'person_add' }}</mat-icon>
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 }
@@ -685,6 +699,13 @@ export class Beneficiarios {
     if (confirm('¿Estás seguro de que deseas VACIAR todo el padrón de beneficiarios? Esta acción no se puede deshacer.')) {
       this.cafeteriaService.vaciarPadron();
     }
+  }
+
+  async toggleActivo(ben: Beneficiario): Promise<void> {
+    const nuevoEstado = ben.activo === false ? true : false;
+    const accion = nuevoEstado ? 'reactivar' : 'desactivar';
+    if (!confirm(`¿Deseas ${accion} a ${ben.nombre} (${ben.codigo_id})?`)) return;
+    await this.cafeteriaService.saveBeneficiario({ ...ben, activo: nuevoEstado });
   }
 
   getTipoComidaNombre(tipoComidaId: number | null | undefined): string {
