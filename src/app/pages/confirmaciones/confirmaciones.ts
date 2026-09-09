@@ -141,10 +141,10 @@ import { Beneficiario, Confirmacion, getVisualCarrera } from '../../models/cafet
                     @for (c of carrerasEnConfirmaciones(); track c) { <option [value]="c">{{ c }}</option> }
                   </select>
                   <select [ngModel]="sortValidos()" (ngModelChange)="sortValidos.set($event)" class="p-2 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 focus:outline-none cursor-pointer">
-                    <option value="hora">Hora</option>
-                    <option value="codigo">Codigo</option>
-                    <option value="nombre">Nombre</option>
-                    <option value="carrera">Carrera</option>
+                    <option value="hora">🕐 Hora</option>
+                    <option value="codigo"># Codigo</option>
+                    <option value="nombre">👤 Nombre</option>
+                    <option value="carrera">🎓 Carrera</option>
                   </select>
                 </div>
               </div>
@@ -232,10 +232,10 @@ import { Beneficiario, Confirmacion, getVisualCarrera } from '../../models/cafet
                     @for (c of carrerasEnExtranos(); track c) { <option [value]="c">{{ c }}</option> }
                   </select>
                   <select [ngModel]="sortExtranos()" (ngModelChange)="sortExtranos.set($event)" class="p-2 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 focus:outline-none cursor-pointer">
-                    <option value="hora">Hora</option>
-                    <option value="codigo">Codigo</option>
-                    <option value="nombre">Nombre</option>
-                    <option value="carrera">Carrera</option>
+                    <option value="hora">🕐 Hora</option>
+                    <option value="codigo"># Codigo</option>
+                    <option value="nombre">👤 Nombre</option>
+                    <option value="carrera">🎓 Carrera</option>
                   </select>
                 </div>
               </div>
@@ -350,10 +350,10 @@ import { Beneficiario, Confirmacion, getVisualCarrera } from '../../models/cafet
                     @for (c of carrerasEnNoConfirmaron(); track c) { <option [value]="c">{{ c }}</option> }
                   </select>
                   <select [ngModel]="sortNoConfirmaron()" (ngModelChange)="sortNoConfirmaron.set($event)" class="p-2 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 focus:outline-none cursor-pointer">
-                    <option value="hora">Hora</option>
-                    <option value="codigo">Codigo</option>
-                    <option value="nombre">Nombre</option>
-                    <option value="carrera">Carrera</option>
+                    <option value="hora">🕐 Hora</option>
+                    <option value="codigo"># Codigo</option>
+                    <option value="nombre">👤 Nombre</option>
+                    <option value="carrera">🎓 Carrera</option>
                   </select>
                 </div>
               </div>
