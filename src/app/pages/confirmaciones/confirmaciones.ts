@@ -616,9 +616,9 @@ export class Confirmaciones {
 
   readonly confirmadosValidos = computed(() => {
     const all = this.cafeteriaService.confirmaciones().filter(c =>
-      c.es_beneficiario_valido && !c.motivo_alerta && !c.entregado
+      c.es_beneficiario_valido && !c.motivo_alerta
     );
-    // Keep only the latest confirmation per codigo_id
+    // First deduplicate: keep latest confirmation per codigo_id
     const latestByCode = new Map<string, typeof all[0]>();
     for (const c of all) {
       const existing = latestByCode.get(c.codigo_id);
@@ -626,7 +626,10 @@ export class Confirmaciones {
         latestByCode.set(c.codigo_id, c);
       }
     }
-    return Array.from(latestByCode.values()).sort((a, b) => (b.id ?? 0) - (a.id ?? 0));
+    // Then filter: only those not yet delivered
+    return Array.from(latestByCode.values())
+      .filter(c => !c.entregado)
+      .sort((a, b) => (b.id ?? 0) - (a.id ?? 0));
   });
 
   readonly totalConfirmados = computed(() => {
@@ -673,7 +676,7 @@ export class Confirmaciones {
     const tipo = this.filtroSubsidio();
     const all = this.cafeteriaService.confirmaciones().filter(c => c.es_beneficiario_valido && !c.motivo_alerta);
     const filtered = tipo === 'Todos' ? all : all.filter(c => c.tipo_comida_nombre === tipo);
-    // Deduplicate by codigo_id (keep latest), same as confirmadosValidos
+    // First deduplicate: keep latest confirmation per codigo_id
     const latestByCode = new Map<string, typeof filtered[0]>();
     for (const c of filtered) {
       const existing = latestByCode.get(c.codigo_id);
@@ -681,14 +684,24 @@ export class Confirmaciones {
         latestByCode.set(c.codigo_id, c);
       }
     }
-    const entregados = this.entregadasPorSubsidio();
-    return Math.max(0, latestByCode.size - entregados);
+    // Then count those not yet delivered
+    return Array.from(latestByCode.values()).filter(c => !c.entregado).length;
   });
 
   readonly confirmadosExtranos = computed(() => {
-    return this.cafeteriaService.confirmaciones().filter(c =>
-      (!c.es_beneficiario_valido || c.motivo_alerta) && !c.entregado
-    ).sort((a, b) => (a.id ?? 0) - (b.id ?? 0));
+    const all = this.cafeteriaService.confirmaciones().filter(c =>
+      (!c.es_beneficiario_valido || c.motivo_alerta)
+    );
+    const latestByCode = new Map<string, typeof all[0]>();
+    for (const c of all) {
+      const existing = latestByCode.get(c.codigo_id);
+      if (!existing || (c.id && existing.id && c.id > existing.id)) {
+        latestByCode.set(c.codigo_id, c);
+      }
+    }
+    return Array.from(latestByCode.values())
+      .filter(c => !c.entregado)
+      .sort((a, b) => (a.id ?? 0) - (b.id ?? 0));
   });
 
   readonly noConfirmaron = computed(() => {
