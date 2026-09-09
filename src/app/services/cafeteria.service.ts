@@ -90,6 +90,7 @@ export class CafeteriaService {
   });
 
   // Connection & Sync States
+  readonly isLoadingData = signal<boolean>(true);
   readonly isOnline = signal<boolean>(typeof navigator !== 'undefined' ? navigator.onLine : true);
   readonly isSyncing = signal<boolean>(false);
   readonly pendingSyncCount = signal<number>(0);
@@ -246,6 +247,8 @@ export class CafeteriaService {
       await this.refreshPendingSyncCount();
     } catch (err) {
       console.warn('[CafeteriaService] Error en initData:', err);
+    } finally {
+      this.isLoadingData.set(false);
     }
   }
 
@@ -344,7 +347,41 @@ export class CafeteriaService {
     const lower = raw.toLowerCase();
     const fecha = this.selectedDate();
 
-    // 1. Search in confirmations of today first
+    // 0. FIRST: Search entregas directly by code (priority - already delivered today)
+    const entregaDirecta = this.entregas().find(e => {
+      const eNorm = this.normalizeCode(e.codigo_id);
+      return (eNorm === norm || e.codigo_id === raw) && e.estado === 'ENTREGADO' && e.fecha === fecha;
+    });
+
+    if (entregaDirecta) {
+      // Find the matching confirmation and beneficiary for display info
+      const confForEntrega = this.confirmaciones().find(c => {
+        const cNorm = this.normalizeCode(c.codigo_id);
+        return cNorm === norm || c.codigo_id === raw;
+      });
+      const benForEntrega = this.beneficiarios().find(b => {
+        const bNorm = this.normalizeCode(b.codigo_id);
+        return bNorm === norm || b.codigo_id === raw;
+      });
+
+      const tipoComidaId = confForEntrega?.tipo_comida_id || benForEntrega?.tipo_comida_id || entregaDirecta.tipo_comida_id || 2;
+      const tipoComidaObj = this.tiposComida().find(t => t.id === tipoComidaId);
+      const tipoComidaNombre = confForEntrega?.tipo_comida_nombre || tipoComidaObj?.nombre || 'Almuerzo';
+
+      return {
+        status: 'ALREADY_DELIVERED',
+        codigo_id: raw,
+        normalized_code: norm,
+        beneficiario: benForEntrega || undefined,
+        confirmacion: confForEntrega || undefined,
+        entrega: entregaDirecta,
+        tipoComidaNombre,
+        tipoComidaId,
+        message: `Ración de ${tipoComidaNombre} ya entregada hoy a las ${entregaDirecta.hora.substring(0, 5)} por ${entregaDirecta.entregado_por || 'Recepcionista'}.`
+      };
+    }
+
+    // 1. Search in confirmations of today
     const confMatch = this.confirmaciones().find(c => {
       const cNorm = this.normalizeCode(c.codigo_id);
       if (cNorm === norm || c.codigo_id === raw) return true;
@@ -360,34 +397,9 @@ export class CafeteriaService {
       return false;
     });
 
-    // Code to target
-    const targetCode = confMatch ? confMatch.codigo_id : (benMatch ? benMatch.codigo_id : raw);
-    const targetNorm = this.normalizeCode(targetCode);
-
-    // 3. Search if already delivered today
-    const entregaMatch = this.entregas().find(e => {
-      const eNorm = this.normalizeCode(e.codigo_id);
-      return (eNorm === targetNorm || e.codigo_id === targetCode) && e.estado === 'ENTREGADO' && e.fecha === fecha;
-    });
-
     const tipoComidaId = confMatch?.tipo_comida_id || benMatch?.tipo_comida_id || 2;
     const tipoComidaObj = this.tiposComida().find(t => t.id === tipoComidaId);
     const tipoComidaNombre = confMatch?.tipo_comida_nombre || tipoComidaObj?.nombre || 'Almuerzo';
-
-    // Case A: Already delivered today
-    if (entregaMatch) {
-      return {
-        status: 'ALREADY_DELIVERED',
-        codigo_id: targetCode,
-        normalized_code: targetNorm,
-        beneficiario: benMatch,
-        confirmacion: confMatch,
-        entrega: entregaMatch,
-        tipoComidaNombre,
-        tipoComidaId,
-        message: `Ración de ${tipoComidaNombre} ya entregada hoy a las ${entregaMatch.hora.substring(0, 5)} por ${entregaMatch.entregado_por || 'Recepcionista'}.`
-      };
-    }
 
     // Case B: Confirmed with alert (Carrera diferente, no en padrón, nombre difiere)
     if (confMatch) {
@@ -403,8 +415,8 @@ export class CafeteriaService {
 
         return {
           status: 'VALID_ALERT',
-          codigo_id: targetCode,
-          normalized_code: targetNorm,
+          codigo_id: confMatch.codigo_id,
+          normalized_code: norm,
           beneficiario: benMatch,
           confirmacion: confMatch,
           tipoComidaNombre,
@@ -418,8 +430,8 @@ export class CafeteriaService {
       // Case C: Valid normal confirmation ready for delivery
       return {
         status: 'VALID_READY',
-        codigo_id: targetCode,
-        normalized_code: targetNorm,
+        codigo_id: confMatch.codigo_id,
+        normalized_code: norm,
         beneficiario: benMatch,
         confirmacion: confMatch,
         tipoComidaNombre,
@@ -432,8 +444,8 @@ export class CafeteriaService {
     if (benMatch) {
       return {
         status: 'NOT_CONFIRMED',
-        codigo_id: targetCode,
-        normalized_code: targetNorm,
+        codigo_id: benMatch.codigo_id,
+        normalized_code: norm,
         beneficiario: benMatch,
         tipoComidaNombre,
         tipoComidaId,
@@ -1041,12 +1053,14 @@ export class CafeteriaService {
     this.notify('info', 'Operador Seleccionado', `Sesión activa como: ${op.nombre} (${op.rol})`);
   }
 
-  setSelectedDate(dateStr: string): void {
+  async setSelectedDate(dateStr: string): Promise<void> {
     this.selectedDate.set(dateStr);
-    this.loadFromLocalDatabase();
+    this.isLoadingData.set(true);
+    await this.loadFromLocalDatabase();
     if (this.isOnline()) {
-      this.syncWithSupabase();
+      await this.syncWithSupabase();
     }
+    this.isLoadingData.set(false);
   }
 
   async resetToDemoData(): Promise<void> {

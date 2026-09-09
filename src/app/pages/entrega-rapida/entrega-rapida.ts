@@ -29,8 +29,22 @@ import { getVisualCarrera } from '../../models/cafeteria.models';
         </div>
       </div>
 
+      <!-- LOADING DATA BANNER -->
+      @if (cafeteriaService.isLoadingData()) {
+        <div class="bg-amber-50 border border-amber-200 rounded-2xl shadow-sm p-4 flex items-center gap-3">
+          <mat-icon class="text-amber-500 animate-spin">sync</mat-icon>
+          <div>
+            <p class="text-sm font-bold text-amber-800">Cargando padrón y confirmaciones...</p>
+            <p class="text-xs text-amber-600">Espera un momento antes de buscar.</p>
+          </div>
+        </div>
+      }
+
       <!-- SEARCH BOX -->
-      <div class="bg-white border-2 border-slate-200 rounded-2xl shadow-sm p-6 sm:p-8">
+      <div class="bg-white border-2 rounded-2xl shadow-sm p-6 sm:p-8 transition-colors"
+        [class.border-slate-200]="!cafeteriaService.isLoadingData()"
+        [class.border-amber-200]="cafeteriaService.isLoadingData()"
+      >
         <div class="max-w-xl mx-auto">
           <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Codigo del Estudiante</label>
           <div class="relative">
@@ -42,8 +56,9 @@ import { getVisualCarrera } from '../../models/cafeteria.models';
               placeholder="Escribe el codigo..."
               maxlength="6"
               inputmode="numeric"
-              autofocus
-              class="w-full pl-14 pr-14 py-4 text-2xl font-mono font-bold text-slate-800 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-400 transition-all placeholder:text-slate-300"
+              [disabled]="cafeteriaService.isLoadingData()"
+              [attr.autofocus]="cafeteriaService.isLoadingData() ? null : ''"
+              class="w-full pl-14 pr-14 py-4 text-2xl font-mono font-bold text-slate-800 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-400 transition-all placeholder:text-slate-300 disabled:opacity-50 disabled:cursor-not-allowed"
             />
             @if (searchCode()) {
               <button type="button" (click)="clearSearch()" class="absolute right-4 top-1/2 -translate-y-1/2 p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer">
@@ -51,6 +66,9 @@ import { getVisualCarrera } from '../../models/cafeteria.models';
               </button>
             }
           </div>
+          @if (cafeteriaService.isLoadingData()) {
+            <p class="text-xs text-amber-600 mt-2 text-center">Busca una vez que se complete la carga</p>
+          }
         </div>
       </div>
 
@@ -211,7 +229,11 @@ import { getVisualCarrera } from '../../models/cafeteria.models';
         </div>
         <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
           <div class="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">En Padron</div>
-          <div class="text-2xl font-bold text-slate-900">{{ cafeteriaService.beneficiarios().length }}</div>
+          @if (cafeteriaService.isLoadingData()) {
+            <div class="text-2xl font-bold text-slate-300 animate-pulse">...</div>
+          } @else {
+            <div class="text-2xl font-bold text-slate-900">{{ cafeteriaService.beneficiarios().length }}</div>
+          }
         </div>
       </section>
 
@@ -295,7 +317,7 @@ export class EntregaRapida {
 
   onSearch(code: string): void {
     this.searchCode.set(code);
-    if (!code || code.length < 3) {
+    if (!code || code.length < 3 || this.cafeteriaService.isLoadingData()) {
       this.searchResult.set(null);
       return;
     }
