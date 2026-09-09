@@ -339,7 +339,7 @@ export class CafeteriaService {
     return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   }
 
-  searchBeneficiarioOrConfirmacion(query: string): DeliverySearchResult | null {
+  async searchBeneficiarioOrConfirmacion(query: string): Promise<DeliverySearchResult | null> {
     if (!query || !query.trim()) return null;
 
     const raw = query.trim();
@@ -381,11 +381,14 @@ export class CafeteriaService {
       };
     }
 
+    // Check if query looks like a code (only digits)
+    const isCode = /^\d+$/.test(raw);
+
     // 1. Search in confirmations of today
     const confMatch = this.confirmaciones().find(c => {
       const cNorm = this.normalizeCode(c.codigo_id);
       if (cNorm === norm || c.codigo_id === raw) return true;
-      if (c.beneficiario_nombre && c.beneficiario_nombre.toLowerCase().includes(lower)) return true;
+      if (!isCode && c.beneficiario_nombre && c.beneficiario_nombre.toLowerCase().includes(lower)) return true;
       return false;
     });
 
@@ -393,7 +396,7 @@ export class CafeteriaService {
     const benMatch = this.beneficiarios().find(b => {
       const bNorm = this.normalizeCode(b.codigo_id);
       if (bNorm === norm || b.codigo_id === raw) return true;
-      if (b.nombre && b.nombre.toLowerCase().includes(lower)) return true;
+      if (!isCode && b.nombre && b.nombre.toLowerCase().includes(lower)) return true;
       return false;
     });
 
@@ -451,6 +454,47 @@ export class CafeteriaService {
         tipoComidaId,
         message: `Estudiante registrado en padrón (${benMatch.nombre} - ${benMatch.carrera_nombre || 'Carrera'}) pero NO llenó el formulario de confirmación para hoy.`
       };
+    }
+
+    // For code queries: do a live Supabase fallback when online (fixes Dexie corruption)
+    if (isCode && this.isOnline() && this.supabase.isConnected) {
+      try {
+        const { data, error } = await (this.supabase as any).client
+          .from('beneficiarios')
+          .select('*, carreras(nombre)')
+          .eq('codigo_id', norm)
+          .single();
+        if (!error && data) {
+          const supBen: Beneficiario = {
+            id: data.id,
+            codigo_id: data.codigo_id,
+            nombre: data.nombre,
+            genero: data.genero,
+            carrera_id: data.carrera_id,
+            tipo_comida_id: data.tipo_comida_id,
+            activo: data.activo ?? true,
+            telefono: data.telefono,
+            email: data.email,
+            fecha_vigencia: data.fecha_vigencia,
+            fecha_caducidad: data.fecha_caducidad,
+            num_tarjeta: data.num_tarjeta,
+            num_habitacion: data.num_habitacion,
+            num_piso: data.num_piso,
+            carrera_nombre: data.carreras?.nombre || ''
+          };
+          return {
+            status: 'NOT_CONFIRMED',
+            codigo_id: supBen.codigo_id,
+            normalized_code: norm,
+            beneficiario: supBen,
+            tipoComidaNombre: this.tiposComida().find(t => t.id === supBen.tipo_comida_id)?.nombre || 'Almuerzo',
+            tipoComidaId: supBen.tipo_comida_id || 2,
+            message: `Estudiante registrado en padrón (${supBen.nombre} - ${supBen.carrera_nombre || 'Carrera'}) pero NO llenó el formulario de confirmación para hoy.`
+          };
+        }
+      } catch {
+        // Supabase lookup failed, fall through to NOT_IN_PADRON
+      }
     }
 
     // Case E: Not in padrón and no confirmation

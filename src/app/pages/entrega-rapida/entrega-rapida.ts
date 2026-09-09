@@ -309,14 +309,14 @@ export class EntregaRapida {
     return entregas.slice(0, 20);
   });
 
-  onSearch(code: string): void {
+  async onSearch(code: string): Promise<void> {
     this.searchCode.set(code);
     if (!code || code.length < 3 || this.cafeteriaService.isLoadingData()) {
       this.searchResult.set(null);
       return;
     }
 
-    const result = this.cafeteriaService.searchBeneficiarioOrConfirmacion(code);
+    const result = await this.cafeteriaService.searchBeneficiarioOrConfirmacion(code);
     if (!result || result.status === 'NOT_IN_PADRON') {
       this.searchResult.set(null);
       return;
@@ -352,12 +352,12 @@ export class EntregaRapida {
 
     this.delivering.set(true);
     try {
-      const searchResult = this.cafeteriaService.searchBeneficiarioOrConfirmacion(result.codigo);
+      const searchResult = await this.cafeteriaService.searchBeneficiarioOrConfirmacion(result.codigo);
       if (searchResult) {
         await this.cafeteriaService.registrarEntrega(searchResult);
       }
       // Refresh search to show delivered status
-      this.onSearch(this.searchCode());
+      await this.onSearch(this.searchCode());
     } catch (e) {
       console.error('Error marking delivery:', e);
     } finally {
