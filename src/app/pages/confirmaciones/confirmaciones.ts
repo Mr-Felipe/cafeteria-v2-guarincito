@@ -128,7 +128,7 @@ import { Beneficiario, Confirmacion, getVisualCarrera } from '../../models/cafet
           @if (accordionValidosOpen()) {
             <div class="flex flex-col flex-1 overflow-y-auto min-h-0">
               <div class="sticky top-0 z-10 p-4 sm:p-5 bg-slate-50 border-b border-slate-200">
-                <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                <div class="flex flex-col gap-3">
                   <div class="relative flex-1 max-w-md">
                     <mat-icon class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</mat-icon>
                     <input #busqValidos type="text" [value]="busquedaValidos()" (input)="busquedaValidos.set($any($event.target).value)" (focus)="onSearchFocus()" (blur)="onSearchBlur()" placeholder="Buscar por codigo, nombre..." autocorrect="off" autocapitalize="off" spellcheck="false" inputmode="search" class="w-full pl-9 pr-8 py-2 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20"/>
@@ -136,26 +136,46 @@ import { Beneficiario, Confirmacion, getVisualCarrera } from '../../models/cafet
                       <button type="button" (click)="busquedaValidos.set(''); busqValidos.focus()" class="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 text-slate-400 hover:text-slate-600 cursor-pointer"><mat-icon class="text-base">close</mat-icon></button>
                     }
                   </div>
-                  <select [ngModel]="carreraValidos()" (ngModelChange)="carreraValidos.set($event)" class="p-2 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 focus:outline-none">
-                    <option value="TODAS">Todas las carreras</option>
-                    @for (c of carrerasEnConfirmaciones(); track c) { <option [value]="c">{{ c }}</option> }
-                  </select>
-                  <div class="relative" (mouseleave)="closeSortDropdown()">
-                    <button type="button" (click)="toggleSortDropdown('sortValidos')" class="p-2 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 focus:outline-none cursor-pointer flex items-center gap-1.5 hover:border-slate-300">
-                      <mat-icon class="text-sm text-slate-500">{{ getSortIcon('validos') }}</mat-icon>
-                      <span>{{ getSortLabel('validos') }}</span>
-                      <mat-icon class="text-xs text-slate-400">expand_more</mat-icon>
-                    </button>
-                    @if (openSortDropdown() === 'sortValidos') {
-                      <div class="absolute right-0 mt-1 w-40 bg-white border border-slate-200 rounded-lg shadow-lg z-50 py-1">
-                        @for (opt of sortOptions; track opt.key) {
-                          <button type="button" (click)="setSort('validos', opt.key)" class="w-full px-3 py-2 text-left text-xs font-medium flex items-center gap-2 hover:bg-slate-50 transition-colors" [class.bg-blue-50]="sortValidos() === opt.key" [class.text-blue-700]="sortValidos() === opt.key">
-                            <mat-icon class="text-sm text-slate-400">{{ opt.icon }}</mat-icon>
-                            <span>{{ opt.label }}</span>
+                  <div class="flex items-center gap-2">
+                    <div class="relative" (mouseleave)="closeCarreraDropdown()">
+                      <button type="button" (click)="toggleCarreraDropdown('carreraValidos')" class="h-8 px-2.5 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 focus:outline-none cursor-pointer flex items-center gap-1.5 hover:border-slate-300">
+                        <mat-icon class="text-sm text-slate-500">{{ getCarreraIcon('validos') }}</mat-icon>
+                        <span class="max-w-[100px] truncate">{{ getCarreraLabel('validos') }}</span>
+                        <mat-icon class="text-xs text-slate-400">expand_more</mat-icon>
+                      </button>
+                      @if (openCarreraDropdown() === 'carreraValidos') {
+                        <div class="absolute left-0 mt-1 w-56 bg-white border border-slate-200 rounded-lg shadow-lg z-50 py-1 max-h-60 overflow-y-auto">
+                          <button type="button" (click)="setCarrera('validos', 'TODAS')" class="w-full px-3 py-2 text-left text-xs font-medium flex items-center gap-2 hover:bg-slate-50 transition-colors" [class.bg-blue-50]="carreraValidos() === 'TODAS'" [class.text-blue-700]="carreraValidos() === 'TODAS'">
+                            <mat-icon class="text-sm text-slate-400">apps</mat-icon>
+                            <span>Todas las carreras</span>
                           </button>
-                        }
-                      </div>
-                    }
+                          @for (c of carrerasEnConfirmaciones(); track c) {
+                            @let v = getVisual(c);
+                            <button type="button" (click)="setCarrera('validos', c)" class="w-full px-3 py-2 text-left text-xs font-medium flex items-center gap-2 hover:bg-slate-50 transition-colors" [class.bg-blue-50]="carreraValidos() === c" [class.text-blue-700]="carreraValidos() === c">
+                              <mat-icon class="text-sm text-slate-400">{{ v.icono }}</mat-icon>
+                              <span class="truncate">{{ c }}</span>
+                            </button>
+                          }
+                        </div>
+                      }
+                    </div>
+                    <div class="relative" (mouseleave)="closeSortDropdown()">
+                      <button type="button" (click)="toggleSortDropdown('sortValidos')" class="h-8 px-2.5 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 focus:outline-none cursor-pointer flex items-center gap-1.5 hover:border-slate-300">
+                        <mat-icon class="text-sm text-slate-500">{{ getSortIcon('validos') }}</mat-icon>
+                        <span>{{ getSortLabel('validos') }}</span>
+                        <mat-icon class="text-xs text-slate-400">expand_more</mat-icon>
+                      </button>
+                      @if (openSortDropdown() === 'sortValidos') {
+                        <div class="absolute right-0 mt-1 w-40 bg-white border border-slate-200 rounded-lg shadow-lg z-50 py-1">
+                          @for (opt of sortOptions; track opt.key) {
+                            <button type="button" (click)="setSort('validos', opt.key)" class="w-full px-3 py-2 text-left text-xs font-medium flex items-center gap-2 hover:bg-slate-50 transition-colors" [class.bg-blue-50]="sortValidos() === opt.key" [class.text-blue-700]="sortValidos() === opt.key">
+                              <mat-icon class="text-sm text-slate-400">{{ opt.icon }}</mat-icon>
+                              <span>{{ opt.label }}</span>
+                            </button>
+                          }
+                        </div>
+                      }
+                    </div>
                   </div>
                 </div>
               </div>
@@ -230,7 +250,7 @@ import { Beneficiario, Confirmacion, getVisualCarrera } from '../../models/cafet
           @if (accordionExtranosOpen()) {
             <div class="flex flex-col flex-1 overflow-y-auto min-h-0">
               <div class="sticky top-0 z-10 p-4 sm:p-5 bg-amber-50 border-b border-amber-200">
-                <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                <div class="flex flex-col gap-3">
                   <div class="relative flex-1 max-w-md">
                     <mat-icon class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</mat-icon>
                     <input #busqExtr type="text" [value]="busquedaExtranos()" (input)="busquedaExtranos.set($any($event.target).value)" placeholder="Buscar por codigo, nombre..." autocorrect="off" autocapitalize="off" spellcheck="false" inputmode="search" class="w-full pl-9 pr-8 py-2 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/20"/>
@@ -238,26 +258,46 @@ import { Beneficiario, Confirmacion, getVisualCarrera } from '../../models/cafet
                       <button type="button" (click)="busquedaExtranos.set(''); busqExtr.focus()" class="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 text-slate-400 hover:text-slate-600 cursor-pointer"><mat-icon class="text-base">close</mat-icon></button>
                     }
                   </div>
-                  <select [ngModel]="carreraExtranos()" (ngModelChange)="carreraExtranos.set($event)" class="p-2 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 focus:outline-none">
-                    <option value="TODAS">Todas las carreras</option>
-                    @for (c of carrerasEnExtranos(); track c) { <option [value]="c">{{ c }}</option> }
-                  </select>
-                  <div class="relative" (mouseleave)="closeSortDropdown()">
-                    <button type="button" (click)="toggleSortDropdown('sortExtranos')" class="p-2 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 focus:outline-none cursor-pointer flex items-center gap-1.5 hover:border-slate-300">
-                      <mat-icon class="text-sm text-slate-500">{{ getSortIcon('extranos') }}</mat-icon>
-                      <span>{{ getSortLabel('extranos') }}</span>
-                      <mat-icon class="text-xs text-slate-400">expand_more</mat-icon>
-                    </button>
-                    @if (openSortDropdown() === 'sortExtranos') {
-                      <div class="absolute right-0 mt-1 w-40 bg-white border border-slate-200 rounded-lg shadow-lg z-50 py-1">
-                        @for (opt of sortOptions; track opt.key) {
-                          <button type="button" (click)="setSort('extranos', opt.key)" class="w-full px-3 py-2 text-left text-xs font-medium flex items-center gap-2 hover:bg-slate-50 transition-colors" [class.bg-blue-50]="sortExtranos() === opt.key" [class.text-blue-700]="sortExtranos() === opt.key">
-                            <mat-icon class="text-sm text-slate-400">{{ opt.icon }}</mat-icon>
-                            <span>{{ opt.label }}</span>
+                  <div class="flex items-center gap-2">
+                    <div class="relative" (mouseleave)="closeCarreraDropdown()">
+                      <button type="button" (click)="toggleCarreraDropdown('carreraExtranos')" class="h-8 px-2.5 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 focus:outline-none cursor-pointer flex items-center gap-1.5 hover:border-slate-300">
+                        <mat-icon class="text-sm text-slate-500">{{ getCarreraIcon('extranos') }}</mat-icon>
+                        <span class="max-w-[100px] truncate">{{ getCarreraLabel('extranos') }}</span>
+                        <mat-icon class="text-xs text-slate-400">expand_more</mat-icon>
+                      </button>
+                      @if (openCarreraDropdown() === 'carreraExtranos') {
+                        <div class="absolute left-0 mt-1 w-56 bg-white border border-slate-200 rounded-lg shadow-lg z-50 py-1 max-h-60 overflow-y-auto">
+                          <button type="button" (click)="setCarrera('extranos', 'TODAS')" class="w-full px-3 py-2 text-left text-xs font-medium flex items-center gap-2 hover:bg-slate-50 transition-colors" [class.bg-blue-50]="carreraExtranos() === 'TODAS'" [class.text-blue-700]="carreraExtranos() === 'TODAS'">
+                            <mat-icon class="text-sm text-slate-400">apps</mat-icon>
+                            <span>Todas las carreras</span>
                           </button>
-                        }
-                      </div>
-                    }
+                          @for (c of carrerasEnExtranos(); track c) {
+                            @let v = getVisual(c);
+                            <button type="button" (click)="setCarrera('extranos', c)" class="w-full px-3 py-2 text-left text-xs font-medium flex items-center gap-2 hover:bg-slate-50 transition-colors" [class.bg-blue-50]="carreraExtranos() === c" [class.text-blue-700]="carreraExtranos() === c">
+                              <mat-icon class="text-sm text-slate-400">{{ v.icono }}</mat-icon>
+                              <span class="truncate">{{ c }}</span>
+                            </button>
+                          }
+                        </div>
+                      }
+                    </div>
+                    <div class="relative" (mouseleave)="closeSortDropdown()">
+                      <button type="button" (click)="toggleSortDropdown('sortExtranos')" class="h-8 px-2.5 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 focus:outline-none cursor-pointer flex items-center gap-1.5 hover:border-slate-300">
+                        <mat-icon class="text-sm text-slate-500">{{ getSortIcon('extranos') }}</mat-icon>
+                        <span>{{ getSortLabel('extranos') }}</span>
+                        <mat-icon class="text-xs text-slate-400">expand_more</mat-icon>
+                      </button>
+                      @if (openSortDropdown() === 'sortExtranos') {
+                        <div class="absolute right-0 mt-1 w-40 bg-white border border-slate-200 rounded-lg shadow-lg z-50 py-1">
+                          @for (opt of sortOptions; track opt.key) {
+                            <button type="button" (click)="setSort('extranos', opt.key)" class="w-full px-3 py-2 text-left text-xs font-medium flex items-center gap-2 hover:bg-slate-50 transition-colors" [class.bg-blue-50]="sortExtranos() === opt.key" [class.text-blue-700]="sortExtranos() === opt.key">
+                              <mat-icon class="text-sm text-slate-400">{{ opt.icon }}</mat-icon>
+                              <span>{{ opt.label }}</span>
+                            </button>
+                          }
+                        </div>
+                      }
+                    </div>
                   </div>
                 </div>
               </div>
@@ -359,7 +399,7 @@ import { Beneficiario, Confirmacion, getVisualCarrera } from '../../models/cafet
           @if (accordionNoConfirmaronOpen()) {
             <div class="flex flex-col flex-1 overflow-y-auto min-h-0">
               <div class="sticky top-0 z-10 p-4 sm:p-5 bg-slate-50 border-b border-slate-200">
-                <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                <div class="flex flex-col gap-3">
                   <div class="relative flex-1 max-w-md">
                     <mat-icon class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</mat-icon>
                     <input #busqNoConf type="text" [value]="busquedaNoConfirmaron()" (input)="busquedaNoConfirmaron.set($any($event.target).value)" placeholder="Buscar por codigo, nombre..." autocorrect="off" autocapitalize="off" spellcheck="false" inputmode="search" class="w-full pl-9 pr-8 py-2 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20"/>
@@ -367,26 +407,46 @@ import { Beneficiario, Confirmacion, getVisualCarrera } from '../../models/cafet
                       <button type="button" (click)="busquedaNoConfirmaron.set(''); busqNoConf.focus()" class="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 text-slate-400 hover:text-slate-600 cursor-pointer"><mat-icon class="text-base">close</mat-icon></button>
                     }
                   </div>
-                  <select [ngModel]="carreraNoConfirmaron()" (ngModelChange)="carreraNoConfirmaron.set($event)" class="p-2 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 focus:outline-none">
-                    <option value="TODAS">Todas las carreras</option>
-                    @for (c of carrerasEnNoConfirmaron(); track c) { <option [value]="c">{{ c }}</option> }
-                  </select>
-                  <div class="relative" (mouseleave)="closeSortDropdown()">
-                    <button type="button" (click)="toggleSortDropdown('sortNoConfirmaron')" class="p-2 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 focus:outline-none cursor-pointer flex items-center gap-1.5 hover:border-slate-300">
-                      <mat-icon class="text-sm text-slate-500">{{ getSortIcon('noConfirmaron') }}</mat-icon>
-                      <span>{{ getSortLabel('noConfirmaron') }}</span>
-                      <mat-icon class="text-xs text-slate-400">expand_more</mat-icon>
-                    </button>
-                    @if (openSortDropdown() === 'sortNoConfirmaron') {
-                      <div class="absolute right-0 mt-1 w-40 bg-white border border-slate-200 rounded-lg shadow-lg z-50 py-1">
-                        @for (opt of sortOptions; track opt.key) {
-                          <button type="button" (click)="setSort('noConfirmaron', opt.key)" class="w-full px-3 py-2 text-left text-xs font-medium flex items-center gap-2 hover:bg-slate-50 transition-colors" [class.bg-blue-50]="sortNoConfirmaron() === opt.key" [class.text-blue-700]="sortNoConfirmaron() === opt.key">
-                            <mat-icon class="text-sm text-slate-400">{{ opt.icon }}</mat-icon>
-                            <span>{{ opt.label }}</span>
+                  <div class="flex items-center gap-2">
+                    <div class="relative" (mouseleave)="closeCarreraDropdown()">
+                      <button type="button" (click)="toggleCarreraDropdown('carreraNoConfirmaron')" class="h-8 px-2.5 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 focus:outline-none cursor-pointer flex items-center gap-1.5 hover:border-slate-300">
+                        <mat-icon class="text-sm text-slate-500">{{ getCarreraIcon('noConfirmaron') }}</mat-icon>
+                        <span class="max-w-[100px] truncate">{{ getCarreraLabel('noConfirmaron') }}</span>
+                        <mat-icon class="text-xs text-slate-400">expand_more</mat-icon>
+                      </button>
+                      @if (openCarreraDropdown() === 'carreraNoConfirmaron') {
+                        <div class="absolute left-0 mt-1 w-56 bg-white border border-slate-200 rounded-lg shadow-lg z-50 py-1 max-h-60 overflow-y-auto">
+                          <button type="button" (click)="setCarrera('noConfirmaron', 'TODAS')" class="w-full px-3 py-2 text-left text-xs font-medium flex items-center gap-2 hover:bg-slate-50 transition-colors" [class.bg-blue-50]="carreraNoConfirmaron() === 'TODAS'" [class.text-blue-700]="carreraNoConfirmaron() === 'TODAS'">
+                            <mat-icon class="text-sm text-slate-400">apps</mat-icon>
+                            <span>Todas las carreras</span>
                           </button>
-                        }
-                      </div>
-                    }
+                          @for (c of carrerasEnNoConfirmaron(); track c) {
+                            @let v = getVisual(c);
+                            <button type="button" (click)="setCarrera('noConfirmaron', c)" class="w-full px-3 py-2 text-left text-xs font-medium flex items-center gap-2 hover:bg-slate-50 transition-colors" [class.bg-blue-50]="carreraNoConfirmaron() === c" [class.text-blue-700]="carreraNoConfirmaron() === c">
+                              <mat-icon class="text-sm text-slate-400">{{ v.icono }}</mat-icon>
+                              <span class="truncate">{{ c }}</span>
+                            </button>
+                          }
+                        </div>
+                      }
+                    </div>
+                    <div class="relative" (mouseleave)="closeSortDropdown()">
+                      <button type="button" (click)="toggleSortDropdown('sortNoConfirmaron')" class="h-8 px-2.5 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 focus:outline-none cursor-pointer flex items-center gap-1.5 hover:border-slate-300">
+                        <mat-icon class="text-sm text-slate-500">{{ getSortIcon('noConfirmaron') }}</mat-icon>
+                        <span>{{ getSortLabel('noConfirmaron') }}</span>
+                        <mat-icon class="text-xs text-slate-400">expand_more</mat-icon>
+                      </button>
+                      @if (openSortDropdown() === 'sortNoConfirmaron') {
+                        <div class="absolute right-0 mt-1 w-40 bg-white border border-slate-200 rounded-lg shadow-lg z-50 py-1">
+                          @for (opt of sortOptions; track opt.key) {
+                            <button type="button" (click)="setSort('noConfirmaron', opt.key)" class="w-full px-3 py-2 text-left text-xs font-medium flex items-center gap-2 hover:bg-slate-50 transition-colors" [class.bg-blue-50]="sortNoConfirmaron() === opt.key" [class.text-blue-700]="sortNoConfirmaron() === opt.key">
+                              <mat-icon class="text-sm text-slate-400">{{ opt.icon }}</mat-icon>
+                              <span>{{ opt.label }}</span>
+                            </button>
+                          }
+                        </div>
+                      }
+                    </div>
                   </div>
                 </div>
               </div>
@@ -609,6 +669,7 @@ export class Confirmaciones {
   readonly sortNoConfirmaron = signal<string>('hora');
   readonly sortDirNoConfirmaron = signal<'asc' | 'desc'>('desc');
   readonly openSortDropdown = signal<string | null>(null);
+  readonly openCarreraDropdown = signal<string | null>(null);
 
   readonly sortOptions = [
     { key: 'hora', label: 'Hora', icon: 'schedule' },
@@ -936,6 +997,38 @@ export class Confirmaciones {
   getSortIcon(signal: 'validos' | 'extranos' | 'noConfirmaron'): string {
     const val = signal === 'validos' ? this.sortValidos() : signal === 'extranos' ? this.sortExtranos() : this.sortNoConfirmaron();
     return this.sortOptions.find(o => o.key === val)?.icon || 'sort';
+  }
+
+  toggleCarreraDropdown(id: string): void {
+    this.openCarreraDropdown.set(this.openCarreraDropdown() === id ? null : id);
+  }
+
+  closeCarreraDropdown(): void {
+    this.openCarreraDropdown.set(null);
+  }
+
+  setCarrera(signal: 'validos' | 'extranos' | 'noConfirmaron', value: string): void {
+    if (signal === 'validos') this.carreraValidos.set(value);
+    else if (signal === 'extranos') this.carreraExtranos.set(value);
+    else this.carreraNoConfirmaron.set(value);
+    this.openCarreraDropdown.set(null);
+  }
+
+  getCarreraLabel(signal: 'validos' | 'extranos' | 'noConfirmaron'): string {
+    const val = signal === 'validos' ? this.carreraValidos() : signal === 'extranos' ? this.carreraExtranos() : this.carreraNoConfirmaron();
+    return val === 'TODAS' ? 'Todas' : val;
+  }
+
+  getCarreraIcon(signal: 'validos' | 'extranos' | 'noConfirmaron'): string {
+    const val = signal === 'validos' ? this.carreraValidos() : signal === 'extranos' ? this.carreraExtranos() : this.carreraNoConfirmaron();
+    if (val === 'TODAS') return 'apps';
+    return getVisualCarrera(val).icono;
+  }
+
+  getCarrerasList(signal: 'validos' | 'extranos' | 'noConfirmaron'): string[] {
+    if (signal === 'validos') return this.carrerasEnConfirmaciones();
+    if (signal === 'extranos') return this.carrerasEnExtranos();
+    return this.carrerasEnNoConfirmaron();
   }
 
   getVisual(carrera: string) {
