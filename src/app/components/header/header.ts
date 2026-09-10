@@ -12,6 +12,11 @@ interface RouteInfo {
 }
 
 const ROUTE_INFO_MAP: Record<string, RouteInfo> = {
+  '/asistencia': {
+    title: 'Control de Asistencia',
+    subtitle: 'Análisis de asistencia con carga de datos IVMS-4200',
+    icon: 'analytics'
+  },
   '/app': {
     title: 'Monitoreo de Confirmaciones',
     subtitle: 'Control de asistencia, despacho rapido y entregas en tiempo real',
