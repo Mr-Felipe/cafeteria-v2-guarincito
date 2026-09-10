@@ -1274,21 +1274,31 @@ export class AttendanceService {
       orgDayMealCounts.set(org, mealCounts);
     }
     
-    // Build header row
+    // Build header row - weekdays: Alm+Ref only, Sunday: Des only
     const headerRow1: any[] = ['Carrera'];
     const headerRow2: any[] = [''];
+    const dayColMap: Map<string, string[]> = new Map(); // d -> ['Alm','Ref'] or ['Des']
     
     for (const d of days) {
       const date = new Date(d + 'T12:00:00');
-      const dayName = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'][date.getDay()];
+      const dow = date.getDay();
+      const dayName = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'][dow];
       const dayNum = d.split('-')[2];
       const month = d.split('-')[1];
       headerRow1.push(`${dayName} ${dayNum}/${month}`);
-      headerRow1.push('');
-      headerRow1.push('');
-      headerRow2.push('🍽️ Alm');
-      headerRow2.push('🍷 Ref');
-      headerRow2.push('🌅 Des');
+      
+      if (dow === 0) {
+        // Sunday: only Desayuno
+        dayColMap.set(d, ['Desayuno']);
+        headerRow1.push('');
+        headerRow2.push('🌅 Des');
+      } else {
+        // Mon-Sat: Almuerzo + Refrigerio
+        dayColMap.set(d, ['Almuerzo', 'Refitorio']);
+        headerRow1.push('');
+        headerRow2.push('🍽️ Alm');
+        headerRow2.push('🍷 Ref');
+      }
     }
     headerRow1.push('TOTAL');
     headerRow2.push('');
@@ -1301,10 +1311,11 @@ export class AttendanceService {
       const mealCounts = orgDayMealCounts.get(org) || {};
       for (const d of days) {
         const counts = mealCounts[d] || { Almuerzo: 0, Refitorio: 0, Desayuno: 0 };
-        row.push(counts['Almuerzo']);
-        row.push(counts['Refitorio']);
-        row.push(counts['Desayuno']);
-        rowTotal += counts['Almuerzo'] + counts['Refitorio'] + counts['Desayuno'];
+        const cols = dayColMap.get(d) || [];
+        for (const meal of cols) {
+          row.push(counts[meal] || 0);
+          rowTotal += counts[meal] || 0;
+        }
       }
       row.push(rowTotal);
       dataRows.push(row);
@@ -1315,10 +1326,11 @@ export class AttendanceService {
     let grandTotal = 0;
     for (const d of days) {
       const t = dayMealTotals[d];
-      totalsRow.push(t['Almuerzo']);
-      totalsRow.push(t['Refitorio']);
-      totalsRow.push(t['Desayuno']);
-      grandTotal += t['Almuerzo'] + t['Refitorio'] + t['Desayuno'];
+      const cols = dayColMap.get(d) || [];
+      for (const meal of cols) {
+        totalsRow.push(t[meal] || 0);
+        grandTotal += t[meal] || 0;
+      }
     }
     totalsRow.push(grandTotal);
     
@@ -1348,15 +1360,31 @@ export class AttendanceService {
     
     const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
     
-    const cols = [{ wch: 35 }, ...days.flatMap(() => [{ wch: 10 }, { wch: 10 }, { wch: 10 }]), { wch: 12 }];
-    summarySheet['!cols'] = cols;
+    // Build column widths based on variable columns per day
+    const colDefs: { wch: number }[] = [{ wch: 35 }];
+    for (const d of days) {
+      const cols = dayColMap.get(d) || [];
+      for (const _ of cols) colDefs.push({ wch: 10 });
+    }
+    colDefs.push({ wch: 12 });
+    summarySheet['!cols'] = colDefs;
     
-    this.applySummaryStyles(summarySheet, summaryData.length, days.length, dayToWeekIdx, weekColors, days);
+    this.applySummaryStyles(summarySheet, summaryData.length, days.length, dayToWeekIdx, weekColors, days, dayColMap);
     XLSX.utils.book_append_sheet(wb, summarySheet, 'Resumen');
   }
 
-  private applySummaryStyles(sheet: XLSX.WorkSheet, totalRows: number, dayCount: number, dayToWeekIdx: Map<string, number>, weekColors: {bg: string; header: string}[], days: string[]): void {
-    // Title style (row 1) - same as org sheets
+  private applySummaryStyles(sheet: XLSX.WorkSheet, totalRows: number, dayCount: number, dayToWeekIdx: Map<string, number>, weekColors: {bg: string; header: string}[], days: string[], dayColMap: Map<string, string[]>): void {
+    // Helper to get column offset for a given day and meal index
+    let colOffset = 1; // Start after 'Carrera' column A
+    const dayStartCol = new Map<string, number>();
+    for (const d of days) {
+      dayStartCol.set(d, colOffset);
+      const cols = dayColMap.get(d) || [];
+      colOffset += cols.length;
+    }
+    const totalCols = colOffset; // Total data columns (excluding Carrera)
+    
+    // Title style (row 1)
     this.setCellStyles(sheet, 'A1', { font: { bold: true, sz: 14, color: { rgb: 'FFFFFF' } }, fill: { fgColor: { rgb: '7C3AED' } }, alignment: { horizontal: 'center' } });
     
     // Info rows
@@ -1369,46 +1397,54 @@ export class AttendanceService {
     // Schedule info (row 9)
     this.setCellStyles(sheet, 'A9', { font: { italic: true, sz: 9, color: { rgb: '64748B' } } });
     
-    // Top header row (row 11) - Carrera + day headers
+    // Top header row (row 11) - Carrera + day headers with week colors
     this.setCellStyles(sheet, 'A11', { font: { bold: true, sz: 10, color: { rgb: 'FFFFFF' } }, fill: { fgColor: { rgb: '334155' } }, border: this.getBorderDef(), alignment: { horizontal: 'center' } });
     
-    // Day header columns - COLORES POR SEMANA
-    for (let i = 0; i < dayCount; i++) {
-      const baseCol = 1 + (i * 3); // B=1, E=4, H=7, ...
-      const colLetter = this.getExcelCol(baseCol);
-      
-      // Get week color for this day
-      const d = days[i];
+    // Day header columns - COLORES POR SEMANA (span columns per day)
+    for (const d of days) {
+      const startCol = dayStartCol.get(d) || 1;
+      const mealCols = dayColMap.get(d) || [];
+      const colLetter = this.getExcelCol(startCol);
       const wIdx = dayToWeekIdx.get(d) || 0;
       const weekColor = weekColors[wIdx % weekColors.length];
       
+      // Merge header if multiple cols, or just style the first
       this.setCellStyles(sheet, `${colLetter}11`, { 
         font: { bold: true, sz: 9, color: { rgb: 'FFFFFF' } }, 
         fill: { fgColor: { rgb: weekColor.header } }, 
         border: this.getBorderDef(), 
         alignment: { horizontal: 'center' } 
       });
+      // Style additional columns for same day
+      for (let mi = 1; mi < mealCols.length; mi++) {
+        const extraCol = this.getExcelCol(startCol + mi);
+        this.setCellStyles(sheet, `${extraCol}11`, { 
+          font: { bold: true, sz: 9, color: { rgb: 'FFFFFF' } }, 
+          fill: { fgColor: { rgb: weekColor.header } }, 
+          border: this.getBorderDef(), 
+          alignment: { horizontal: 'center' } 
+        });
+      }
     }
     
     // Total column header
-    const totalCol = this.getExcelCol(1 + dayCount * 3);
-    this.setCellStyles(sheet, `${totalCol}11`, { font: { bold: true, sz: 10, color: { rgb: 'FFFFFF' } }, fill: { fgColor: { rgb: '334155' } }, border: this.getBorderDef(), alignment: { horizontal: 'center' } });
+    const totalColLetter = this.getExcelCol(totalCols + 1);
+    this.setCellStyles(sheet, `${totalColLetter}11`, { font: { bold: true, sz: 10, color: { rgb: 'FFFFFF' } }, fill: { fgColor: { rgb: '334155' } }, border: this.getBorderDef(), alignment: { horizontal: 'center' } });
     
-    // Sub header row (row 12) - meal types
-    const subHeaders = ['A12'];
-    for (let i = 0; i < dayCount; i++) {
-      const baseCol = 1 + (i * 3);
-      subHeaders.push(this.getExcelCol(baseCol)); // Alm
-      subHeaders.push(this.getExcelCol(baseCol + 1)); // Ref
-      subHeaders.push(this.getExcelCol(baseCol + 2)); // Des
+    // Sub header row (row 12) - meal type labels per day
+    this.setCellStyles(sheet, 'A12', { font: { bold: true, sz: 8, color: { rgb: 'FFFFFF' } }, fill: { fgColor: { rgb: '475569' } }, border: this.getBorderDef(), alignment: { horizontal: 'center' } });
+    for (const d of days) {
+      const startCol = dayStartCol.get(d) || 1;
+      const mealCols = dayColMap.get(d) || [];
+      const labels = mealCols.map(m => m === 'Almuerzo' ? '🍽️ Alm' : m === 'Refitorio' ? '🍷 Ref' : '🌅 Des');
+      for (let mi = 0; mi < mealCols.length; mi++) {
+        const col = this.getExcelCol(startCol + mi);
+        this.setCellStyles(sheet, `${col}12`, { font: { bold: true, sz: 8, color: { rgb: 'FFFFFF' } }, fill: { fgColor: { rgb: '475569' } }, border: this.getBorderDef(), alignment: { horizontal: 'center' } });
+      }
     }
-    subHeaders.push(totalCol);
+    this.setCellStyles(sheet, `${totalColLetter}12`, { font: { bold: true, sz: 8, color: { rgb: 'FFFFFF' } }, fill: { fgColor: { rgb: '475569' } }, border: this.getBorderDef(), alignment: { horizontal: 'center' } });
     
-    subHeaders.forEach(cell => {
-      this.setCellStyles(sheet, cell, { font: { bold: true, sz: 8, color: { rgb: 'FFFFFF' } }, fill: { fgColor: { rgb: '475569' } }, border: this.getBorderDef(), alignment: { horizontal: 'center' } });
-    });
-    
-    // Data rows
+    // Data rows (row 13+)
     for (let rowIdx = 0; rowIdx < totalRows - 13; rowIdx++) {
       const row = 13 + rowIdx;
       const isEven = rowIdx % 2 === 0;
@@ -1417,11 +1453,12 @@ export class AttendanceService {
       // Carrera column
       this.setCellStyles(sheet, `A${row}`, { fill: { fgColor: { rgb: baseBgColor } }, border: this.getBorderDef() });
       
-      // Data columns
-      for (let dayIdx = 0; dayIdx < dayCount; dayIdx++) {
-        const baseCol = 1 + (dayIdx * 3);
-        for (let meal = 0; meal < 3; meal++) {
-          const col = this.getExcelCol(baseCol + meal);
+      // Data columns - variable per day
+      for (const d of days) {
+        const startCol = dayStartCol.get(d) || 1;
+        const mealCols = dayColMap.get(d) || [];
+        for (let mi = 0; mi < mealCols.length; mi++) {
+          const col = this.getExcelCol(startCol + mi);
           this.setCellStyles(sheet, `${col}${row}`, { 
             fill: { fgColor: { rgb: baseBgColor } }, 
             border: this.getBorderDef(),
@@ -1431,16 +1468,17 @@ export class AttendanceService {
       }
       
       // Total column
-      this.setCellStyles(sheet, `${totalCol}${row}`, { fill: { fgColor: { rgb: baseBgColor } }, border: this.getBorderDef(), alignment: { horizontal: 'center' } });
+      this.setCellStyles(sheet, `${totalColLetter}${row}`, { fill: { fgColor: { rgb: baseBgColor } }, border: this.getBorderDef(), alignment: { horizontal: 'center' } });
     }
     
     // Totals row (last data row)
     const totalsRow = 13 + (totalRows - 14);
     this.setCellStyles(sheet, `A${totalsRow}`, { font: { bold: true, sz: 10, color: { rgb: 'FFFFFF' } }, fill: { fgColor: { rgb: '1E40AF' } }, border: this.getBorderDef() });
-    for (let i = 0; i <= dayCount * 3; i++) {
-      const col = this.getExcelCol(1 + i);
+    for (let i = 1; i <= totalCols; i++) {
+      const col = this.getExcelCol(i);
       this.setCellStyles(sheet, `${col}${totalsRow}`, { font: { bold: true, sz: 10, color: { rgb: 'FFFFFF' } }, fill: { fgColor: { rgb: '1E40AF' } }, border: this.getBorderDef(), alignment: { horizontal: 'center' } });
     }
+    this.setCellStyles(sheet, `${totalColLetter}${totalsRow}`, { font: { bold: true, sz: 10, color: { rgb: 'FFFFFF' } }, fill: { fgColor: { rgb: '1E40AF' } }, border: this.getBorderDef(), alignment: { horizontal: 'center' } });
   }
 
   private applyOrgSheetStyles(sheet: XLSX.WorkSheet, totalRows: number, dayCount: number, items: BeneficiaryMonthlySummary[], days: string[], dayToWeekIdx: Map<string, number>, weekColors: {bg: string; header: string}[]): void {
