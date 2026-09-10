@@ -35,8 +35,7 @@
             "outputMode": "server",
             "ssr": {
               "entry": "src/server.ts"
-            },
-            "allowedCommonJsDependencies": ["xlsx-js-style"]
+            }
           },
           "configurations": {
             "production": {
