@@ -213,6 +213,7 @@ export class Sidebar implements OnInit, OnDestroy {
 
   readonly navItems = [
     { label: 'Confirmaciones', route: '/confirmaciones', icon: 'how_to_reg', badge: 'En Vivo' },
+    { label: 'Control de Asistencia', route: '/asistencia', icon: 'analytics' },
     { label: 'Entrega Rapida', route: '/entrega-rapida', icon: 'flash_on' },
     { label: 'Entregas del Dia', route: '/entregas', icon: 'task_alt' },
     { label: 'Beneficiarios', route: '/beneficiarios', icon: 'badge' },

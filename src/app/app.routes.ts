@@ -7,6 +7,11 @@ export const routes: Routes = [
     pathMatch: 'full'
   },
   {
+    path: 'asistencia',
+    loadComponent: () => import('./pages/asistencia/asistencia').then(m => m.Asistencia),
+    title: 'Control de Asistencia - Cafeteria Guarincito'
+  },
+  {
     path: 'confirmaciones',
     loadComponent: () => import('./pages/confirmaciones/confirmaciones').then(m => m.Confirmaciones),
     title: 'Confirmaciones del Dia - Cafeteria Guarincito'
