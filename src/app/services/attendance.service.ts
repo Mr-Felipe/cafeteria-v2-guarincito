@@ -1225,7 +1225,7 @@ export class AttendanceService {
       }
     }
 
-    // Classify each day: Sunday -> Desayuno only, Saturday -> Desayuno (7am+) + Almuerzo/Refriegerio, Mon-Fri -> Almuerzo/Refriegerio
+    // Classify each day: Sunday -> Desayuno only, Saturday -> Desayuno (7am+) + Almuerzo/Refrigerio, Mon-Fri -> Almuerzo/Refrigerio
     const dayConfig: Record<string, { meals: string[]; label: string }> = {};
     for (const d of days) {
       const date = new Date(d + 'T12:00:00');
@@ -1233,7 +1233,7 @@ export class AttendanceService {
       if (dow === 0) {
         dayConfig[d] = { meals: ['Desayuno'], label: 'Des' };
       } else {
-        dayConfig[d] = { meals: ['Almuerzo', 'Refriegerio'], label: 'Alm/Ref' };
+        dayConfig[d] = { meals: ['Almuerzo', 'Refrigerio'], label: 'Alm/Ref' };
       }
     }
 
@@ -1243,7 +1243,7 @@ export class AttendanceService {
       const hour = parseInt(timeStr.split(':')[0], 10);
       if (dayOfWeek === 0) return 'Desayuno';
       if (hour >= 11 && hour < 16) return 'Almuerzo';
-      if (hour >= 18) return 'Refriegerio';
+      if (hour >= 18) return 'Refrigerio';
       return 'Otro';
     };
 
@@ -1252,13 +1252,13 @@ export class AttendanceService {
     const dayMealTotals: Record<string, Record<string, number>> = {};
 
     for (const d of days) {
-      dayMealTotals[d] = { Almuerzo: 0, Refriegerio: 0, Desayuno: 0 };
+      dayMealTotals[d] = { Almuerzo: 0, Refrigerio: 0, Desayuno: 0 };
     }
 
     for (const [org, items] of orgGroups) {
       const mealCounts: Record<string, Record<string, number>> = {};
       for (const d of days) {
-        mealCounts[d] = { Almuerzo: 0, Refriegerio: 0, Desayuno: 0 };
+        mealCounts[d] = { Almuerzo: 0, Refrigerio: 0, Desayuno: 0 };
       }
       for (const item of items) {
         for (const d of days) {
@@ -1278,10 +1278,10 @@ export class AttendanceService {
     }
 
     // Compute per-meal grand totals
-    const mealGrandTotals = { Almuerzo: 0, Refriegerio: 0, Desayuno: 0 };
+    const mealGrandTotals = { Almuerzo: 0, Refrigerio: 0, Desayuno: 0 };
     for (const d of days) {
       mealGrandTotals.Almuerzo += dayMealTotals[d]['Almuerzo'];
-      mealGrandTotals.Refriegerio += dayMealTotals[d]['Refriegerio'];
+      mealGrandTotals.Refrigerio += dayMealTotals[d]['Refrigerio'];
       mealGrandTotals.Desayuno += dayMealTotals[d]['Desayuno'];
     }
 
@@ -1325,7 +1325,7 @@ export class AttendanceService {
       for (const d of days) {
         const date = new Date(d + 'T12:00:00');
         const dow = date.getDay();
-        const counts = mealCounts[d] || { Almuerzo: 0, Refriegerio: 0, Desayuno: 0 };
+        const counts = mealCounts[d] || { Almuerzo: 0, Refrigerio: 0, Desayuno: 0 };
         if (dow === 0) {
           // Sunday: only Des
           row.push(counts['Desayuno']);
@@ -1333,8 +1333,8 @@ export class AttendanceService {
         } else {
           // Weekday/Saturday: Alm + Ref
           row.push(counts['Almuerzo']);
-          row.push(counts['Refriegerio']);
-          rowTotal += counts['Almuerzo'] + counts['Refriegerio'];
+          row.push(counts['Refrigerio']);
+          rowTotal += counts['Almuerzo'] + counts['Refrigerio'];
         }
       }
       row.push(rowTotal);
@@ -1355,8 +1355,8 @@ export class AttendanceService {
       } else {
         // Weekday/Saturday: Alm + Ref
         totalsRow.push(t['Almuerzo']);
-        totalsRow.push(t['Refriegerio']);
-        grandTotal += t['Almuerzo'] + t['Refriegerio'];
+        totalsRow.push(t['Refrigerio']);
+        grandTotal += t['Almuerzo'] + t['Refrigerio'];
       }
     }
     totalsRow.push(grandTotal);
@@ -1385,7 +1385,7 @@ export class AttendanceService {
       totalsRow,
       [''],
       ['🍽️ Total Almuerzos', mealGrandTotals.Almuerzo],
-      ['🍷 Total Refrigerio', mealGrandTotals.Refriegerio],
+      ['🍷 Total Refrigerio', mealGrandTotals.Refrigerio],
       ['🌅 Total Desayunos', mealGrandTotals.Desayuno],
       [''],
       ['📊 TOTAL GENERAL', grandTotal]
@@ -1479,7 +1479,7 @@ export class AttendanceService {
       const mealColors: Record<string, string> = {
         'Desayuno': '7C3AED',    // morado
         'Almuerzo': 'D97706',    // naranja
-        'Refriegerio': '60A5FA', // azul claro
+        'Refrigerio': '60A5FA', // azul claro
       };
       for (const meal of cfg.meals) {
         const color = mealColors[meal] || '475569';
