@@ -1,4 +1,5 @@
 import { Injectable, computed, effect, inject, signal } from '@angular/core';
+import * as XLSX from 'xlsx-js-style';
 import { SupabaseService } from './supabase.service';
 import { OfflineDbService } from './offline-db.service';
 import {
@@ -993,6 +994,92 @@ export class CafeteriaService {
     const csvContent = '\uFEFF' + [headers.join(';'), ...rows.map(r => r.join(';'))].join('\r\n');
     this.downloadCsvFile(csvContent, `entregas_guarincito_${this.selectedDate()}.csv`);
     this.notify('success', 'Exportación Exitosa', 'El archivo CSV de entregas se ha descargado.');
+  }
+
+  async exportarSinConfirmarExcel(): Promise<void> {
+    this.notify('info', 'Exportando', 'Consultando entregas sin confirmar...');
+    try {
+      const entregas = await this.supabase.fetchEntregasSinConfirmar();
+      if (entregas.length === 0) {
+        this.notify('info', 'Sin Datos', 'No hay entregas sin confirmar registradas.');
+        return;
+      }
+
+      const wb = XLSX.utils.book_new();
+
+      const grouped = new Map<string, typeof entregas>();
+      for (const e of entregas) {
+        const fecha = e.fecha || 'sin_fecha';
+        if (!grouped.has(fecha)) grouped.set(fecha, []);
+        grouped.get(fecha)!.push(e);
+      }
+
+      const sortedDates = Array.from(grouped.keys()).sort().reverse();
+
+      for (const fecha of sortedDates) {
+        const items = grouped.get(fecha)!;
+        const sheetName = fecha.substring(0, 31);
+
+        const data: any[][] = [
+          [`ENTREGAS SIN CONFIRMACIÓN - ${fecha}`],
+          [''],
+          ['Código ID', 'Nombre', 'Carrera', 'Tipo Comida', 'Estado', 'Entregado Por', 'Hora'],
+        ];
+
+        for (const e of items) {
+          data.push([
+            e.codigo_id || '',
+            e.beneficiario_nombre || '',
+            e.carrera_nombre || '',
+            e.tipo_comida_nombre || '',
+            e.estado || '',
+            e.entregado_por || '',
+            e.hora || ''
+          ]);
+        }
+
+        data.push(['']);
+        data.push([`Total: ${items.length} entregas sin confirmar`]);
+
+        const ws = XLSX.utils.aoa_to_sheet(data);
+
+        ws['!cols'] = [
+          { wch: 12 },
+          { wch: 40 },
+          { wch: 25 },
+          { wch: 15 },
+          { wch: 12 },
+          { wch: 20 },
+          { wch: 10 }
+        ];
+
+        XLSX.utils.book_append_sheet(wb, ws, sheetName);
+      }
+
+      const summaryData: any[][] = [
+        ['RESUMEN - ENTREGAS SIN CONFIRMACIÓN'],
+        [''],
+        ['Fecha', 'Cantidad'],
+      ];
+      for (const fecha of sortedDates) {
+        summaryData.push([fecha, grouped.get(fecha)!.length]);
+      }
+      summaryData.push(['']);
+      summaryData.push([`TOTAL: ${entregas.length} entregas sin confirmar`]);
+      summaryData.push([`Fecha de exportación: ${new Date().toLocaleString('es-CO')}`]);
+
+      const summaryWs = XLSX.utils.aoa_to_sheet(summaryData);
+      summaryWs['!cols'] = [{ wch: 15 }, { wch: 12 }];
+      XLSX.utils.book_append_sheet(wb, summaryWs, 'Resumen');
+
+      const fileName = `Entregas_Sin_Confirmar_${sortedDates[0]}_a_${sortedDates[sortedDates.length - 1]}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+
+      this.notify('success', 'Exportación Exitosa', `Se exportaron ${entregas.length} registros en ${sortedDates.length} hojas.`);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Error desconocido';
+      this.notify('error', 'Error al Exportar', msg);
+    }
   }
 
   exportarBeneficiariosCsv(): void {

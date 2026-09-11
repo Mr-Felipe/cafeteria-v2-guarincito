@@ -325,6 +325,48 @@ export class SupabaseService {
     }
   }
 
+  async fetchEntregasSinConfirmar(): Promise<Entrega[]> {
+    if (!this.client) return [];
+    try {
+      const { data, error } = await this.client
+        .from('entregas')
+        .select(`
+          *,
+          beneficiarios (
+            id,
+            nombre,
+            carreras (nombre)
+          ),
+          tipos_comida (
+            id,
+            nombre
+          )
+        `)
+        .is('confirmacion_id', null)
+        .order('fecha', { ascending: false })
+        .order('hora', { ascending: false });
+      if (error) throw error;
+
+      return ((data || []) as unknown as SupabaseEntregaRow[]).map(e => ({
+        id: e.id,
+        confirmacion_id: e.confirmacion_id,
+        codigo_id: e.codigo_id,
+        beneficiario_id: e.beneficiario_id,
+        tipo_comida_id: e.tipo_comida_id,
+        fecha: e.fecha,
+        hora: e.hora,
+        estado: e.estado,
+        entregado_por: e.entregado_por,
+        beneficiario_nombre: e.beneficiarios?.nombre || '',
+        carrera_nombre: e.beneficiarios?.carreras?.nombre || '',
+        tipo_comida_nombre: e.tipos_comida?.nombre || ''
+      }));
+    } catch (err) {
+      console.warn('[Supabase] fetchEntregasSinConfirmar falló:', err);
+      throw err;
+    }
+  }
+
   async insertEntrega(entrega: Partial<Entrega>): Promise<Entrega> {
     if (!this.client) throw new Error('Supabase no conectado');
     const { data, error } = await this.client
