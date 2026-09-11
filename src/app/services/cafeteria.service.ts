@@ -1005,29 +1005,249 @@ export class CafeteriaService {
         return;
       }
 
+      const XLSX_LIB = await import('xlsx-js-style');
+      const XLSX = XLSX_LIB.default || XLSX_LIB;
+
       const wb = XLSX.utils.book_new();
 
+      // Group by beneficiary
+      const beneficiaryMap = new Map<string, {
+        nombre: string;
+        carrera: string;
+        codigo_id: string;
+        fechas: Map<string, { tipo_comida: string; hora: string }>;
+      }>();
+      for (const e of entregas) {
+        const key = e.codigo_id || e.beneficiario_nombre || 'unknown';
+        if (!beneficiaryMap.has(key)) {
+          beneficiaryMap.set(key, {
+            nombre: e.beneficiario_nombre || '',
+            carrera: e.carrera_nombre || '',
+            codigo_id: e.codigo_id || '',
+            fechas: new Map()
+          });
+        }
+        const b = beneficiaryMap.get(key)!;
+        if (e.fecha && !b.fechas.has(e.fecha)) {
+          b.fechas.set(e.fecha, {
+            tipo_comida: e.tipo_comida_nombre || '',
+            hora: e.hora || ''
+          });
+        }
+      }
+
+      // Group by date for detail sheets
       const grouped = new Map<string, typeof entregas>();
       for (const e of entregas) {
         const fecha = e.fecha || 'sin_fecha';
         if (!grouped.has(fecha)) grouped.set(fecha, []);
         grouped.get(fecha)!.push(e);
       }
+      const sortedDates = Array.from(grouped.keys()).sort();
 
-      const sortedDates = Array.from(grouped.keys()).sort().reverse();
+      // All unique dates sorted
+      const allDates = [...new Set(entregas.map(e => e.fecha).filter(Boolean))].sort();
+      const dayNames = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 
+      // ============================
+      // SUMMARY SHEET (MATRIX)
+      // ============================
+      const borderColor = { rgb: 'CBD5E1' };
+      const thinBorder = {
+        top: { style: 'thin' as const, color: borderColor },
+        bottom: { style: 'thin' as const, color: borderColor },
+        left: { style: 'thin' as const, color: borderColor },
+        right: { style: 'thin' as const, color: borderColor }
+      };
+
+      const beneficiaries = Array.from(beneficiaryMap.values()).sort((a, b) => a.nombre.localeCompare(b.nombre));
+
+      // Header row: Código | Nombre | Carrera | date1 | date2 | ... | Total
+      const headerRow1: any[] = ['Código', 'Nombre', 'Carrera'];
+      for (const d of allDates) {
+        const dt = new Date(d + 'T12:00:00');
+        const dn = dayNames[dt.getDay()];
+        const dd = d.split('-')[2];
+        const mm = d.split('-')[1];
+        headerRow1.push(`${dn} ${dd}/${mm}`);
+      }
+      headerRow1.push('Total');
+
+      const summaryData: any[][] = [
+        ['📊 RESUMEN: ENTREGAS SIN CONFIRMACIÓN'],
+        [''],
+        ['📅 Período:', `${allDates[0]} al ${allDates[allDates.length - 1]}`],
+        ['📆 Días con datos:', `${allDates.length} días`],
+        ['🕐 Fecha de Exportación:', new Date().toLocaleString('es-CO')],
+        [''],
+        ['⚠️ Las celdas en NARANJA indican entregas realizadas sin confirmación previa'],
+        [''],
+        headerRow1,
+      ];
+
+      // Data rows: one per beneficiary
+      for (const b of beneficiaries) {
+        const row: any[] = [b.codigo_id, b.nombre, b.carrera];
+        let total = 0;
+        for (const d of allDates) {
+          if (b.fechas.has(d)) {
+            const info = b.fechas.get(d)!;
+            row.push(`✅ ${info.tipo_comida}`);
+            total++;
+          } else {
+            row.push('');
+          }
+        }
+        row.push(total);
+        summaryData.push(row);
+      }
+
+      // Totals row
+      const totalsRow: any[] = ['', 'TOTAL', ''];
+      let grandTotal = 0;
+      for (const d of allDates) {
+        const count = entregas.filter(e => e.fecha === d).length;
+        totalsRow.push(count);
+        grandTotal += count;
+      }
+      totalsRow.push(grandTotal);
+      summaryData.push(['']);
+      summaryData.push(totalsRow);
+      summaryData.push(['']);
+      summaryData.push([`📊 TOTAL GENERAL: ${grandTotal} entregas sin confirmar`]);
+
+      const summaryWs = XLSX.utils.aoa_to_sheet(summaryData);
+
+      // Column widths
+      const summaryCols: any[] = [{ wch: 12 }, { wch: 38 }, { wch: 25 }];
+      for (let i = 0; i < allDates.length; i++) summaryCols.push({ wch: 16 });
+      summaryCols.push({ wch: 8 });
+      summaryWs['!cols'] = summaryCols;
+
+      // ---- STYLING ----
+      const setStyle = (cell: string, style: any) => {
+        if (summaryWs[cell]) {
+          summaryWs[cell].s = style;
+        }
+      };
+
+      // Title (row 1)
+      setStyle('A1', {
+        font: { bold: true, sz: 14, color: { rgb: 'FFFFFF' } },
+        fill: { fgColor: { rgb: 'D97706' } },
+        alignment: { horizontal: 'center' }
+      });
+
+      // Metadata rows
+      setStyle('A3', { font: { bold: true, color: { rgb: '92400E' } } });
+      setStyle('A4', { font: { bold: true, color: { rgb: '92400E' } } });
+      setStyle('A5', { font: { italic: true, sz: 9, color: { rgb: '64748B' } } });
+
+      // Warning row (row 7)
+      setStyle('A7', {
+        font: { bold: true, sz: 10, color: { rgb: 'FFFFFF' } },
+        fill: { fgColor: { rgb: 'EA580C' } },
+        alignment: { horizontal: 'center' }
+      });
+
+      // Header row (row 9)
+      const headerRowNum = 9;
+      const headerStyle = {
+        font: { bold: true, sz: 10, color: { rgb: 'FFFFFF' } },
+        fill: { fgColor: { rgb: '7C2D12' } },
+        border: thinBorder,
+        alignment: { horizontal: 'center' as const, wrapText: true }
+      };
+      const colLetters = ['A', 'B', 'C'];
+      for (let i = 0; i < allDates.length; i++) colLetters.push(String.fromCharCode(68 + i)); // D, E, F...
+      colLetters.push(String.fromCharCode(68 + allDates.length)); // Total column
+
+      for (const col of colLetters) {
+        setStyle(`${col}${headerRowNum}`, headerStyle);
+      }
+
+      // Data rows (row 10+)
+      for (let i = 0; i < beneficiaries.length; i++) {
+        const rowNum = 10 + i;
+        const isEven = i % 2 === 0;
+        const rowBg = isEven ? 'FFF7ED' : 'FFFFFF';
+
+        // Base cells (A, B, C)
+        for (const col of ['A', 'B', 'C']) {
+          setStyle(`${col}${rowNum}`, {
+            fill: { fgColor: { rgb: rowBg } },
+            border: thinBorder,
+            alignment: { horizontal: col === 'A' ? 'center' : 'left' as const }
+          });
+        }
+
+        // Day cells
+        for (let d = 0; d < allDates.length; d++) {
+          const colLetter = String.fromCharCode(68 + d);
+          const hasEntrega = beneficiaries[i].fechas.has(allDates[d]);
+          if (hasEntrega) {
+            setStyle(`${colLetter}${rowNum}`, {
+              font: { bold: true, sz: 9, color: { rgb: '9A3412' } },
+              fill: { fgColor: { rgb: 'FED7AA' } },
+              border: thinBorder,
+              alignment: { horizontal: 'center' }
+            });
+          } else {
+            setStyle(`${colLetter}${rowNum}`, {
+              fill: { fgColor: { rgb: rowBg } },
+              border: thinBorder,
+              alignment: { horizontal: 'center' }
+            });
+          }
+        }
+
+        // Total column
+        const totalCol = String.fromCharCode(68 + allDates.length);
+        setStyle(`${totalCol}${rowNum}`, {
+          font: { bold: true, sz: 10, color: { rgb: '9A3412' } },
+          fill: { fgColor: { rgb: 'FDBA74' } },
+          border: thinBorder,
+          alignment: { horizontal: 'center' }
+        });
+      }
+
+      // Totals row
+      const totalsRowNum = 10 + beneficiaries.length + 1; // +1 for empty row
+      const totalsStyle = {
+        font: { bold: true, sz: 10, color: { rgb: 'FFFFFF' } },
+        fill: { fgColor: { rgb: '1E40AF' } },
+        border: thinBorder,
+        alignment: { horizontal: 'center' as const }
+      };
+      for (const col of colLetters) {
+        setStyle(`${col}${totalsRowNum}`, totalsStyle);
+      }
+      // Grand total cell
+      setStyle(`${colLetters[colLetters.length - 1]}${totalsRowNum}`, {
+        font: { bold: true, sz: 12, color: { rgb: 'FFFFFF' } },
+        fill: { fgColor: { rgb: '7C2D12' } },
+        border: thinBorder,
+        alignment: { horizontal: 'center' }
+      });
+
+      XLSX.utils.book_append_sheet(wb, summaryWs, 'Resumen');
+
+      // ============================
+      // DETAIL SHEETS (one per date)
+      // ============================
       for (const fecha of sortedDates) {
         const items = grouped.get(fecha)!;
-        const sheetName = fecha.substring(0, 31);
+        const dt = new Date(fecha + 'T12:00:00');
+        const sheetLabel = `${dayNames[dt.getDay()]} ${fecha}`;
 
-        const data: any[][] = [
-          [`ENTREGAS SIN CONFIRMACIÓN - ${fecha}`],
+        const detailData: any[][] = [
+          [`⚠️ ENTREGAS SIN CONFIRMACIÓN - ${sheetLabel}`],
           [''],
           ['Código ID', 'Nombre', 'Carrera', 'Tipo Comida', 'Estado', 'Entregado Por', 'Hora'],
         ];
 
         for (const e of items) {
-          data.push([
+          detailData.push([
             e.codigo_id || '',
             e.beneficiario_nombre || '',
             e.carrera_nombre || '',
@@ -1038,12 +1258,11 @@ export class CafeteriaService {
           ]);
         }
 
-        data.push(['']);
-        data.push([`Total: ${items.length} entregas sin confirmar`]);
+        detailData.push(['']);
+        detailData.push([`Total: ${items.length} entregas sin confirmar`]);
 
-        const ws = XLSX.utils.aoa_to_sheet(data);
-
-        ws['!cols'] = [
+        const detailWs = XLSX.utils.aoa_to_sheet(detailData);
+        detailWs['!cols'] = [
           { wch: 12 },
           { wch: 40 },
           { wch: 25 },
@@ -1053,29 +1272,50 @@ export class CafeteriaService {
           { wch: 10 }
         ];
 
-        XLSX.utils.book_append_sheet(wb, ws, sheetName);
+        // Style title
+        if (detailWs['A1']) {
+          detailWs['A1'].s = {
+            font: { bold: true, sz: 12, color: { rgb: 'FFFFFF' } },
+            fill: { fgColor: { rgb: 'D97706' } },
+            alignment: { horizontal: 'center' }
+          };
+        }
+
+        // Style header row (row 3)
+        for (const col of ['A', 'B', 'C', 'D', 'E', 'F', 'G']) {
+          const cell = detailWs[`${col}3`];
+          if (cell) {
+            cell.s = {
+              font: { bold: true, sz: 10, color: { rgb: 'FFFFFF' } },
+              fill: { fgColor: { rgb: '7C2D12' } },
+              border: thinBorder,
+              alignment: { horizontal: 'center' }
+            };
+          }
+        }
+
+        // Style data rows
+        for (let r = 4; r < 4 + items.length; r++) {
+          const isEven = (r - 4) % 2 === 0;
+          const rowBg = isEven ? 'FFF7ED' : 'FFFFFF';
+          for (const col of ['A', 'B', 'C', 'D', 'E', 'F', 'G']) {
+            const cell = detailWs[`${col}${r}`];
+            if (cell) {
+              cell.s = {
+                fill: { fgColor: { rgb: rowBg } },
+                border: thinBorder
+              };
+            }
+          }
+        }
+
+        XLSX.utils.book_append_sheet(wb, detailWs, sheetLabel.substring(0, 31));
       }
 
-      const summaryData: any[][] = [
-        ['RESUMEN - ENTREGAS SIN CONFIRMACIÓN'],
-        [''],
-        ['Fecha', 'Cantidad'],
-      ];
-      for (const fecha of sortedDates) {
-        summaryData.push([fecha, grouped.get(fecha)!.length]);
-      }
-      summaryData.push(['']);
-      summaryData.push([`TOTAL: ${entregas.length} entregas sin confirmar`]);
-      summaryData.push([`Fecha de exportación: ${new Date().toLocaleString('es-CO')}`]);
-
-      const summaryWs = XLSX.utils.aoa_to_sheet(summaryData);
-      summaryWs['!cols'] = [{ wch: 15 }, { wch: 12 }];
-      XLSX.utils.book_append_sheet(wb, summaryWs, 'Resumen');
-
-      const fileName = `Entregas_Sin_Confirmar_${sortedDates[0]}_a_${sortedDates[sortedDates.length - 1]}.xlsx`;
+      const fileName = `Entregas_Sin_Confirmar_${allDates[0]}_a_${allDates[allDates.length - 1]}.xlsx`;
       XLSX.writeFile(wb, fileName);
 
-      this.notify('success', 'Exportación Exitosa', `Se exportaron ${entregas.length} registros en ${sortedDates.length} hojas.`);
+      this.notify('success', 'Exportación Exitosa', `Se exportaron ${grandTotal} registros de ${beneficiaries.length} beneficiarios en ${allDates.length} días.`);
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Error desconocido';
       this.notify('error', 'Error al Exportar', msg);
