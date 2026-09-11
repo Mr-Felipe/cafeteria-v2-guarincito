@@ -46,6 +46,18 @@ import { getVisualCarrera } from '../../models/cafeteria.models';
             <span>Exportar Reporte (CSV)</span>
           </button>
 
+          <!-- Exportar Sin Confirmar -->
+          <button
+            id="btn-export-sin-confirmar"
+            type="button"
+            (click)="cafeteriaService.exportarSinConfirmarExcel()"
+            class="px-3.5 py-2 bg-amber-50 border border-amber-200 hover:bg-amber-100 text-amber-800 text-xs font-semibold rounded-lg flex items-center gap-2 transition-colors shadow-sm cursor-pointer"
+            title="Exportar entregas realizadas sin confirmación previa"
+          >
+            <mat-icon [style.fontSize.px]="18" class="text-amber-600">warning</mat-icon>
+            <span>Sin Confirmar (Excel)</span>
+          </button>
+
           <!-- Imprimir -->
           <button
             id="btn-print-entregas"

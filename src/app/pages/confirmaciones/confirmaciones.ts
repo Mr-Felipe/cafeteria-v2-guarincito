@@ -29,9 +29,6 @@ import { Beneficiario, Confirmacion, getVisualCarrera } from '../../models/cafet
           <button type="button" (click)="cafeteriaService.exportarConfirmacionesCsv()" class="px-3.5 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded-lg flex items-center gap-2 transition-colors shadow-sm cursor-pointer">
             <mat-icon class="text-base text-slate-500">download</mat-icon><span>CSV</span>
           </button>
-          <button type="button" (click)="cafeteriaService.exportarSinConfirmarExcel()" class="px-3.5 py-2 bg-amber-50 border border-amber-200 hover:bg-amber-100 text-amber-800 text-xs font-semibold rounded-lg flex items-center gap-2 transition-colors shadow-sm cursor-pointer">
-            <mat-icon class="text-base text-amber-600">warning</mat-icon><span>Sin Confirmar (Excel)</span>
-          </button>
         </div>
       </div>
 
