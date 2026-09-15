@@ -680,4 +680,127 @@ export class SupabaseService {
     const { error } = await this.client.from('confirmaciones').delete().eq('id', id);
     if (error) throw error;
   }
+
+  // ==================== STORAGE: ARCHIVOS CSV ====================
+
+  private readonly BUCKET = 'archivos-csv';
+
+  async ensureBucketExists(): Promise<void> {
+    if (!this.client) return;
+    try {
+      const { data: buckets } = await this.client.storage.listBuckets();
+      const exists = buckets?.some(b => b.name === this.BUCKET);
+      if (!exists) {
+        await this.client.storage.createBucket(this.BUCKET, { public: false });
+      }
+    } catch (err) {
+      console.warn('[Supabase] ensureBucketExists:', err);
+    }
+  }
+
+  // ---- PADRÓN ----
+
+  async uploadPadron(nombre: string, contenido: string): Promise<void> {
+    if (!this.client) return;
+    await this.ensureBucketExists();
+    const path = `padron/${nombre}`;
+    const blob = new Blob([contenido], { type: 'text/csv;charset=utf-8' });
+    const { error } = await this.client.storage.from(this.BUCKET).upload(path, blob, {
+      upsert: true,
+      contentType: 'text/csv'
+    });
+    if (error) throw error;
+  }
+
+  async listPadronFiles(): Promise<{ name: string; path: string; size: number; createdAt: string }[]> {
+    if (!this.client) return [];
+    try {
+      await this.ensureBucketExists();
+      const { data, error } = await this.client.storage.from(this.BUCKET).list('padron', {
+        limit: 100,
+        sortBy: { column: 'created_at', order: 'desc' }
+      });
+      if (error) throw error;
+      return (data || []).map(f => ({
+        name: f.name,
+        path: `padron/${f.name}`,
+        size: f.metadata?.size || 0,
+        createdAt: f.created_at || ''
+      }));
+    } catch (err) {
+      console.warn('[Supabase] listPadronFiles:', err);
+      return [];
+    }
+  }
+
+  async downloadPadron(path: string): Promise<string | null> {
+    if (!this.client) return null;
+    try {
+      const { data, error } = await this.client.storage.from(this.BUCKET).download(path);
+      if (error) throw error;
+      return await data.text();
+    } catch (err) {
+      console.warn('[Supabase] downloadPadron:', err);
+      return null;
+    }
+  }
+
+  async deletePadronFile(path: string): Promise<void> {
+    if (!this.client) return;
+    const { error } = await this.client.storage.from(this.BUCKET).remove([path]);
+    if (error) throw error;
+  }
+
+  // ---- ASISTENCIA ----
+
+  async uploadAsistencia(nombre: string, contenido: string): Promise<void> {
+    if (!this.client) return;
+    await this.ensureBucketExists();
+    const path = `asistencia/${nombre}`;
+    const blob = new Blob([contenido], { type: 'text/csv;charset=utf-8' });
+    const { error } = await this.client.storage.from(this.BUCKET).upload(path, blob, {
+      upsert: true,
+      contentType: 'text/csv'
+    });
+    if (error) throw error;
+  }
+
+  async listAsistenciaFiles(): Promise<{ name: string; path: string; size: number; createdAt: string }[]> {
+    if (!this.client) return [];
+    try {
+      await this.ensureBucketExists();
+      const { data, error } = await this.client.storage.from(this.BUCKET).list('asistencia', {
+        limit: 500,
+        sortBy: { column: 'created_at', order: 'desc' }
+      });
+      if (error) throw error;
+      return (data || []).map(f => ({
+        name: f.name,
+        path: `asistencia/${f.name}`,
+        size: f.metadata?.size || 0,
+        createdAt: f.created_at || ''
+      }));
+    } catch (err) {
+      console.warn('[Supabase] listAsistenciaFiles:', err);
+      return [];
+    }
+  }
+
+  async downloadAsistencia(path: string): Promise<string | null> {
+    if (!this.client) return null;
+    try {
+      const { data, error } = await this.client.storage.from(this.BUCKET).download(path);
+      if (error) throw error;
+      return await data.text();
+    } catch (err) {
+      console.warn('[Supabase] downloadAsistencia:', err);
+      return null;
+    }
+  }
+
+  async deleteAsistenciaFile(path: string): Promise<void> {
+    if (!this.client) return;
+    const { error } = await this.client.storage.from(this.BUCKET).remove([path]);
+    if (error) throw error;
+  }
 }

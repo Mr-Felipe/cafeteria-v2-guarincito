@@ -1,4 +1,4 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, signal, computed, inject } from '@angular/core';
 import {
   Beneficiary,
   RawAttendanceLog,
@@ -8,17 +8,23 @@ import {
   UploadedFileInfo,
   ProcessingStats
 } from '../models/attendance.models';
+import { SupabaseService } from './supabase.service';
 import * as XLSX from 'xlsx-js-style';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AttendanceService {
+  private readonly supabase = inject(SupabaseService);
   // Reactive Signals
   readonly beneficiaries = signal<Beneficiary[]>([]);
   readonly rawAttendanceLogs = signal<RawAttendanceLog[]>([]);
   readonly uploadedBeneficiariesFile = signal<UploadedFileInfo | null>(null);
   readonly uploadedAttendanceFiles = signal<UploadedFileInfo[]>([]);
+  
+  // Stored files from Supabase Storage
+  readonly archivosPadron = signal<{ name: string; path: string; size: number; createdAt: string }[]>([]);
+  readonly archivosAsistencia = signal<{ name: string; path: string; size: number; createdAt: string }[]>([]);
   
   // Selection and filter signals
   readonly selectedBeneficiaryId = signal<string | null>(null);
@@ -479,8 +485,67 @@ export class AttendanceService {
   });
 
   constructor() {
-    // Starts clean by default so users can upload their real CSV files.
-    // Demo data can be loaded optionally via the 'Cargar Demo' button.
+    this.cargarArchivosDesdeSupabase();
+  }
+
+  // ==========================================
+  // SUPABASE STORAGE: FILE MANAGEMENT
+  // ==========================================
+
+  async cargarArchivosDesdeSupabase(): Promise<void> {
+    try {
+      const [padronFiles, asistenciaFiles] = await Promise.all([
+        this.supabase.listPadronFiles(),
+        this.supabase.listAsistenciaFiles()
+      ]);
+      this.archivosPadron.set(padronFiles);
+      this.archivosAsistencia.set(asistenciaFiles);
+    } catch (err) {
+      console.warn('[Attendance] Error cargando archivos desde Supabase:', err);
+    }
+  }
+
+  async subirPadron(nombre: string, contenido: string): Promise<void> {
+    await this.supabase.uploadPadron(nombre, contenido);
+    this.parseBeneficiariesCsv(contenido, nombre);
+    await this.cargarArchivosDesdeSupabase();
+  }
+
+  async subirAsistencia(nombre: string, contenido: string): Promise<void> {
+    await this.supabase.uploadAsistencia(nombre, contenido);
+    await this.cargarArchivosDesdeSupabase();
+  }
+
+  async cargarAsistenciaDesdeStorage(paths: string[]): Promise<void> {
+    const files: { name: string; content: string; size: number }[] = [];
+    for (const path of paths) {
+      const contenido = await this.supabase.downloadAsistencia(path);
+      if (contenido) {
+        const name = path.split('/').pop() || path;
+        files.push({ name, content: contenido, size: contenido.length });
+      }
+    }
+    if (files.length > 0) {
+      this.parseAttendanceCsvs(files, true);
+    }
+  }
+
+  async cargarPadronDesdeStorage(path: string): Promise<void> {
+    const contenido = await this.supabase.downloadPadron(path);
+    if (contenido) {
+      const name = path.split('/').pop() || path;
+      this.parseBeneficiariesCsv(contenido, name);
+    }
+  }
+
+  async eliminarArchivoPadron(path: string): Promise<void> {
+    await this.supabase.deletePadronFile(path);
+    await this.cargarArchivosDesdeSupabase();
+  }
+
+  async eliminarArchivoAsistencia(path: string): Promise<void> {
+    await this.supabase.deleteAsistenciaFile(path);
+    await this.cargarArchivosDesdeSupabase();
   }
 
   // Toggle organization selection
@@ -822,90 +887,6 @@ export class AttendanceService {
     } else {
       this.selectedDate.set(null);
     }
-  }
-
-  // Load realistic sample data
-  loadDemoData() {
-    const demoBeneficiariesCsv = `*ID de persona;*Organización;*Nombre de persona;*Sexo;Tel.;Correo electrónico;Hora de vigencia;Hora de caducidad;N.º de tarjeta;N.º de habitación;Núm. de piso
-'00076578;'UNIVERSIDAD/empleados;Tito Salazar;1;;;'2026/07/25 00:00:00;'2036/07/24 23:59:59;;;
-'10995475;'UNIVERSIDAD/estudiantes/AGROINDUSTRIAL;JONATAN DAVID OSPINA MOSQUERA;1;;;'2026/08/11 00:00:00;'2036/08/10 23:59:59;;;
-'9172;'UNIVERSIDAD/estudiantes/ING INFORMATICA;LAURA ALEJANDRA ROJAS MARTINEZ;2;;;'2026/08/01 00:00:00;'2036/08/01 23:59:59;;;
-'10884521;'UNIVERSIDAD/estudiantes/MEDICINA;CAMILO ANDRES PEÑA VARGAS;1;;;'2026/08/01 00:00:00;'2036/08/01 23:59:59;;;
-'10957812;'UNIVERSIDAD/estudiantes/ING CIVIL;MARIA FERNANDA GOMEZ SILVA;2;;;'2026/08/01 00:00:00;'2036/08/01 23:59:59;;;
-'00045123;'UNIVERSIDAD/empleados;Carlos Alberto Mendoza;1;;;'2026/07/25 00:00:00;'2036/07/24 23:59:59;;;
-'10741299;'UNIVERSIDAD/estudiantes/DERECHO;VALENTINA CASTRO RESTREPO;2;;;'2026/08/01 00:00:00;'2036/08/01 23:59:59;;;
-'10996841;'UNIVERSIDAD/estudiantes/AGROINDUSTRIAL;SANTIAGO MORALES DUQUE;1;;;'2026/08/11 00:00:00;'2036/08/10 23:59:59;;;
-'10204918;'UNIVERSIDAD/estudiantes/ADMINISTRACION;PAULA ANDREA ZULUAGA;2;;;'2026/08/01 00:00:00;'2036/08/01 23:59:59;;;
-'00088912;'UNIVERSIDAD/empleados;Marta Elena Rincón;2;;;'2026/07/25 00:00:00;'2036/07/24 23:59:59;;;
-'10945820;'UNIVERSIDAD/estudiantes/ING INFORMATICA;DIEGO FELIPE HERRERA;1;;;'2026/08/01 00:00:00;'2036/08/01 23:59:59;;;
-'10659832;'UNIVERSIDAD/estudiantes/ENFERMERIA;ANA SOFIA CARDONA;2;;;'2026/08/01 00:00:00;'2036/08/01 23:59:59;;;`;
-
-    this.parseBeneficiariesCsv(demoBeneficiariesCsv, 'Beneficiarios_Almuerzos_IVMS4200_Demo.csv');
-
-    // Demo daily attendance files for week of August 24 - 28, 2026
-    const file24 = `ID de persona,Nombre,Departamento,Hora,Estado de asistencia,Punto de verificación de asistencia,Nombre personalizado,Fuente de datos,Gestión de informe,Temperatura,Anormal
-'9172,LAURA ALEJANDRA ROJAS MARTINEZ,UNIVERSIDAD/estudiantes/ING INFORMATICA,2026-08-24 12:35:59,Nada,BIOMETRICO 1_Puerta1_Lector de tarjetas de entrada1,-,Registro de deslizamiento de tarjeta,-,-,-
-'9172,LAURA ALEJANDRA ROJAS MARTINEZ,UNIVERSIDAD/estudiantes/ING INFORMATICA,2026-08-24 12:36:12,Nada,BIOMETRICO 1_Puerta1_Lector de tarjetas de entrada1,-,Registro de deslizamiento de tarjeta,-,-,-
-'00076578,Tito Salazar,UNIVERSIDAD/empleados,2026-08-24 12:15:30,Nada,BIOMETRICO 1_Puerta1_Lector de tarjetas de entrada1,-,Registro de deslizamiento de tarjeta,-,-,-
-'10995475,JONATAN DAVID OSPINA MOSQUERA,UNIVERSIDAD/estudiantes/AGROINDUSTRIAL,2026-08-24 12:48:10,Nada,BIOMETRICO 2_Puerta Principal,-,Registro de deslizamiento de tarjeta,-,-,-
-'10884521,CAMILO ANDRES PEÑA VARGAS,UNIVERSIDAD/estudiantes/MEDICINA,2026-08-24 13:05:22,Nada,BIOMETRICO 1_Puerta1_Lector de tarjetas de entrada1,-,Registro de deslizamiento de tarjeta,-,-,-
-'10957812,MARIA FERNANDA GOMEZ SILVA,UNIVERSIDAD/estudiantes/ING CIVIL,2026-08-24 12:20:45,Nada,BIOMETRICO 1_Puerta1_Lector de tarjetas de entrada1,-,Registro de deslizamiento de tarjeta,-,-,-
-'00045123,Carlos Alberto Mendoza,UNIVERSIDAD/empleados,2026-08-24 11:58:30,Nada,BIOMETRICO 1_Puerta1_Lector de tarjetas de entrada1,-,Registro de deslizamiento de tarjeta,-,-,-
-'10741299,VALENTINA CASTRO RESTREPO,UNIVERSIDAD/estudiantes/DERECHO,2026-08-24 13:14:02,Nada,BIOMETRICO 2_Puerta Principal,-,Registro de deslizamiento de tarjeta,-,-,-
-'10996841,SANTIAGO MORALES DUQUE,UNIVERSIDAD/estudiantes/AGROINDUSTRIAL,2026-08-24 12:55:18,Nada,BIOMETRICO 1_Puerta1_Lector de tarjetas de entrada1,-,Registro de deslizamiento de tarjeta,-,-,-
-'00088912,Marta Elena Rincón,UNIVERSIDAD/empleados,2026-08-24 12:10:05,Nada,BIOMETRICO 1_Puerta1_Lector de tarjetas de entrada1,-,Registro de deslizamiento de tarjeta,-,-,-
-'99999999,VISITANTE NO REGISTRADO,EXTERNO,2026-08-24 13:40:11,Nada,BIOMETRICO 1_Puerta1_Lector de tarjetas de entrada1,-,Registro de deslizamiento de tarjeta,-,-,-`;
-
-    const file25 = `ID de persona,Nombre,Departamento,Hora,Estado de asistencia,Punto de verificación de asistencia,Nombre personalizado,Fuente de datos,Gestión de informe,Temperatura,Anormal
-'00076578,Tito Salazar,UNIVERSIDAD/empleados,2026-08-25 12:22:15,Nada,BIOMETRICO 1_Puerta1_Lector de tarjetas de entrada1,-,Registro de deslizamiento de tarjeta,-,-,-
-'00076578,Tito Salazar,UNIVERSIDAD/empleados,2026-08-25 12:22:30,Nada,BIOMETRICO 1_Puerta1_Lector de tarjetas de entrada1,-,Registro de deslizamiento de tarjeta,-,-,-
-'10995475,JONATAN DAVID OSPINA MOSQUERA,UNIVERSIDAD/estudiantes/AGROINDUSTRIAL,2026-08-25 12:40:00,Nada,BIOMETRICO 2_Puerta Principal,-,Registro de deslizamiento de tarjeta,-,-,-
-'9172,LAURA ALEJANDRA ROJAS MARTINEZ,UNIVERSIDAD/estudiantes/ING INFORMATICA,2026-08-25 12:45:10,Nada,BIOMETRICO 1_Puerta1_Lector de tarjetas de entrada1,-,Registro de deslizamiento de tarjeta,-,-,-
-'10957812,MARIA FERNANDA GOMEZ SILVA,UNIVERSIDAD/estudiantes/ING CIVIL,2026-08-25 12:15:33,Nada,BIOMETRICO 1_Puerta1_Lector de tarjetas de entrada1,-,Registro de deslizamiento de tarjeta,-,-,-
-'00045123,Carlos Alberto Mendoza,UNIVERSIDAD/empleados,2026-08-25 12:05:19,Nada,BIOMETRICO 1_Puerta1_Lector de tarjetas de entrada1,-,Registro de deslizamiento de tarjeta,-,-,-
-'10204918,PAULA ANDREA ZULUAGA,UNIVERSIDAD/estudiantes/ADMINISTRACION,2026-08-25 13:20:44,Nada,BIOMETRICO 1_Puerta1_Lector de tarjetas de entrada1,-,Registro de deslizamiento de tarjeta,-,-,-
-'10945820,DIEGO FELIPE HERRERA,UNIVERSIDAD/estudiantes/ING INFORMATICA,2026-08-25 12:50:11,Nada,BIOMETRICO 2_Puerta Principal,-,Registro de deslizamiento de tarjeta,-,-,-
-'10659832,ANA SOFIA CARDONA,UNIVERSIDAD/estudiantes/ENFERMERIA,2026-08-25 13:00:25,Nada,BIOMETRICO 1_Puerta1_Lector de tarjetas de entrada1,-,Registro de deslizamiento de tarjeta,-,-,-`;
-
-    const file26 = `ID de persona,Nombre,Departamento,Hora,Estado de asistencia,Punto de verificación de asistencia,Nombre personalizado,Fuente de datos,Gestión de informe,Temperatura,Anormal
-'00076578,Tito Salazar,UNIVERSIDAD/empleados,2026-08-26 12:10:40,Nada,BIOMETRICO 1_Puerta1_Lector de tarjetas de entrada1,-,Registro de deslizamiento de tarjeta,-,-,-
-'10995475,JONATAN DAVID OSPINA MOSQUERA,UNIVERSIDAD/estudiantes/AGROINDUSTRIAL,2026-08-26 12:35:12,Nada,BIOMETRICO 2_Puerta Principal,-,Registro de deslizamiento de tarjeta,-,-,-
-'10884521,CAMILO ANDRES PEÑA VARGAS,UNIVERSIDAD/estudiantes/MEDICINA,2026-08-26 12:55:00,Nada,BIOMETRICO 1_Puerta1_Lector de tarjetas de entrada1,-,Registro de deslizamiento de tarjeta,-,-,-
-'10884521,CAMILO ANDRES PEÑA VARGAS,UNIVERSIDAD/estudiantes/MEDICINA,2026-08-26 12:55:40,Nada,BIOMETRICO 1_Puerta1_Lector de tarjetas de entrada1,-,Registro de deslizamiento de tarjeta,-,-,-
-'10741299,VALENTINA CASTRO RESTREPO,UNIVERSIDAD/estudiantes/DERECHO,2026-08-26 13:10:15,Nada,BIOMETRICO 2_Puerta Principal,-,Registro de deslizamiento de tarjeta,-,-,-
-'10996841,SANTIAGO MORALES DUQUE,UNIVERSIDAD/estudiantes/AGROINDUSTRIAL,2026-08-26 12:44:20,Nada,BIOMETRICO 1_Puerta1_Lector de tarjetas de entrada1,-,Registro de deslizamiento de tarjeta,-,-,-
-'00088912,Marta Elena Rincón,UNIVERSIDAD/empleados,2026-08-26 12:18:50,Nada,BIOMETRICO 1_Puerta1_Lector de tarjetas de entrada1,-,Registro de deslizamiento de tarjeta,-,-,-
-'10204918,PAULA ANDREA ZULUAGA,UNIVERSIDAD/estudiantes/ADMINISTRACION,2026-08-26 13:05:30,Nada,BIOMETRICO 1_Puerta1_Lector de tarjetas de entrada1,-,Registro de deslizamiento de tarjeta,-,-,-
-'10659832,ANA SOFIA CARDONA,UNIVERSIDAD/estudiantes/ENFERMERIA,2026-08-26 12:28:40,Nada,BIOMETRICO 1_Puerta1_Lector de tarjetas de entrada1,-,Registro de deslizamiento de tarjeta,-,-,-`;
-
-    const file27 = `ID de persona,Nombre,Departamento,Hora,Estado de asistencia,Punto de verificación de asistencia,Nombre personalizado,Fuente de datos,Gestión de informe,Temperatura,Anormal
-'00076578,Tito Salazar,UNIVERSIDAD/empleados,2026-08-27 12:14:02,Nada,BIOMETRICO 1_Puerta1_Lector de tarjetas de entrada1,-,Registro de deslizamiento de tarjeta,-,-,-
-'10995475,JONATAN DAVID OSPINA MOSQUERA,UNIVERSIDAD/estudiantes/AGROINDUSTRIAL,2026-08-27 12:45:00,Nada,BIOMETRICO 2_Puerta Principal,-,Registro de deslizamiento de tarjeta,-,-,-
-'9172,LAURA ALEJANDRA ROJAS MARTINEZ,UNIVERSIDAD/estudiantes/ING INFORMATICA,2026-08-27 12:30:19,Nada,BIOMETRICO 1_Puerta1_Lector de tarjetas de entrada1,-,Registro de deslizamiento de tarjeta,-,-,-
-'10957812,MARIA FERNANDA GOMEZ SILVA,UNIVERSIDAD/estudiantes/ING CIVIL,2026-08-27 12:18:40,Nada,BIOMETRICO 1_Puerta1_Lector de tarjetas de entrada1,-,Registro de deslizamiento de tarjeta,-,-,-
-'00045123,Carlos Alberto Mendoza,UNIVERSIDAD/empleados,2026-08-27 12:02:11,Nada,BIOMETRICO 1_Puerta1_Lector de tarjetas de entrada1,-,Registro de deslizamiento de tarjeta,-,-,-
-'10741299,VALENTINA CASTRO RESTREPO,UNIVERSIDAD/estudiantes/DERECHO,2026-08-27 13:12:55,Nada,BIOMETRICO 2_Puerta Principal,-,Registro de deslizamiento de tarjeta,-,-,-
-'10945820,DIEGO FELIPE HERRERA,UNIVERSIDAD/estudiantes/ING INFORMATICA,2026-08-27 12:52:30,Nada,BIOMETRICO 1_Puerta1_Lector de tarjetas de entrada1,-,Registro de deslizamiento de tarjeta,-,-,-
-'10659832,ANA SOFIA CARDONA,UNIVERSIDAD/estudiantes/ENFERMERIA,2026-08-27 12:39:10,Nada,BIOMETRICO 1_Puerta1_Lector de tarjetas de entrada1,-,Registro de deslizamiento de tarjeta,-,-,-`;
-
-    const file28 = `ID de persona,Nombre,Departamento,Hora,Estado de asistencia,Punto de verificación de asistencia,Nombre personalizado,Fuente de datos,Gestión de informe,Temperatura,Anormal
-'00076578,Tito Salazar,UNIVERSIDAD/empleados,2026-08-28 12:08:22,Nada,BIOMETRICO 1_Puerta1_Lector de tarjetas de entrada1,-,Registro de deslizamiento de tarjeta,-,-,-
-'10995475,JONATAN DAVID OSPINA MOSQUERA,UNIVERSIDAD/estudiantes/AGROINDUSTRIAL,2026-08-28 12:30:10,Nada,BIOMETRICO 2_Puerta Principal,-,Registro de deslizamiento de tarjeta,-,-,-
-'9172,LAURA ALEJANDRA ROJAS MARTINEZ,UNIVERSIDAD/estudiantes/ING INFORMATICA,2026-08-28 12:42:05,Nada,BIOMETRICO 1_Puerta1_Lector de tarjetas de entrada1,-,Registro de deslizamiento de tarjeta,-,-,-
-'10884521,CAMILO ANDRES PEÑA VARGAS,UNIVERSIDAD/estudiantes/MEDICINA,2026-08-28 13:02:18,Nada,BIOMETRICO 1_Puerta1_Lector de tarjetas de entrada1,-,Registro de deslizamiento de tarjeta,-,-,-
-'10957812,MARIA FERNANDA GOMEZ SILVA,UNIVERSIDAD/estudiantes/ING CIVIL,2026-08-28 12:12:40,Nada,BIOMETRICO 1_Puerta1_Lector de tarjetas de entrada1,-,Registro de deslizamiento de tarjeta,-,-,-
-'10996841,SANTIAGO MORALES DUQUE,UNIVERSIDAD/estudiantes/AGROINDUSTRIAL,2026-08-28 12:50:33,Nada,BIOMETRICO 1_Puerta1_Lector de tarjetas de entrada1,-,Registro de deslizamiento de tarjeta,-,-,-
-'00088912,Marta Elena Rincón,UNIVERSIDAD/empleados,2026-08-28 12:25:01,Nada,BIOMETRICO 1_Puerta1_Lector de tarjetas de entrada1,-,Registro de deslizamiento de tarjeta,-,-,-
-'10204918,PAULA ANDREA ZULUAGA,UNIVERSIDAD/estudiantes/ADMINISTRACION,2026-08-28 13:18:22,Nada,BIOMETRICO 1_Puerta1_Lector de tarjetas de entrada1,-,Registro de deslizamiento de tarjeta,-,-,-
-'10945820,DIEGO FELIPE HERRERA,UNIVERSIDAD/estudiantes/ING INFORMATICA,2026-08-28 12:48:15,Nada,BIOMETRICO 2_Puerta Principal,-,Registro de deslizamiento de tarjeta,-,-,-`;
-
-    this.parseAttendanceCsvs([
-      { name: 'IVMS_Asistencia_2026-08-24.csv', content: file24, size: file24.length },
-      { name: 'IVMS_Asistencia_2026-08-25.csv', content: file25, size: file25.length },
-      { name: 'IVMS_Asistencia_2026-08-26.csv', content: file26, size: file26.length },
-      { name: 'IVMS_Asistencia_2026-08-27.csv', content: file27, size: file27.length },
-      { name: 'IVMS_Asistencia_2026-08-28.csv', content: file28, size: file28.length },
-    ], false);
   }
 
   // ==========================================
