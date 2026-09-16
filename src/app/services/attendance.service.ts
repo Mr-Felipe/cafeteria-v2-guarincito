@@ -1079,12 +1079,16 @@ export class AttendanceService {
       });
       
       // Filter days based on attendance type:
-      // - If only weekend attendance: show only Sat/Sun
-      // - If weekday attendance: show all 7 days
+      // - Weekday orgs: show ONLY Mon-Fri (laborales)
+      // - Weekend-only orgs: show only Sat/Sun
       let orgDays: string[];
       if (hasWeekdayAttendance) {
-        // Weekday orgs: all 7 days
-        orgDays = orgDaysSorted;
+        // Solo días laborales (lunes a viernes)
+        orgDays = orgDaysSorted.filter(d => {
+          const date = new Date(d + 'T12:00:00');
+          const dow = date.getDay();
+          return dow >= 1 && dow <= 5;
+        });
       } else {
         // Weekend-only orgs: only Sat/Sun
         orgDays = orgDaysSorted.filter(d => {
@@ -1107,14 +1111,15 @@ export class AttendanceService {
       // Build sheet data
       const weekendNote = !hasWeekdayAttendance ? ' (Solo fines de semana)' : '';
       const weeksNote = orgWeeks !== maxWeeksCount ? ` [${orgWeeks} sem]` : '';
+      const dayLabel = hasWeekdayAttendance ? 'laborales' : 'de asistencia';
       const sheetData: any[][] = [
         [`🍽️ ASISTENCIA DE ALMUERZOS - ${this.formatOrgForExcel(org)}${weekendNote}${weeksNote}`],
         [''],
         ['📅 Período:', `${orgDays[0]} al ${orgDays[orgDays.length - 1]}`],
-        ['📆 Semanas:', `${orgWeeks} semana(s) (${orgDays.length} días)`],
+        ['📆 Semanas:', `${orgWeeks} semana(s) (${orgDays.length} días ${dayLabel})`],
         ['👥 Beneficiarios:', items.length],
         [''],
-        ['ID', 'NOMBRE', 'DÍAS ASISTIDOS', ...orgDays.map(d => `📅 ${this.formatDayHeader(d)}`)]
+        ['ID', 'NOMBRE', 'DÍAS ASISTIDOS', 'DÍAS TOTALES', ...orgDays.map(d => `📅 ${this.formatDayHeader(d)}`)]
       ];
       
       // Data rows
@@ -1140,6 +1145,7 @@ export class AttendanceService {
           b.normalizedId,
           b.name,
           item.daysAttended,
+          orgDays.length,
           ...dayValues
         ]);
       }
@@ -1158,6 +1164,7 @@ export class AttendanceService {
         { wch: 14 },
         { wch: 35 },
         { wch: 16 },
+        { wch: 13 },
         ...orgDays.map(() => ({ wch: 22 }))
       ];
       sheet['!cols'] = cols;
@@ -1521,15 +1528,15 @@ export class AttendanceService {
     this.setCellStyles(sheet, 'A3', { font: { bold: true, color: { rgb: '7C3AED' } } });
     this.setCellStyles(sheet, 'A4', { font: { bold: true, color: { rgb: '7C3AED' } } });
     
-    // Table headers (row 7) - base columns
-    const headerCells = ['A7', 'B7', 'C7'];
+    // Table headers (row 7) - base columns (ID, NOMBRE, DÍAS ASISTIDOS, DÍAS TOTALES)
+    const headerCells = ['A7', 'B7', 'C7', 'D7'];
     headerCells.forEach(cell => {
       this.setCellStyles(sheet, cell, { font: { bold: true, sz: 10, color: { rgb: 'FFFFFF' } }, fill: { fgColor: { rgb: '1E40AF' } }, border: this.getBorderDef(), alignment: { horizontal: 'center' } });
     });
     
-    // Day header columns - COLORES POR SEMANA (D=4, E=5, F=6, ...)
+    // Day header columns - COLORES POR SEMANA (E=4, F=5, G=6, ...)
     for (let i = 0; i < dayCount; i++) {
-      const col = this.getExcelCol(3 + i); // D, E, F, ...
+      const col = this.getExcelCol(4 + i); // E, F, G, ...
       const d = days[i];
       const wIdx = dayToWeekIdx.get(d) || 0;
       const weekColor = weekColors[wIdx % weekColors.length];
@@ -1547,11 +1554,11 @@ export class AttendanceService {
       const row = 8 + rowIdx;
       const item = items[rowIdx];
       
-      // Base columns (ID, Name, Days Attended)
+      // Base columns (ID, Name, Days Attended, Days Total)
       const isEven = rowIdx % 2 === 0;
       const baseBgColor = isEven ? 'F8FAFC' : 'FFFFFF';
       
-      for (let col = 0; col < 3; col++) {
+      for (let col = 0; col < 4; col++) {
         const colLetter = this.getExcelCol(col);
         this.setCellStyles(sheet, `${colLetter}${row}`, { 
           fill: { fgColor: { rgb: baseBgColor } }, 
@@ -1561,7 +1568,7 @@ export class AttendanceService {
       
       // Attendance cells - SIEMPRE VERDE si asistió
       for (let dayIdx = 0; dayIdx < dayCount; dayIdx++) {
-        const col = this.getExcelCol(3 + dayIdx); // D, E, F...
+        const col = this.getExcelCol(4 + dayIdx); // E, F, G...
         const dateStr = days[dayIdx];
         const hasAttended = item.attendanceByDate[dateStr] !== null;
         const date = new Date(dateStr + 'T12:00:00');
