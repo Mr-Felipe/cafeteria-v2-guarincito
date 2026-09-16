@@ -1152,7 +1152,7 @@ export class AttendanceService {
       
       // Day attendance totals
       sheetData.push(['']);
-      sheetData.push(['', '📈 ASISTENCIA POR DÍA:', '', ...orgDays.map(d => {
+      sheetData.push(['', '📈 ASISTENCIA POR DÍA:', '', '', ...orgDays.map(d => {
         const stat = orgDayTotals[d];
         return stat ? `${stat.attended}/${stat.total} (${stat.percentage}%)` : '';
       })]);
