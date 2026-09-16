@@ -1383,12 +1383,26 @@ export class Formularios implements OnInit {
   async saveCardHours(configTipo: string, horaInicio: string | undefined, horaFin: string | undefined, editSignalType: string) {
     const cfg = this.config().find(c => c.tipo === configTipo);
     if (!cfg) return;
+    const horaFinAnterior = cfg.hora_fin;
     try {
       const patch: any = {};
       if (horaInicio) patch.hora_inicio = horaInicio;
       if (horaFin) patch.hora_fin = horaFin;
       await this.supabase.updateFormConfig(cfg.id, patch);
       this.config.update(cfgs => cfgs.map(c => c.tipo === configTipo ? { ...c, ...patch } : c));
+
+      // Actualizar carreras que tenían la hora anterior (las que coincidían con el general)
+      if (horaFin && horaFinAnterior && horaFin !== horaFinAnterior) {
+        const targetSignal = this.getTargetSignal(configTipo);
+        const carrerasAActualizar = targetSignal().filter(h => h.hora_cierre === horaFinAnterior);
+        for (const h of carrerasAActualizar) {
+          await this.supabase.updateCarreraHorario(h.id, { hora_cierre: horaFin });
+        }
+        if (carrerasAActualizar.length > 0) {
+          targetSignal.update(hs => hs.map(h => h.hora_cierre === horaFinAnterior ? { ...h, hora_cierre: horaFin } : h));
+        }
+      }
+
       if (editSignalType === 'almuerzo') this.editingAlmuerzo.set(false);
       else if (editSignalType === 'adea') this.editingAdea.set(false);
       else if (editSignalType === 'fin_de_semana_sabado') this.editingFindeSabado.set(false);
