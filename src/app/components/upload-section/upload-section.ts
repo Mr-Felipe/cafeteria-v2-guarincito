@@ -21,17 +21,10 @@ import { FileBrowserComponent } from '../file-browser/file-browser';
             <p class="text-[10px] text-slate-400">Almacenamiento en Supabase Storage</p>
           </div>
         </div>
-        <button
-          type="button"
-          (click)="isExpanded.set(!isExpanded())"
-          class="text-xs font-bold text-slate-500 hover:text-slate-700 flex items-center gap-1 cursor-pointer bg-slate-50 hover:bg-slate-100 px-2.5 py-1 rounded border border-slate-200 transition-colors">
-          <span>{{ isExpanded() ? 'Ocultar' : 'Configurar' }}</span>
-          <mat-icon class="text-base">{{ isExpanded() ? 'expand_less' : 'expand_more' }}</mat-icon>
-        </button>
       </div>
 
-      <!-- Compact selector cards (always visible) -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+      <!-- Compact selector cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <!-- Padrón -->
         <div class="flex items-center gap-3 p-3 rounded-lg border transition-colors"
              [class]="service.uploadedBeneficiariesFile() ? 'bg-green-50 border-green-200' : 'bg-slate-50 border-slate-200'">
@@ -48,23 +41,12 @@ import { FileBrowserComponent } from '../file-browser/file-browser';
               <div class="text-[10px] text-slate-400">Sin cargar</div>
             }
           </div>
-          <div class="flex items-center gap-1 shrink-0">
-            <button
-              type="button"
-              (click)="abrirNavegadorPadron()"
-              class="p-1.5 rounded-md text-indigo-600 hover:bg-indigo-100 transition-colors cursor-pointer"
-              title="Seleccionar de Storage">
-              <mat-icon class="text-base">folder_open</mat-icon>
-            </button>
-            <label
-              (dragover)="onDragOver($event)"
-              (drop)="onDropPadron($event)"
-              class="p-1.5 rounded-md text-slate-500 hover:bg-slate-100 transition-colors cursor-pointer"
-              title="Subir nuevo archivo">
-              <input type="file" accept=".csv,.txt" class="hidden" (change)="onPadronFileSelected($event)" />
-              <mat-icon class="text-base">cloud_upload</mat-icon>
-            </label>
-          </div>
+          <button
+            type="button"
+            (click)="abrirModalPadron()"
+            class="px-3 py-1.5 text-[10px] font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-lg transition-colors cursor-pointer shrink-0">
+            CARGAR
+          </button>
         </div>
 
         <!-- Asistencia -->
@@ -83,97 +65,151 @@ import { FileBrowserComponent } from '../file-browser/file-browser';
               <div class="text-[10px] text-slate-400">Sin cargar</div>
             }
           </div>
-          <div class="flex items-center gap-1 shrink-0">
-            <button
-              type="button"
-              (click)="abrirNavegadorAsistencia()"
-              class="p-1.5 rounded-md text-indigo-600 hover:bg-indigo-100 transition-colors cursor-pointer"
-              title="Seleccionar de Storage">
-              <mat-icon class="text-base">folder_open</mat-icon>
+          <button
+            type="button"
+            (click)="abrirModalAsistencia()"
+            class="px-3 py-1.5 text-[10px] font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-lg transition-colors cursor-pointer shrink-0">
+            CARGAR
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== MODAL PADRÓN ========== -->
+    @if (modalPadron()) {
+      <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4"
+           (click)="cerrarModalPadron()">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden" (click)="$event.stopPropagation()">
+          <!-- Header -->
+          <div class="bg-gradient-to-r from-indigo-600 to-indigo-700 p-4 flex items-center justify-between">
+            <div>
+              <h3 class="text-base font-bold text-white">Padrón de Beneficiarios</h3>
+              <p class="text-indigo-200 text-[10px]">Sube un CSV o selecciona de Storage</p>
+            </div>
+            <button (click)="cerrarModalPadron()" class="p-1 text-white/70 hover:text-white cursor-pointer">
+              <mat-icon>close</mat-icon>
             </button>
+          </div>
+
+          <div class="p-4 space-y-4">
+            <!-- Drag & Drop zone -->
             <label
               (dragover)="onDragOver($event)"
-              (drop)="onDropAsistencia($event)"
-              class="p-1.5 rounded-md text-slate-500 hover:bg-slate-100 transition-colors cursor-pointer"
-              title="Subir nuevo archivo">
-              <input type="file" accept=".csv,.txt" multiple class="hidden" (change)="onAsistenciaFilesSelected($event)" />
-              <mat-icon class="text-base">cloud_upload</mat-icon>
+              (drop)="onDropPadron($event)"
+              class="border-2 border-dashed border-slate-200 hover:border-indigo-400 rounded-xl p-6 text-center cursor-pointer transition-colors flex flex-col items-center justify-center gap-2"
+              [class.border-indigo-400]="dragOverPadron()"
+              [class.bg-indigo-50]="dragOverPadron()">
+              <input type="file" accept=".csv,.txt" class="hidden" (change)="onPadronFileSelected($event)" />
+              <mat-icon class="text-2xl text-indigo-600">cloud_upload</mat-icon>
+              <div class="text-sm font-semibold text-slate-700">Arrastra un CSV aquí</div>
+              <div class="text-[10px] text-slate-400">o haz clic para seleccionar</div>
             </label>
+
+            <!-- Already loaded in memory -->
+            @if (service.uploadedBeneficiariesFile(); as bFile) {
+              <div class="p-2.5 bg-green-50 rounded-lg border border-green-100 text-[11px] text-green-800 flex items-center gap-2">
+                <mat-icon class="text-green-600 text-sm">check_circle</mat-icon>
+                <span>Cargado: <strong class="font-mono">{{ bFile.name }}</strong> ({{ bFile.validRows }} registros)</span>
+              </div>
+            }
+
+            <!-- Storage files -->
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Archivos en Storage</span>
+                <span class="text-[9px] font-mono text-slate-500">{{ service.archivosPadron().length }}</span>
+              </div>
+              @if (service.archivosPadron().length === 0) {
+                <div class="text-[10px] text-slate-400 text-center py-3 border border-dashed border-slate-200 rounded-lg">Vacío</div>
+              } @else {
+                <div class="space-y-1 max-h-40 overflow-y-auto border border-slate-100 rounded-lg">
+                  @for (file of service.archivosPadron(); track file.path) {
+                    <div class="flex items-center gap-2 px-3 py-2 hover:bg-slate-50 text-[11px]">
+                      <mat-icon class="text-slate-400 text-sm">description</mat-icon>
+                      <span class="font-mono font-medium text-slate-700 truncate flex-1">{{ file.name }}</span>
+                      <span class="text-slate-400 text-[9px] shrink-0">{{ formatSize(file.size) }}</span>
+                      <button (click)="cargarPadronDeStorage(file.path); cerrarModalPadron()"
+                        class="p-1 text-indigo-600 hover:bg-indigo-50 rounded cursor-pointer" title="Cargar">
+                        <mat-icon class="text-sm">download</mat-icon>
+                      </button>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
           </div>
         </div>
       </div>
+    }
 
-      <!-- Expanded config panel -->
-      @if (isExpanded()) {
-        <div class="border-t border-slate-100 pt-4 space-y-4">
-          <!-- Storage info -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <!-- Padrón files in storage -->
-            <div class="bg-slate-50 rounded-lg p-3 border border-slate-100">
-              <div class="flex items-center justify-between mb-2">
-                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Storage: Padrón</span>
-                <span class="text-[9px] font-mono text-slate-500">{{ service.archivosPadron().length }} archivo(s)</span>
-              </div>
-              @if (service.archivosPadron().length === 0) {
-                <div class="text-[10px] text-slate-400 text-center py-2">Vacío</div>
-              } @else {
-                <div class="space-y-1 max-h-24 overflow-y-auto">
-                  @for (file of service.archivosPadron(); track file.path) {
-                    <div class="flex items-center gap-1.5 text-[10px] text-slate-600">
-                      <mat-icon class="text-slate-400 text-xs">description</mat-icon>
-                      <span class="truncate font-mono flex-1">{{ file.name }}</span>
-                      <span class="text-slate-400 shrink-0">{{ formatSize(file.size) }}</span>
-                    </div>
-                  }
-                </div>
-              }
+    <!-- ========== MODAL ASISTENCIA ========== -->
+    @if (modalAsistencia()) {
+      <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4"
+           (click)="cerrarModalAsistencia()">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden" (click)="$event.stopPropagation()">
+          <!-- Header -->
+          <div class="bg-gradient-to-r from-blue-600 to-blue-700 p-4 flex items-center justify-between">
+            <div>
+              <h3 class="text-base font-bold text-white">Logs de Asistencia</h3>
+              <p class="text-blue-200 text-[10px]">Sube CSVs o selecciona de Storage</p>
             </div>
-
-            <!-- Asistencia files in storage -->
-            <div class="bg-slate-50 rounded-lg p-3 border border-slate-100">
-              <div class="flex items-center justify-between mb-2">
-                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Storage: Asistencia</span>
-                <span class="text-[9px] font-mono text-slate-500">{{ service.archivosAsistencia().length }} archivo(s)</span>
-              </div>
-              @if (service.archivosAsistencia().length === 0) {
-                <div class="text-[10px] text-slate-400 text-center py-2">Vacío</div>
-              } @else {
-                <div class="space-y-1 max-h-24 overflow-y-auto">
-                  @for (file of service.archivosAsistencia(); track file.path) {
-                    <div class="flex items-center gap-1.5 text-[10px] text-slate-600">
-                      <mat-icon class="text-slate-400 text-xs">description</mat-icon>
-                      <span class="truncate font-mono flex-1">{{ file.name }}</span>
-                      <span class="text-slate-400 shrink-0">{{ formatSize(file.size) }}</span>
-                    </div>
-                  }
-                </div>
-              }
-            </div>
+            <button (click)="cerrarModalAsistencia()" class="p-1 text-white/70 hover:text-white cursor-pointer">
+              <mat-icon>close</mat-icon>
+            </button>
           </div>
 
-          <!-- Dedup notice -->
-          <div class="p-3 bg-indigo-50/60 rounded-lg border border-indigo-100 flex items-start gap-3 text-xs text-indigo-950">
-            <div class="p-1.5 bg-indigo-100 rounded text-indigo-700 shrink-0">
-              <mat-icon class="text-base">verified_user</mat-icon>
-            </div>
-            <div>
-              <div class="font-bold text-indigo-950 text-xs">Deduplicación Automática</div>
-              <p class="text-indigo-800 text-[10px] leading-relaxed mt-0.5">
-                Se toma la <strong>primera marcación cronológica</strong> de cada beneficiario por día como el almuerzo oficial.
-              </p>
-            </div>
-            <div class="shrink-0 ml-auto">
-              <div class="text-[9px] font-mono text-right">
-                <div class="font-bold text-indigo-900">{{ service.stats().totalValidLunches }}/{{ service.stats().totalRawLogs }}</div>
-                <div class="text-indigo-500">validados</div>
+          <div class="p-4 space-y-4">
+            <!-- Drag & Drop zone -->
+            <label
+              (dragover)="onDragOver($event)"
+              (drop)="onDropAsistencia($event)"
+              class="border-2 border-dashed border-slate-200 hover:border-blue-400 rounded-xl p-6 text-center cursor-pointer transition-colors flex flex-col items-center justify-center gap-2"
+              [class.border-blue-400]="dragOverAsistencia()"
+              [class.bg-blue-50]="dragOverAsistencia()">
+              <input type="file" accept=".csv,.txt" multiple class="hidden" (change)="onAsistenciaFilesSelected($event)" />
+              <mat-icon class="text-2xl text-blue-600">cloud_upload</mat-icon>
+              <div class="text-sm font-semibold text-slate-700">Arrastra CSVs aquí</div>
+              <div class="text-[10px] text-slate-400">Múltiples archivos permitidos</div>
+            </label>
+
+            <!-- Already loaded in memory -->
+            @if (service.uploadedAttendanceFiles().length > 0) {
+              <div class="p-2.5 bg-green-50 rounded-lg border border-green-100 text-[11px] text-green-800 flex items-center gap-2">
+                <mat-icon class="text-green-600 text-sm">check_circle</mat-icon>
+                <span>En memoria: <strong>{{ service.uploadedAttendanceFiles().length }}</strong> archivos · {{ service.stats().totalRawLogs }} registros</span>
               </div>
+            }
+
+            <!-- Storage files -->
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Archivos en Storage</span>
+                <span class="text-[9px] font-mono text-slate-500">{{ service.archivosAsistencia().length }}</span>
+              </div>
+              @if (service.archivosAsistencia().length === 0) {
+                <div class="text-[10px] text-slate-400 text-center py-3 border border-dashed border-slate-200 rounded-lg">Vacío</div>
+              } @else {
+                <div class="space-y-1 max-h-40 overflow-y-auto border border-slate-100 rounded-lg">
+                  @for (file of service.archivosAsistencia(); track file.path) {
+                    <div class="flex items-center gap-2 px-3 py-2 hover:bg-slate-50 text-[11px]">
+                      <mat-icon class="text-slate-400 text-sm">description</mat-icon>
+                      <span class="font-mono font-medium text-slate-700 truncate flex-1">{{ file.name }}</span>
+                      <span class="text-slate-400 text-[9px] shrink-0">{{ formatSize(file.size) }}</span>
+                      <button (click)="cargarAsistenciaDeStorage(file.path); cerrarModalAsistencia()"
+                        class="p-1 text-blue-600 hover:bg-blue-50 rounded cursor-pointer" title="Cargar">
+                        <mat-icon class="text-sm">download</mat-icon>
+                      </button>
+                    </div>
+                  }
+                </div>
+              }
             </div>
           </div>
         </div>
-      }
-    </section>
+      </div>
+    }
 
-    <!-- File Browser Modals -->
+    <!-- File Browser Modals (for multi-select from Storage) -->
     <app-file-browser
       #browserPadron
       tipo="padron"
@@ -191,16 +227,41 @@ import { FileBrowserComponent } from '../file-browser/file-browser';
 })
 export class UploadSectionComponent {
   readonly service = inject(AttendanceService);
-  readonly isExpanded = signal(false);
   readonly loading = signal(false);
+
+  readonly modalPadron = signal(false);
+  readonly modalAsistencia = signal(false);
+  readonly dragOverPadron = signal(false);
+  readonly dragOverAsistencia = signal(false);
 
   @ViewChild('browserPadron') browserPadron!: FileBrowserComponent;
   @ViewChild('browserAsistencia') browserAsistencia!: FileBrowserComponent;
 
+  // ---- MODALS ----
+
+  abrirModalPadron() {
+    this.modalPadron.set(true);
+  }
+
+  cerrarModalPadron() {
+    this.modalPadron.set(false);
+    this.dragOverPadron.set(false);
+  }
+
+  abrirModalAsistencia() {
+    this.modalAsistencia.set(true);
+  }
+
+  cerrarModalAsistencia() {
+    this.modalAsistencia.set(false);
+    this.dragOverAsistencia.set(false);
+  }
+
   // ---- PADRÓN ----
 
-  abrirNavegadorPadron() {
-    this.browserPadron.open(this.service.archivosPadron());
+  cargarPadronDeStorage(path: string) {
+    this.loading.set(true);
+    this.service.cargarPadronDesdeStorage(path).finally(() => this.loading.set(false));
   }
 
   onPadronSelected(paths: string[]) {
@@ -217,6 +278,7 @@ export class UploadSectionComponent {
   onDropPadron(event: DragEvent) {
     event.preventDefault();
     event.stopPropagation();
+    this.dragOverPadron.set(false);
     if (event.dataTransfer?.files?.length) {
       this.processPadronFile(event.dataTransfer.files[0]);
     }
@@ -242,8 +304,9 @@ export class UploadSectionComponent {
 
   // ---- ASISTENCIA ----
 
-  abrirNavegadorAsistencia() {
-    this.browserAsistencia.open(this.service.archivosAsistencia());
+  cargarAsistenciaDeStorage(path: string) {
+    this.loading.set(true);
+    this.service.cargarAsistenciaDesdeStorage([path]).finally(() => this.loading.set(false));
   }
 
   onAsistenciaSelected(paths: string[]) {
@@ -260,6 +323,7 @@ export class UploadSectionComponent {
   onDropAsistencia(event: DragEvent) {
     event.preventDefault();
     event.stopPropagation();
+    this.dragOverAsistencia.set(false);
     if (event.dataTransfer?.files?.length) {
       this.processAsistenciaFiles(Array.from(event.dataTransfer.files));
     }
