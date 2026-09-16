@@ -1391,16 +1391,17 @@ export class Formularios implements OnInit {
       await this.supabase.updateFormConfig(cfg.id, patch);
       this.config.update(cfgs => cfgs.map(c => c.tipo === configTipo ? { ...c, ...patch } : c));
 
-      // Actualizar carreras que tenían la hora anterior (las que coincidían con el general)
+      // Actualizar carreras que tenían la hora anterior
       if (horaFin && horaFinAnterior && horaFin !== horaFinAnterior) {
-        const targetSignal = this.getTargetSignal(configTipo);
-        const carrerasAActualizar = targetSignal().filter(h => h.hora_cierre === horaFinAnterior);
+        // Cargar horarios directo de la DB (puede que no estén en la señal)
+        const horarios = await this.supabase.fetchCarreraHorarios(configTipo);
+        const carrerasAActualizar = horarios.filter((h: any) => h.hora_cierre === horaFinAnterior);
         for (const h of carrerasAActualizar) {
           await this.supabase.updateCarreraHorario(h.id, { hora_cierre: horaFin });
         }
-        if (carrerasAActualizar.length > 0) {
-          targetSignal.update(hs => hs.map(h => h.hora_cierre === horaFinAnterior ? { ...h, hora_cierre: horaFin } : h));
-        }
+        // Actualizar la señal también
+        const targetSignal = this.getTargetSignal(configTipo);
+        targetSignal.set(horarios.map((h: any) => ({ ...h, hora_cierre: h.hora_cierre === horaFinAnterior ? horaFin : h.hora_cierre })));
       }
 
       if (editSignalType === 'almuerzo') this.editingAlmuerzo.set(false);
