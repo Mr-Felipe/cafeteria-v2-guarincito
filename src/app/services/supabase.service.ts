@@ -691,10 +691,14 @@ export class SupabaseService {
       const { data: buckets } = await this.client.storage.listBuckets();
       const exists = buckets?.some(b => b.name === this.BUCKET);
       if (!exists) {
-        await this.client.storage.createBucket(this.BUCKET, { public: false });
+        try {
+          await this.client.storage.createBucket(this.BUCKET, { public: false });
+        } catch {
+          // Bucket already exists or creation not allowed — ignore
+        }
       }
-    } catch (err) {
-      console.warn('[Supabase] ensureBucketExists:', err);
+    } catch {
+      // listBuckets failed — ignore, bucket probably exists
     }
   }
 
