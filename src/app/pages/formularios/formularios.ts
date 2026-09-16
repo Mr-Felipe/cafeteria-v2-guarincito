@@ -1395,13 +1395,15 @@ export class Formularios implements OnInit {
       if (horaFin && horaFinAnterior && horaFin !== horaFinAnterior) {
         // Cargar horarios directo de la DB (puede que no estén en la señal)
         const horarios = await this.supabase.fetchCarreraHorarios(configTipo);
-        const carrerasAActualizar = horarios.filter((h: any) => h.hora_cierre === horaFinAnterior);
+        const newTime = this.normalizeTime(horaFin);
+        const oldTime = this.normalizeTime(horaFinAnterior);
+        const carrerasAActualizar = horarios.filter((h: any) => this.normalizeTime(h.hora_cierre) === oldTime);
         for (const h of carrerasAActualizar) {
           await this.supabase.updateCarreraHorario(h.id, { hora_cierre: horaFin });
         }
         // Actualizar la señal también
         const targetSignal = this.getTargetSignal(configTipo);
-        targetSignal.set(horarios.map((h: any) => ({ ...h, hora_cierre: h.hora_cierre === horaFinAnterior ? horaFin : h.hora_cierre })));
+        targetSignal.set(horarios.map((h: any) => ({ ...h, hora_cierre: this.normalizeTime(h.hora_cierre) === oldTime ? horaFin : h.hora_cierre })));
       }
 
       if (editSignalType === 'almuerzo') this.editingAlmuerzo.set(false);
@@ -1501,9 +1503,17 @@ export class Formularios implements OnInit {
     }
   }
 
+  private normalizeTime(time: string | undefined | null): string {
+    if (!time) return '';
+    let t = time.substring(0, 5); // "22:08:00" -> "22:08", "10:08" -> "10:08"
+    // Convert 12h AM/PM to 24h if needed
+    // "10:08" from input type="time" is always 24h, so this should be fine
+    return t;
+  }
+
   getCustomCount(horarios: any[], defaultHoraFin: string | undefined): number {
-    const defaultHora = (defaultHoraFin || '').substring(0, 5);
-    return horarios.filter(h => h.hora_cierre?.substring(0, 5) !== defaultHora).length;
+    const defaultHora = this.normalizeTime(defaultHoraFin);
+    return horarios.filter(h => this.normalizeTime(h.hora_cierre) !== defaultHora).length;
   }
 
   private getTargetSignal(formTipo: string): typeof this.carrerasHorarios {
