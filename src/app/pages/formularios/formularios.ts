@@ -171,12 +171,12 @@ interface WebConfirmacion {
                             <mat-icon class="text-[18px]">close</mat-icon>
                           </button>
                         </div>
-                      } @else {
-                        <button class="anim-fade-in p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg cursor-pointer flex-shrink-0"
-                          (click)="editingAlmuerzo.set(true); editingAlmuerzoInicio.set(almuerzoConfig()?.hora_inicio || ''); editingAlmuerzoFin.set(almuerzoConfig()?.hora_fin || '')">
-                          <mat-icon class="text-[18px]">edit</mat-icon>
-                        </button>
-                      }
+                          } @else {
+                            <button class="anim-fade-in p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg cursor-pointer flex-shrink-0"
+                              (click)="editingAlmuerzo.set(true); editingAlmuerzoInicio.set(almuerzoConfig()?.hora_inicio || ''); editingAlmuerzoFin.set(almuerzoConfig()?.hora_fin || '')">
+                              <mat-icon class="text-[18px]">edit</mat-icon>
+                            </button>
+                          }
                     </div>
                     <button (click)="toggleExpandAlmuerzo()"
                       class="flex items-center gap-2 w-full py-2 px-3 text-sm text-slate-600 hover:bg-slate-50 rounded-xl transition-all cursor-pointer">
@@ -219,7 +219,7 @@ interface WebConfirmacion {
                                 <div class="anim-fade-in flex items-center gap-2">
                                   <input type="time" [value]="h.hora_cierre" disabled
                                     class="w-32 py-1 px-2 text-xs rounded-lg bg-slate-100 border border-slate-200 font-mono text-slate-400 cursor-not-allowed">
-                                  <button (click)="editingHorarioId.set(h.id); editingHorarioValue.set(h.hora_cierre)"
+                                  <button (click)="editingHorarioId.set(h.id); editingFormTipo.set('almuerzo'); editingHorarioValue.set(h.hora_cierre)"
                                     class="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg cursor-pointer">
                                     <mat-icon class="text-[16px]">edit</mat-icon>
                                   </button>
@@ -364,16 +364,16 @@ interface WebConfirmacion {
                                     <mat-icon class="text-[16px]">close</mat-icon>
                                   </button>
                                 </div>
-                              } @else {
-                                <div class="anim-fade-in flex items-center gap-2">
-                                  <input type="time" [value]="h.hora_cierre" disabled
-                                    class="w-32 py-1 px-2 text-xs rounded-lg bg-slate-100 border border-slate-200 font-mono text-slate-400 cursor-not-allowed">
-                                  <button (click)="editingHorarioId.set(h.id); editingHorarioValue.set(h.hora_cierre)"
-                                    class="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg cursor-pointer">
-                                    <mat-icon class="text-[16px]">edit</mat-icon>
-                                  </button>
-                                </div>
-                              }
+                                  } @else {
+                                    <div class="anim-fade-in flex items-center gap-2">
+                                      <input type="time" [value]="h.hora_cierre" disabled
+                                        class="w-32 py-1 px-2 text-xs rounded-lg bg-slate-100 border border-slate-200 font-mono text-slate-400 cursor-not-allowed">
+                                      <button (click)="editingHorarioId.set(h.id); editingFormTipo.set('refrigerio'); editingHorarioValue.set(h.hora_cierre)"
+                                        class="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg cursor-pointer">
+                                        <mat-icon class="text-[16px]">edit</mat-icon>
+                                      </button>
+                                    </div>
+                                  }
                             </div>
                           }
                           @if (carrerasHorarios().length === 0) {
@@ -513,16 +513,16 @@ interface WebConfirmacion {
                                     <mat-icon class="text-[16px]">close</mat-icon>
                                   </button>
                                 </div>
-                              } @else {
-                                <div class="anim-fade-in flex items-center gap-2">
-                                  <input type="time" [value]="h.hora_cierre" disabled
-                                    class="w-32 py-1 px-2 text-xs rounded-lg bg-slate-100 border border-slate-200 font-mono text-slate-400 cursor-not-allowed">
-                                  <button (click)="editingHorarioId.set(h.id); editingHorarioValue.set(h.hora_cierre)"
-                                    class="p-1 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg cursor-pointer">
-                                    <mat-icon class="text-[16px]">edit</mat-icon>
-                                  </button>
-                                </div>
-                              }
+                                  } @else {
+                                    <div class="anim-fade-in flex items-center gap-2">
+                                      <input type="time" [value]="h.hora_cierre" disabled
+                                        class="w-32 py-1 px-2 text-xs rounded-lg bg-slate-100 border border-slate-200 font-mono text-slate-400 cursor-not-allowed">
+                                      <button (click)="editingHorarioId.set(h.id); editingFormTipo.set('almuerzo_adea'); editingHorarioValue.set(h.hora_cierre)"
+                                        class="p-1 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg cursor-pointer">
+                                        <mat-icon class="text-[16px]">edit</mat-icon>
+                                      </button>
+                                    </div>
+                                  }
                             </div>
                           }
                           @if (adeaHorarios().length === 0) {
@@ -666,16 +666,16 @@ interface WebConfirmacion {
                                       <mat-icon class="text-[14px]">close</mat-icon>
                                     </button>
                                   </div>
-                                } @else {
-                                  <div class="anim-fade-in flex items-center gap-1">
-                                    <input type="time" [value]="h.hora_cierre" disabled
-                                      class="w-28 py-0.5 px-1.5 text-[11px] rounded bg-slate-100 border border-slate-200 font-mono text-slate-400 cursor-not-allowed">
-                                    <button (click)="editingHorarioId.set(h.id); editingHorarioValue.set(h.hora_cierre)"
-                                      class="p-0.5 text-slate-400 hover:text-violet-600 hover:bg-violet-50 rounded cursor-pointer">
-                                      <mat-icon class="text-[14px]">edit</mat-icon>
-                                    </button>
-                                  </div>
-                                }
+                                  } @else {
+                                    <div class="anim-fade-in flex items-center gap-1">
+                                      <input type="time" [value]="h.hora_cierre" disabled
+                                        class="w-28 py-0.5 px-1.5 text-[11px] rounded bg-slate-100 border border-slate-200 font-mono text-slate-400 cursor-not-allowed">
+                                      <button (click)="editingHorarioId.set(h.id); editingFormTipo.set('refrigerio_finde'); editingHorarioValue.set(h.hora_cierre)"
+                                        class="p-0.5 text-slate-400 hover:text-violet-600 hover:bg-violet-50 rounded cursor-pointer">
+                                        <mat-icon class="text-[14px]">edit</mat-icon>
+                                      </button>
+                                    </div>
+                                  }
                               </div>
                             }
                             @if (findeSabadoHorarios().length === 0) {
@@ -789,16 +789,16 @@ interface WebConfirmacion {
                                       <mat-icon class="text-[14px]">close</mat-icon>
                                     </button>
                                   </div>
-                                } @else {
-                                  <div class="anim-fade-in flex items-center gap-1">
-                                    <input type="time" [value]="h.hora_cierre" disabled
-                                      class="w-28 py-0.5 px-1.5 text-[11px] rounded bg-slate-100 border border-slate-200 font-mono text-slate-400 cursor-not-allowed">
-                                    <button (click)="editingHorarioId.set(h.id); editingHorarioValue.set(h.hora_cierre)"
-                                      class="p-0.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded cursor-pointer">
-                                      <mat-icon class="text-[14px]">edit</mat-icon>
-                                    </button>
-                                  </div>
-                                }
+                                  } @else {
+                                    <div class="anim-fade-in flex items-center gap-1">
+                                      <input type="time" [value]="h.hora_cierre" disabled
+                                        class="w-28 py-0.5 px-1.5 text-[11px] rounded bg-slate-100 border border-slate-200 font-mono text-slate-400 cursor-not-allowed">
+                                      <button (click)="editingHorarioId.set(h.id); editingFormTipo.set('desayuno_finde'); editingHorarioValue.set(h.hora_cierre)"
+                                        class="p-0.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded cursor-pointer">
+                                        <mat-icon class="text-[14px]">edit</mat-icon>
+                                      </button>
+                                    </div>
+                                  }
                               </div>
                             }
                             @if (findeDomingoHorarios().length === 0) {
@@ -1166,6 +1166,7 @@ export class Formularios implements OnInit {
   readonly expandedForm = signal<string | null>(null);
   readonly modalDias = signal<{ tipo: string; dias: string[] } | null>(null);
   readonly editingHorarioId = signal<string | number | null>(null);
+  readonly editingFormTipo = signal<string>('');
   readonly editingGeneralHours = signal<boolean>(false);
   readonly editingHorarioValue = signal<string>('');
   readonly editingGeneralInicio = signal<string>('');
@@ -1490,16 +1491,28 @@ export class Formularios implements OnInit {
     return horarios.filter(h => h.hora_cierre?.substring(0, 5) !== defaultHora).length;
   }
 
+  private getTargetSignal(formTipo: string): typeof this.carrerasHorarios {
+    switch (formTipo) {
+      case 'almuerzo': return this.almuerzoHorarios;
+      case 'almuerzo_adea': return this.adeaHorarios;
+      case 'refrigerio_finde': return this.findeSabadoHorarios;
+      case 'desayuno_finde': return this.findeDomingoHorarios;
+      case 'refrigerio': return this.carrerasHorarios;
+      default: return this.carrerasHorarios;
+    }
+  }
+
   async resetHorariosDefault(formTipo: string) {
     const cfg = this.config().find(c => c.tipo === formTipo);
     const defaultHora = cfg?.hora_fin || '19:00';
+    const targetSignal = this.getTargetSignal(formTipo);
     try {
-      for (const h of this.carrerasHorarios()) {
+      for (const h of targetSignal()) {
         if (h.hora_cierre !== defaultHora) {
           await this.supabase.updateCarreraHorario(h.id, { hora_cierre: defaultHora });
         }
       }
-      await this.loadCarreraHorarios(formTipo);
+      await this.loadCardHorarios(formTipo, targetSignal);
       this.cafeteria.notify('success', 'Horarios restablecidos', 'Todas las carreras ahora usan la hora general');
     } catch (err) {
       console.error('[Formularios] Error resetting:', err);
@@ -1524,10 +1537,12 @@ export class Formularios implements OnInit {
   }
 
   async saveHorario(horarioId: string | number, horaCierre: string) {
+    const targetSignal = this.getTargetSignal(this.editingFormTipo());
     try {
       await this.supabase.updateCarreraHorario(Number(horarioId), { hora_cierre: horaCierre });
-      this.carrerasHorarios.update(hs => hs.map(h => h.id === horarioId ? { ...h, hora_cierre: horaCierre } : h));
+      targetSignal.update(hs => hs.map(h => h.id === horarioId ? { ...h, hora_cierre: horaCierre } : h));
       this.editingHorarioId.set(null);
+      this.editingFormTipo.set('');
       this.cafeteria.notify('success', 'Horario actualizado', 'Hora de cierre actualizada');
     } catch (err) {
       console.error('[Formularios] Error updating horario:', err);
@@ -1537,6 +1552,7 @@ export class Formularios implements OnInit {
 
   cancelEditHorario() {
     this.editingHorarioId.set(null);
+    this.editingFormTipo.set('');
   }
 
   async saveGeneralHours(tipo: string, horaInicio: string | undefined, horaFin: string | undefined) {
