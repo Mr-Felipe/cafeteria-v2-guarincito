@@ -593,7 +593,7 @@ export class Beneficiarios {
   readonly sortColumn = signal<string>('');
   readonly sortDirection = signal<'asc' | 'desc' | ''>('');
   readonly currentPage = signal<number>(1);
-  readonly itemsPerPage = signal<number>(25);
+  readonly itemsPerPage = signal<number>(8);
 
   readonly showImportModal = signal<boolean>(false);
   readonly isDragging = signal<boolean>(false);
