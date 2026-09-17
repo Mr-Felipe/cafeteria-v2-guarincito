@@ -81,7 +81,7 @@ import { Beneficiario } from '../../models/cafeteria.models';
                 id="filter-beneficiarios-search"
                 type="text"
                 [value]="busqueda()"
-                (input)="busqueda.set($any($event.target).value)"
+                (input)="busqueda.set($any($event.target).value); resetPage()"
                 placeholder="Codigo, nombre, email o tarjeta..."
                 class="w-full pl-9 pr-3 py-2 text-xs rounded-lg bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
               />
@@ -92,7 +92,7 @@ import { Beneficiario } from '../../models/cafeteria.models';
           <div class="flex-1 min-w-0">
             <span class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">Tipo de Subsidio</span>
             <div class="bg-slate-100 p-1 rounded-lg grid grid-cols-3 gap-1 border border-slate-200">
-              <button type="button" (click)="filtroSubsidio.set('Todos'); carreraFiltro.set('TODAS')"
+              <button type="button" (click)="filtroSubsidio.set('Todos'); carreraFiltro.set('TODAS'); resetPage()"
                 class="py-2 px-1 sm:px-2.5 rounded-md text-[11px] sm:text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer font-medium overflow-hidden"
                 [class.bg-white]="filtroSubsidio() === 'Todos'"
                 [class.text-slate-900]="filtroSubsidio() === 'Todos'"
@@ -101,7 +101,7 @@ import { Beneficiario } from '../../models/cafeteria.models';
                 [class.text-slate-600]="filtroSubsidio() !== 'Todos'">
                 <mat-icon [style.fontSize.px]="20" class="shrink-0">layers</mat-icon><span class="hidden sm:inline truncate">Todos</span>
               </button>
-              <button type="button" (click)="filtroSubsidio.set('Almuerzo'); carreraFiltro.set('TODAS')"
+              <button type="button" (click)="filtroSubsidio.set('Almuerzo'); carreraFiltro.set('TODAS'); resetPage()"
                 class="py-2 px-1 sm:px-2.5 rounded-md text-[11px] sm:text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer font-medium overflow-hidden"
                 [class.bg-white]="filtroSubsidio() === 'Almuerzo'"
                 [class.text-emerald-700]="filtroSubsidio() === 'Almuerzo'"
@@ -110,7 +110,7 @@ import { Beneficiario } from '../../models/cafeteria.models';
                 [class.text-slate-600]="filtroSubsidio() !== 'Almuerzo'">
                 <mat-icon [style.fontSize.px]="20" class="shrink-0">wb_sunny</mat-icon><span class="hidden sm:inline truncate">Almuerzo</span>
               </button>
-              <button type="button" (click)="filtroSubsidio.set('Refrigerio'); carreraFiltro.set('TODAS')"
+              <button type="button" (click)="filtroSubsidio.set('Refrigerio'); carreraFiltro.set('TODAS'); resetPage()"
                 class="py-2 px-1 sm:px-2.5 rounded-md text-[11px] sm:text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer font-medium overflow-hidden"
                 [class.bg-white]="filtroSubsidio() === 'Refrigerio'"
                 [class.text-blue-700]="filtroSubsidio() === 'Refrigerio'"
@@ -128,7 +128,7 @@ import { Beneficiario } from '../../models/cafeteria.models';
             <select
               id="filter-beneficiarios-carrera"
               [value]="carreraFiltro()"
-              (change)="carreraFiltro.set($any($event.target).value)"
+              (change)="carreraFiltro.set($any($event.target).value); resetPage()"
               class="w-full py-2 px-3 text-xs rounded-lg bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium text-slate-700"
             >
               <option value="TODAS">Todas las carreras</option>
@@ -203,7 +203,7 @@ import { Beneficiario } from '../../models/cafeteria.models';
                   </td>
                 </tr>
               } @else {
-                @for (ben of filteredBeneficiarios(); track ben.id || ben.codigo_id) {
+                @for (ben of paginatedBeneficiarios(); track ben.id || ben.codigo_id) {
                   <tr class="hover:bg-slate-50/80 transition-colors">
                     <!-- Código -->
                     <td class="py-3 px-4 font-mono font-bold text-slate-900">
@@ -299,6 +299,59 @@ import { Beneficiario } from '../../models/cafeteria.models';
           </table>
         </div>
       </div>
+
+      <!-- Pagination Controls -->
+      @if (filteredBeneficiarios().length > itemsPerPage()) {
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-xs px-4 py-3 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div class="text-xs text-slate-500 font-medium">
+            Mostrando <span class="font-bold text-slate-700">{{ ((currentPage() - 1) * itemsPerPage()) + 1 }}</span>
+            - <span class="font-bold text-slate-700">{{ Math.min(currentPage() * itemsPerPage(), filteredBeneficiarios().length) }}</span>
+            de <span class="font-bold text-slate-700">{{ filteredBeneficiarios().length }}</span> beneficiarios
+          </div>
+
+          <div class="flex items-center gap-1">
+            <button
+              type="button"
+              (click)="goToPage(currentPage() - 1)"
+              [disabled]="currentPage() === 1"
+              class="px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-200 transition-colors disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 text-slate-700"
+            >
+              ← Anterior
+            </button>
+
+            @for (p of pageNumbers(); track $index) {
+              @if (p === '...') {
+                <span class="px-2 py-1.5 text-xs text-slate-400">…</span>
+              } @else {
+                <button
+                  type="button"
+                  (click)="goToPageFromMixed(p)"
+                  class="min-w-[32px] px-2 py-1.5 rounded-lg text-xs font-bold border transition-colors"
+                  [class.bg-blue-600]="currentPage() === p"
+                  [class.text-white]="currentPage() === p"
+                  [class.border-blue-600]="currentPage() === p"
+                  [class.hover:bg-blue-700]="currentPage() === p"
+                  [class.bg-white]="currentPage() !== p"
+                  [class.text-slate-700]="currentPage() !== p"
+                  [class.border-slate-200]="currentPage() !== p"
+                  [class.hover:bg-slate-50]="currentPage() !== p"
+                >
+                  {{ p }}
+                </button>
+              }
+            }
+
+            <button
+              type="button"
+              (click)="goToPage(currentPage() + 1)"
+              [disabled]="currentPage() === totalPages()"
+              class="px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-200 transition-colors disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 text-slate-700"
+            >
+              Siguiente →
+            </button>
+          </div>
+        </div>
+      }
     </div>
 
     <!-- Modal: Import CSV iVMS-4200 -->
@@ -531,6 +584,7 @@ import { Beneficiario } from '../../models/cafeteria.models';
 })
 export class Beneficiarios {
   readonly cafeteriaService = inject(CafeteriaService);
+  readonly Math = Math;
 
   readonly busqueda = signal<string>('');
   readonly carreraFiltro = signal<string>('TODAS');
@@ -538,6 +592,8 @@ export class Beneficiarios {
 
   readonly sortColumn = signal<string>('');
   readonly sortDirection = signal<'asc' | 'desc' | ''>('');
+  readonly currentPage = signal<number>(1);
+  readonly itemsPerPage = signal<number>(25);
 
   readonly showImportModal = signal<boolean>(false);
   readonly isDragging = signal<boolean>(false);
@@ -621,6 +677,34 @@ export class Beneficiarios {
     return result;
   });
 
+  readonly totalPages = computed(() => Math.ceil(this.filteredBeneficiarios().length / this.itemsPerPage()));
+
+  readonly paginatedBeneficiarios = computed(() => {
+    const all = this.filteredBeneficiarios();
+    const page = this.currentPage();
+    const perPage = this.itemsPerPage();
+    const start = (page - 1) * perPage;
+    return all.slice(start, start + perPage);
+  });
+
+  readonly pageNumbers = computed(() => {
+    const total = this.totalPages();
+    const current = this.currentPage();
+    const pages: (number | string)[] = [];
+    if (total <= 7) {
+      for (let i = 1; i <= total; i++) pages.push(i);
+    } else {
+      pages.push(1);
+      if (current > 3) pages.push('...');
+      const start = Math.max(2, current - 1);
+      const end = Math.min(total - 1, current + 1);
+      for (let i = start; i <= end; i++) pages.push(i);
+      if (current < total - 2) pages.push('...');
+      pages.push(total);
+    }
+    return pages;
+  });
+
   onSort(col: string): void {
     if (this.sortColumn() === col) {
       const dir = this.sortDirection();
@@ -631,6 +715,22 @@ export class Beneficiarios {
       this.sortColumn.set(col);
       this.sortDirection.set('asc');
     }
+  }
+
+  goToPage(page: number): void {
+    if (page >= 1 && page <= this.totalPages()) {
+      this.currentPage.set(page);
+    }
+  }
+
+  goToPageFromMixed(page: number | string): void {
+    if (typeof page === 'number') {
+      this.goToPage(page);
+    }
+  }
+
+  resetPage(): void {
+    this.currentPage.set(1);
   }
 
   sortIcon(col: string): string {
